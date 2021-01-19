@@ -181,6 +181,8 @@ module.exports.uploads = async (res,req) =>
                             SIZE: audio.size
                         }
                     });
+
+                    ok = true;
                 }
                 else
                 {
