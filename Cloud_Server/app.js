@@ -26,6 +26,8 @@ const log = require('./modules/logging.js');
 
 const handle = require('./modules/request.js');
 
+const SQL = require('./modules/sql.js')
+
 /*************************VARIABLES AND INSTANCES*****************************/
 
 const port = 8443;
@@ -97,6 +99,21 @@ if(creds)
 
     app.get("/historics", (res,req) =>
     {
+        let initDate = res.ini;
+        
+        let endDate = res.end;
 
+        let Q = SQL.SEL("*","HISTORICS WHERE date >= '" + initDate + "' AND date <= '" + endDate + "';","","",true)
+        
+        res.status(200).json(Q);
     });
 }
+
+
+//Location Google format
+
+//{location:{"lat":,"long":}, "status":"0 for open? 1 for closed?" , Weight:? , Date:, Time:,}
+
+//splits//\n\r
+
+//will received weight be an average of samples done by the boat device?
