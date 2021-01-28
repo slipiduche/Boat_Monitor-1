@@ -22,7 +22,7 @@ function DBconnection()
   host: "localhost",
   user: "orbittas",
   password: "P4s5w0rd++",
-  database: "STREAMING_SERVER"
+  database: "BOAT_MONITOR"
   });
 
   return con;
@@ -32,7 +32,7 @@ function DBconnection()
 
 /*SELECT QUERY*/
 
-module.exports.SEL = async function SEL(S,TAB,PARAM,WHERE,STR)
+module.exports.SEL = async function SEL(S,TAB,WHERE)
 {  
   let DB = DBconnection();
   
@@ -66,12 +66,23 @@ module.exports.SEL = async function SEL(S,TAB,PARAM,WHERE,STR)
 
   let Q = TAB;
 
-  if(PARAM && WHERE)
+  let wlen = Object.keys(WHERE).length;
+
+  if(wlen > 0)
   {
-    if(STR)
-      Q += " WHERE " + PARAM + " = '" + WHERE + "'";
-    else
-      Q += " WHERE " + PARAM + " = " + WHERE;
+    Q += " WHERE ";
+    for(let i = 0; i < wlen; i++)
+    {
+      Q += WHERE[i].PARAM + " = ";
+
+      if(WHERE[i].STR)
+        Q +=  "'" + WHERE[i].VALUE + "'";
+      else
+        Q +=  WHERE[i].VALUE;
+    }
+
+    if(Q.OP)
+      Q += " " + WHERE[i].OP; 
   }
    
   console.log("SELECT " + S + " FROM " + Q + ";");

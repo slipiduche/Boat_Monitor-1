@@ -97,11 +97,11 @@ if(creds)
             handle.data(res,req,filenames);
     });
 
-    app.get("/historics", (res,req) =>
+    app.get("/historics", (req,res) =>
     {
-        let initDate = res.ini;
+        let initDate = req.ini;
         
-        let endDate = res.end;
+        let endDate = req.end;
 
         let Q = SQL.SEL("*","HISTORICS WHERE date >= '" + initDate + "' AND date <= '" + endDate + "';","","",true)
         
