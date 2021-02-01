@@ -32,11 +32,13 @@ function DBconnection()
 
 /*SELECT QUERY*/
 
-module.exports.SEL = async function SEL(S,TAB,WHERE)
+module.exports.SEL = async function SEL(S,TABLE,WHERE)
 {  
-  let DB = DBconnection();
-  
-  let r = "";
+  let DB = DBconnection(), r = "";
+
+  let q1 = "SELECT ",q2 = " FROM " + TABLE, q3 = " WHERE ", Q;
+
+  let keys = Object.keys(S), wkeys = "", ops = 0;
 
   DB.connect( (error) =>
   {
@@ -53,9 +55,7 @@ module.exports.SEL = async function SEL(S,TAB,WHERE)
       
       errorLog("sql",error,3);
 
-      r = {};
-
-      r.STATUS = error;
+      r = {}; r.STATUS = error;
     }  
   });
 
@@ -64,59 +64,85 @@ module.exports.SEL = async function SEL(S,TAB,WHERE)
   
   console.log("SELECT");
 
-  let Q = TAB;
-
-  let wlen = Object.keys(WHERE).length;
-
-  if(wlen > 0)
+  if(WHERE)
   {
-    Q += " WHERE ";
-    for(let i = 0; i < wlen; i++)
-    {
-      Q += WHERE[i].PARAM + " = ";
+    wkeys = Object.keys(WHERE);
 
-      if(WHERE[i].STR)
-        Q +=  "'" + WHERE[i].VALUE + "'";
-      else
-        Q +=  WHERE[i].VALUE;
-    }
-
-    if(Q.OP)
-      Q += " " + WHERE[i].OP; 
+    if(WHERE.ops)
+      ops = WHERE.ops.length;
   }
-   
-  console.log("SELECT " + S + " FROM " + Q + ";");
+
+  let columns = keys.length, conditions = wkeys.length, iter;
+
+  if(columns > conditions)
+    iter = columns;
+  else
+    iter = conditions;
+
+  for(let i = 0; i < iter; i++)
+  {
+    if(i <= (columns - 1))
+      q1 += S[keys[i]];
+    if(i <= (conditions - 2))
+      q3 += wkeys[i] +  " = ";
+
+    if(i <= (conditions - 2) && isNaN(WHERE[wkeys[i]]))
+      q3 += "'" + WHERE[wkeys[i]] + "'";
+    else if(i <= (conditions - 2))
+      q3 += WHERE[wkeys[i]];
+      
+    if(i < (columns - 1))
+      q1 += ",";    
+    if(i < ops)
+    {
+      if(WHERE.ops[i] == "&")
+        q3 += " AND ";
+      else if(WHERE.ops[i] == "|")
+        q3 += " OR ";
+    }
+  }
+
+  Q = q1 + q2;
+  
+  if(WHERE)
+    Q += q3;
+    
+  Q += ";";
+
+  console.log(Q);
 
   try
   {
-    let [result,fields] = await DB.promise().query("SELECT " + S +  " FROM " + Q + ";");
+    let [result,fields] = await DB.promise().query(Q);
 
-    r = JSON.parse(JSON.stringify(result));
-
-    console.log(r);
+    r = JSON.parse(JSON.stringify(result));  
   }
   catch(error) //sql-error4
   {
     errorLog("sql",error,4);
     
-    r = {};
-
-    r.STATUS = error;
+    r = {}; r.STATUS = error;
   }
-
+  
   DB.end();
+
+  console.log(r);
 
   return r;
 }
 
 /*INSERT QUERY*/
 
-module.exports.INS = async function INS(TAB,COL)
+module.exports.INS = async function INS(TABLE,COLS)
 {
-  let DB = DBconnection();
+  let DB = DBconnection(), r = "";
+  
+  let q1 = "INSERT INTO " + TABLE, q2 = " (", q3 = "VALUES (", Q;
 
-  let r = "";
-    
+  let keys = Object.keys(COLS), values = Object.values(COLS);
+
+  let columns = keys.length;
+
   DB.connect( (error) =>
   {
     if(error)
@@ -126,15 +152,11 @@ module.exports.INS = async function INS(TAB,COL)
         DB.end();
       }
       catch
-      {
-
-      }
+      {}
       
       errorLog("sql",error,5); //sql-error5
       
-      r = {};
-
-      r.STATUS = error;
+      r = {}; r.STATUS = error;
     }  
   });
 
@@ -143,126 +165,59 @@ module.exports.INS = async function INS(TAB,COL)
 
   console.log("INSERT");
 
-  let q1 = "INSERT INTO " + TAB;
-
-  let q2;
-
-  let q3;
-
-  let port;
-
-
-  switch(TAB)
+  for(let i = 0; i < columns; i++)
   {
-    case "ROOMS":
+    q2 += keys[i];
+
+    if(isNaN(values[i]))
+      q3 += "'" + values[i] + "'";
+    else
+      q3 += values[i];
+
+    if(i != (columns - 1))
     {
-      q2  = " (ROOM_NAME,READER_ID,SPEAKER_ID,PORT_ID) ";
-
-      port = await portAvailable(DB,r);   
-      
-      if(port.STATUS)
-      {
-        DB.end();
-
-        return port;
-      }
-        
-      q3 =  "VALUES ('" + COL.FIELD1 + "','" + COL.FIELD2 + "','" + COL.FIELD3 + "'," + port.toString() + ");";
-      
-      break;
+      q2 += ","; q3 += ","
     }
 
-    case "TAGS":
-    {
-      let today = new Date();
-
-      let ymd = [today.getFullYear().toString(),(today.getMonth() + 1).toString(),today.getDate().toString()];
-
-      q2 = " (TAG,SONG_ID,DATE_REG) ";
-
-      q3 =  "VALUES ('" + COL.FIELD1 + "'," + COL.FIELD2 + ",'" + ymd.join('-') + "');";
-
-      break;
-    }
-
-    case "MUSIC":
-    {
-      q2 = " (SONG_NAME,ARTIST,FL_NAME) ";
-
-      q3 =  "VALUES ('" + COL.FIELD1 + "','" + COL.FIELD2 + "','" + COL.FIELD3 + "');";
-
-      break;
-    }
-
-    default:
-    {
-      q1 = "INSERT INTO TEST";
-
-      q2 = " (ID,ANIMAL,COLOR) ";
-
-      let F2 = "'" + COL.FIELD2;
-      F2 += "'";
-
-      let F3 = "'" + COL.FIELD3;
-      F3 += "'";
-
-      q3 = "VALUES (" + COL.FIELD1 + "," + F2 + "," + F3 + ";";
-
-      break;
-    }
   }
 
-  let Q =  q1 + q2 + q3;
-  
-  console.log(Q);
+  q2 += ") "; q3 += ")";
 
-  console.log("wa");
+  Q = q1 + q2 + q3 + ";";
+
+  console.log(Q);
 
   try
   {
     let result = await DB.promise().query(Q);
 
-    if(TAB == "ROOMS")
-    {
-      r = await portAssign(port,DB,r);
-
-      if(r.STATUS)
-      {
-        DB.end();
-
-        return r;
-      }
-    }
-
     r = JSON.parse(JSON.stringify(result));
-      
-    console.log(r);
   }
   catch(error) //sql-error6
   {
       errorLog("sql",error,6);
 
-      r = {};
-
-      r.STATUS = error;
-
-      console.log(r);
+      r = {}; r.STATUS = error;   
   }
 
   DB.end();
+
+  console.log(r);
 
   return r;
 }
 
 /*UPDATE QUERY*/
 
-module.exports.UPDT = async function UPDT(TAB,COL)
+module.exports.UPDT = async function UPDT(TABLE,COLS,WHERE)
 {
-  let DB = DBconnection();
+  let DB = DBconnection(), r = "";
 
-  let oldfile = "";
+  let q1 = "UPDATE " + TABLE, q2 = " SET ", q3 = " WHERE ", Q;
 
-  let r = "";
+  let keys = Object.keys(COLS), values = Object.values(COLS);
+
+  let wkeys = "", wvalues = "", ops = 0;
     
   DB.connect( (error) =>
   {
@@ -273,15 +228,11 @@ module.exports.UPDT = async function UPDT(TAB,COL)
         DB.end();
       }
       catch
-      {
-
-      }
+      {}
       
       errorLog("sql",error,7); //sql-error7
 
-      r = {};
-
-      r.STATUS = error;
+      r = {}; r.STATUS = error;
     }  
   });
 
@@ -290,111 +241,74 @@ module.exports.UPDT = async function UPDT(TAB,COL)
 
   console.log("UPDATE");
 
-  let q1 = "UPDATE " + TAB + " SET";
-
-  let q2;
-
-  let q3;
-  
-  switch(TAB)
+  if(WHERE)
   {
-    case "ROOMS":
-    {
-      q2  = " ROOM_NAME = '"+ COL.FIELD1 +"', READER_ID = '"+ COL.FIELD2 +"', SPEAKER_ID = '" + COL.FIELD3 + "' ";
+    wkeys = Object.keys(WHERE);
+    wvalues = Object.values(WHERE);
+
+    if(WHERE.ops)
+      ops = WHERE.ops.length;
+  }
+
+  let columns = keys.length, conditions = wkeys.length, iter;
+
+  if(columns > conditions)
+    iter = columns;
+  else
+    iter = conditions;
+
+  for(let i = 0; i < iter; i++)
+  {
+    if(i <= (columns - 1))
+      q2 += keys[i] + " = ";
+    if(i <= (conditions - 2))
+      q3 += wkeys[i] +  " = ";
+
+    if(i <= (columns - 1) && isNaN(values[i]))
+      q2 += "'" + values[i] + "'";
+    else if(i <= (columns - 1))
+      q2 += values[i];
+    if(i <= (conditions - 2) && isNaN(wvalues[i]))
+      q3 += "'" + wvalues[i] + "'";
+    else if(i <= (conditions - 2))
+      q3 += wvalues[i];
       
-      q3 = "WHERE ID = " + COL.FIELD4 + ";";
-
-      break;
-    }
-
-    case "TAGS":
+    if(i < (columns - 1))
+      q2 += ",";    
+    if(i < ops)
     {
-      q2 = " SONG_ID = " + COL.FIELD1;
-
-      q3 = " WHERE ID = " + COL.FIELD2 + ";";
-
-      break;
-    }
-
-    case "MUSIC":
-    {
-      q2 = " SONG_NAME = '" + COL.FIELD1 + "', ARTIST = '" + COL.FIELD2 + "', FL_NAME = '" + COL.FIELD3 + "' ";
-
-      q3 = "WHERE ID = " + COL.FIELD4 + ";";
-
-      try
-      {
-        let fields;
-
-        [oldfile,field] = await DB.promise().query("SELECT FL_NAME FROM MUSIC WHERE ID = " + COL.FIELD4 + ";");
-
-        oldfile = JSON.parse(JSON.stringify(oldfile));
-        
-        console.log(oldfile);
-      }
-      catch(error)
-      {
-        errorLog("sql",error,11);
-
-        r = {};
-
-        r.STATUS = error;
-      }
-      
-      break;
+      if(WHERE.ops[i] == "&")
+        q3 += " AND ";
+      else if(WHERE.ops[i] == "|")
+        q3 += " OR ";
     }
   }
 
-  let Q =  q1 + q2 + q3;
+  Q = q1 + q2;
+  
+  if(WHERE)
+    Q += q3;
+    
+  Q += ";";
 
   console.log(Q);
   
   try
   {
-    if(TAB!= "MUSIC" || Object.keys(oldfile).length > 0)
-    {
-      let result = await DB.promise().query(Q);
+    let result = await DB.promise().query(Q);
 
-      r = JSON.parse(JSON.stringify(result));
-      
-      console.log(r);
-
-
-      if(TAB == "MUSIC")
-      {
-        let prev = oldfile[0].FL_NAME;
-
-        let nw  = COL.FIELD3;
-
-        if(prev != nw)
-        {
-          let rename = util.promisify(fs.rename);
-
-          let path = "./files/music/";
-        
-          await rename(path + prev, path + nw);
-  
-          console.log("File " + prev +" canged to " + nw + ".");
-        }
-        else
-        {
-          console.log("FIle name unchanged.");
-        }
-        
-      }
-
-    } 
+    r = JSON.parse(JSON.stringify(result));
   }
   catch(error) //sql-error8
   {
       errorLog("sql",error,8);
 
-      r = {};
-
-      r.STATUS = error;
+      r = {}; r.STATUS = error;
   }
 
   DB.end();
+
+  console.log(r);
 
   return r;
 }
@@ -403,11 +317,7 @@ module.exports.UPDT = async function UPDT(TAB,COL)
 
 module.exports.DEL = async function DEL(TAB,WHERE)
 { 
-  var query;
-
-  var DB = DBconnection();
-  
-  var r = "";
+  var DB = DBconnection(), r = "";
 
   DB.connect( (error) =>
   {
@@ -418,46 +328,13 @@ module.exports.DEL = async function DEL(TAB,WHERE)
         DB.end();
       }
       catch
-      {
-
-      }
+      {}
       
       errorLog("sql",error,9); //sql-error9
 
       r = {"STATUS":error};
     }  
   });
-
-  if(TAB == "ROOMS")
-  {
-    try
-    {
-      query = await module.exports.SEL("*",TAB,"ID", WHERE, false);
-    }
-    catch(error) //sql-error12
-    { 
-      errorLog("sql",error,12);
-  
-      r = {};
-  
-      r.STATUS = error;
-    }
-  }  
-  else if(TAB == "MUSIC")
-  {
-    try
-    {
-      query = await module.exports.SEL("FL_NAME",TAB,"ID", WHERE, false);
-    }
-    catch(error) //sql-error12
-    { 
-      errorLog("sql",error,14);
-  
-      r = {};
-  
-      r.STATUS = error;
-    }
-  }  
 
 
   if(r.STATUS)
@@ -470,60 +347,19 @@ module.exports.DEL = async function DEL(TAB,WHERE)
   try
   {
     let result = await DB.promise().query("DELETE FROM " + Q + ";");
-    let message = "";
-
-    if(TAB == "ROOMS")
-    {
-      if(query[0] && !query.STATUS)
-        await portUnassign(query[0].PORT_ID,DB,r);
-    }
-    else if(TAB == "MUSIC")
-    {
-       let del = util.promisify(fs.unlink);
-
-       let exists = util.promisify(fs.access);
-
-       if(query[0] && !query.STATUS)
-       {
-          console.log("Attempting to delete file "+ query[0].FL_NAME)
-
-          try
-          {
-            await exists("./files/music/" + query[0].FL_NAME);
-
-            await del("./files/music/" + query[0].FL_NAME);
-
-            console.log(query[0].FL_NAME + " successfully deleted.")
-
-          }
-          catch(error)
-          {
-            console.log(error);
-
-            message = "SUCCEEDED IN DELETING DATABASE ENTRY BUT NOT FILE";
-
-          }
-          
-
-   
-       }
-         
-    }
-
-    r = JSON.parse(JSON.stringify(result));
-      
-    console.log(r);
+    
+    r = JSON.parse(JSON.stringify(result));     
   }
   catch(error) //sql-error10
   { 
     errorLog("sql",error,10);
 
-    r = {};
-
-    r.STATUS = error;
+    r = {};  r.STATUS = error;
   }
 
   DB.end();
+
+  console.log(r);
 
   return r;
 }

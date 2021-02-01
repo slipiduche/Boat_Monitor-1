@@ -7,10 +7,12 @@ USE BOAT_MONITOR;
 CREATE TABLE HISTORICS
 (
     id INTEGER NOT NULL AUTO_INCREMENT,
-    container_status TEXT NOT NULL,
-    container_weight FLOAT NOT NULL,
-    boat_location TEXT NOT NULL,
+    container_status TEXT NOT NULL, --'OPEN' OR 'CLOSED'
+    container_weight FLOAT NOT NULL, --KG
+    boat_location TEXT NOT NULL, --LAT, LONG? gOOGLE COMPATIBLE
     dt DATETIME NOT NULL,
+    fl_name TEXT NOT NULL,
+    reg DATETIME NOT NULL
 
     PRIMARY KEY(ID)
 );
@@ -22,6 +24,7 @@ CREATE TABLE FILES
     fl_type TEXT NOT NULL,
     fl_url TEXT NOT NULL,
     dt DATETIME NOT NULL,
+    reg DATETIME NOT NULL
 
     PRIMARY KEY(ID)
 }
