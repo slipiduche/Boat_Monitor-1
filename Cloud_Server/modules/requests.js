@@ -256,7 +256,7 @@ module.exports.data = async (res,req,filenames) =>
             }
             
             data.reg = new Date().toISOString().toString().replace("T"," ").replace("Z","");
-
+            P
             result = sql.INS("HISTORICS",data);
 
             if(!result.STATUS)

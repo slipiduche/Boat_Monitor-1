@@ -4,6 +4,17 @@ CREATE DATABASE BOAT_MONITOR;
 
 USE BOAT_MONITOR;
 
+CREATE TABLE JOURNEYS
+{
+    id INTEGER NOT NULL AUTO_INCREMENT,
+    journey_start DATETIME NOT NULL,
+    journey_end DATETIME NOT NULL,
+    journey_text INT NOT NULL,
+    journey_media INT NOT NULL,
+
+    PRIMARY KEY(id)
+}
+
 CREATE TABLE HISTORICS
 (
     id INTEGER NOT NULL AUTO_INCREMENT,
@@ -12,9 +23,15 @@ CREATE TABLE HISTORICS
     boat_location TEXT NOT NULL, --LAT, LONG? gOOGLE COMPATIBLE
     dt DATETIME NOT NULL,
     fl_name TEXT NOT NULL,
-    reg DATETIME NOT NULL
+    reg DATETIME NOT NULL,
+    journey_id INT NOT NULL,
 
-    PRIMARY KEY(ID)
+    PRIMARY KEY(id),
+
+    CONSTRAINT FK_JOURNEY
+        FOREIGN KEY (journey_id) 
+        REFERENCES JOURNEYS (id)
+            ON DELETE CASCADE
 );
 
 CREATE TABLE FILES
@@ -26,9 +43,17 @@ CREATE TABLE FILES
     fl_url TEXT NOT NULL,
     rl INT,
     dt DATETIME NOT NULL,
-    reg DATETIME NOT NULL
+    reg DATETIME NOT NULL,
+    journey_id INT NOT NULL,
 
-    PRIMARY KEY(ID)
+    PRIMARY KEY(id),
+
+    PRIMARY KEY(id),
+
+    CONSTRAINT FK_JOURNEY
+        FOREIGN KEY (journey_id) 
+        REFERENCES JOURNEYS (id)
+            ON DELETE CASCADE
 }
 
 CREATE USER 'orbittas'@'localhost' IDENTIFIED WITH mysql_native_password BY 'P4s5w0rd++';
