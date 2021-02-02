@@ -8,8 +8,11 @@
 const fs   = require('fs');
 
 const util = require('util');
+const { resourceLimits } = require('worker_threads');
 
 const log = require('./logging.js');
+
+const sql = require('./sql.js');
 
 /*********************************FUNCTIONS***********************************/
 
@@ -222,5 +225,62 @@ module.exports.uploads = async (res,req) =>
 
 module.exports.data = async (res,req,filenames) =>
 {
+    let readFile = util.promisify(fs.readFile);
+
+    let path = "./files/historics/", file = "", jsons = [], data = {}, result;
+
+    let fl_name, fl_type, fl_path, fl_url, rl = 0, dt, reg;
+
+    for(let i = 0; i < filenames.length; i++)
+    {
+        fl_path = path + filenames[i];
+
+        file = readFile(fl_path);
+
+        jsons = file.split("\n\r");
+
+        for(let j = 0; j < jsons.length; j++)
+        {
+            data = jsons[j];
+
+            process.stdout.write("JSON String: ");
+            console.log(data);
+
+            try
+            {
+                data = JSON.parse(data);
+            }
+            catch
+            {
+                console.log("Bad JSON");
+            }
+            
+            data.reg = new Date().toISOString().toString().replace("T"," ").replace("Z","");
+
+            result = sql.INS("HISTORICS",data);
+
+            if(!result.STATUS)
+                rl++;
+            else
+            {
+                let error = "Failed to process data: " + JSON.stringify(data);
+                
+                error +="\n\rFile: " + filenames[i] + " @ line " + rl.toString();
+                
+                log.errorLog("data",error,1);
+            }
+        }
+
+        result = sql.UPDT("FILES",{rl},{fl_name:filenames[i],ops:""});
+
+        if(!result.STATUS)
+            console.log("Successfully registered " + rl + " lines read from file  " + filenames[i]);
+        else
+        {
+            let error = "Failed to register the " + rl.toString() + " lines read from file  " + filenames[i];
+            
+            log.errorLog("data",error,2);
+        }          
+    }
 
 }

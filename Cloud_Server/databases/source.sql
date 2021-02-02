@@ -22,9 +22,19 @@ CREATE TABLE FILES
     id INTEGER NOT NULL AUTO_INCREMENT,
     fl_name TEXT NOT NULL,
     fl_type TEXT NOT NULL,
+    fl_path TEXT NOT NULL,
     fl_url TEXT NOT NULL,
+    rl INT,
     dt DATETIME NOT NULL,
     reg DATETIME NOT NULL
 
     PRIMARY KEY(ID)
 }
+
+CREATE USER 'orbittas'@'localhost' IDENTIFIED WITH mysql_native_password BY 'P4s5w0rd++';
+
+GRANT ALL PRIVILEGES ON STREAMING_SERVER.* TO 'orbittas'@'localhost';
+
+FLUSH PRIVILEGES;
+
+SHOW VARIABLES LIKE 'validate_password%';
