@@ -103,7 +103,7 @@ if(creds)
         
         let endDate = req.end;
 
-        let Q = SQL.SEL("*","HISTORICS WHERE date >= '" + initDate + "' AND date <= '" + endDate + "';","","",true)
+        let Q = SQL.SEL({"*":"*"},"HISTORICS",{"dt":[initDate,endDate], "ops":"&","cond":">=,<="});
         
         res.status(200).json(Q);
     });

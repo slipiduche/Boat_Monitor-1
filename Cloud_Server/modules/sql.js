@@ -38,7 +38,7 @@ module.exports.SEL = async function SEL(S,TABLE,WHERE)
 
   let q1 = "SELECT ",q2 = " FROM " + TABLE, q3 = " WHERE ", Q;
 
-  let keys = Object.keys(S), wkeys = "", ops = 0;
+  let keys = Object.keys(S), wkeys = "", ops = 0, conds = "";
 
   DB.connect( (error) =>
   {
@@ -70,6 +70,9 @@ module.exports.SEL = async function SEL(S,TABLE,WHERE)
 
     if(WHERE.ops)
       ops = WHERE.ops.length;
+
+    if(WHERE.conds)
+      conds = WHERE.conds.split(',');
   }
 
   let columns = keys.length, conditions = wkeys.length, iter;
@@ -84,6 +87,13 @@ module.exports.SEL = async function SEL(S,TABLE,WHERE)
     if(i <= (columns - 1))
       q1 += S[keys[i]];
     if(i <= (conditions - 2))
+    {
+      if(!conds)
+        q3 += wkeys[i] +  " = ";
+      else
+        q3 += wkeys[i] +  " " + conds[i] + " ";
+      
+    }
       q3 += wkeys[i] +  " = ";
 
     if(i <= (conditions - 2) && isNaN(WHERE[wkeys[i]]))
