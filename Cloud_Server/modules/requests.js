@@ -41,7 +41,7 @@ function charRemove(str,symbol,n)
 
 module.exports.uploads = async (res,req) =>
 {
-    let filenames, ok = false;
+    let filenames, ok = false, code;
 
     try 
     {
@@ -171,6 +171,7 @@ module.exports.uploads = async (res,req) =>
                     
                     
                     //send response
+                    /*
                     res.status(200).send(
                     {
                         STATUS: Q,
@@ -183,33 +184,62 @@ module.exports.uploads = async (res,req) =>
                             MIMETYPE: audio.mimetype,
                             SIZE: audio.size
                         }
-                    });
+                    });*/
 
                     ok = true;
+
+                    code = 200;
+
+                    status =
+                        {
+                            STATUS: Q,
+    
+                            MESSAGE: 'Files were successfully uploaded',
+                            
+                            DATA: 
+                            {
+                                NAME: file,
+                                MIMETYPE: audio.mimetype,
+                                SIZE: audio.size
+                            }
+                        };
                 }
                 else
                 {
-                    console.log("Bad request; please upload .mp3 files only.");
+                    console.log("Invalid Format uploaded.");
 
+                    /*
                     res.status(400).send(
                     {
                         STATUS:"BAD REQUEST", 
                         
                         MESSAGE: "PLEASE UPLOAD .mp3 FILES ONLY."
-                    });
+                    });*/
+
+                    code = 400;
+
+                    status = { STATUS:"BAD REQUEST", MESSAGE: "FORMAT"};
                 }
             }
             else if (!TOKEN)
             {
                 console.log("No Token has been generated; please log in.");
 
-                res.status(401).send({STATUS:"LOGIN"});
+                //res.status(401).send({STATUS:"LOGIN"});
+
+                code = 400;
+
+                status = {STATUS:"LOGIN"};
             }
             else
             {
                 console.log("Invalid Token.");
 
-                res.status(401).send({STATUS:"INVALID"});
+                //res.status(401).send({STATUS:"INVALID"});
+
+                code = 401;
+
+                status = {STATUS:"INVALD"};
             }
         }
     } 
@@ -217,17 +247,23 @@ module.exports.uploads = async (res,req) =>
     {
         errorLog("",error,11);
 
-        res.status(500).send({STATUS:"ERROR"});
+        //res.status(500).send({STATUS:"ERROR"});
+
+        code = 500;
+
+        status = {STATUS:"FAILURE", MESSAGE:error}
     }
 
-    return [ok,filenames];
+    return [ok,filenames,status,code];
 }
 
 module.exports.data = async (res,req,filenames) =>
 {
     let readFile = util.promisify(fs.readFile);
 
-    let path = "./files/historics/", file = "", jsons = [], data = {}, result;
+    let path = "./files/historics/", file = "", jsons = [], data = {}, result = [], fault = 0;
+
+    let code = 200;
 
     let fl_name, fl_type, fl_path, fl_url, rl = 0, dt, reg;
 
@@ -256,10 +292,10 @@ module.exports.data = async (res,req,filenames) =>
             }
             
             data.reg = new Date().toISOString().toString().replace("T"," ").replace("Z","");
-            P
-            result = sql.INS("HISTORICS",data);
+            
+            let r = sql.INS("HISTORICS",data);
 
-            if(!result.STATUS)
+            if(!r.STATUS)
                 rl++;
             else
             {
@@ -271,16 +307,61 @@ module.exports.data = async (res,req,filenames) =>
             }
         }
 
-        result = sql.UPDT("FILES",{rl},{fl_name:filenames[i],ops:""});
+        if(rl != 0)
+        {
+            let r = sql.UPDT("FILES",{rl},{fl_name:filenames[i],ops:""}); 
 
-        if(!result.STATUS)
-            console.log("Successfully registered " + rl + " lines read from file  " + filenames[i]);
+            result.push({fl_update:r,rl});
+    
+            if(!r.STATUS)
+                console.log("Successfully registered " + rl + " lines read from file  " + filenames[i]);
+            else
+            {
+                let error = "Failed to register the " + rl.toString() + " lines read from file  " + filenames[i];
+                
+                log.errorLog("data",error,2);
+            }     
+        }
         else
         {
-            let error = "Failed to register the " + rl.toString() + " lines read from file  " + filenames[i];
-            
-            log.errorLog("data",error,2);
-        }          
+            fault++;
+
+            if(fault == (filenames.length - 1))
+            {
+                code = 500;
+
+                result = {STATUS:"FAILURE", MESSAGE:"NO DOCUMENTS WHERE PROCCESSED"};
+            }
+                
+        }
+        
+           
     }
 
+    return [result,code];
+}
+
+module.exports.journey = async (req,res) =>
+{
+    //{"id":"","journey_start":"","journey_end":"",}
+
+    let result;
+
+    if(req.body.id)
+    {
+        let end = req.body.journey_end;
+
+        result = sql.UPDT("JOURNEYS",{journey_end:end},{id:req.body.id,ops:""});      
+    }
+    else
+    {
+        let start = req.body.journey_start;
+
+        result = sql.INS("JOURNEYS",{journey_start:start},"");
+    }
+
+    if(!result.status)
+        res.status(200).json(result);
+    else
+        res.status(500).json(result);
 }

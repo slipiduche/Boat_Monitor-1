@@ -88,26 +88,26 @@ if(creds)
 
     app.post("/process", (req,res) =>
     {
-        let ok = false, filenames = [], status = {};
+        let ok = false, filenames = [], status = {},code;
 
-        [ok,filenames,status] = handle.uploads(res,req);
+        [ok,filenames,status,code] = handle.uploads(res,req);
 
         if(ok)
-            status = handle.data(res,req,filenames);
+            [status,code] = handle.data(res,req,filenames);
         
-        res.status(status.code).send(status.message);         
+        res.status(code).send(status);         
     });
 
     app.get("/historics", (req,res) =>
     {
-        let initDate = req.ini, endDate = req.end, status = 500;
+        let initDate = req.ini, endDate = req.end, code = 500;
 
         let Q = SQL.SEL({"*":"*"},"HISTORICS",{"dt":[initDate,endDate],"ops":"&","cond":">=,<="});
         
         if(!Q.status)
-            status = 200;
+            code = 200;
 
-        res.status(status).json(Q);
+        res.status(code).json(Q);
     });
 }
 

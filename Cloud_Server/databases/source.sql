@@ -9,8 +9,6 @@ CREATE TABLE JOURNEYS
     id INTEGER NOT NULL AUTO_INCREMENT,
     journey_start DATETIME NOT NULL,
     journey_end DATETIME NOT NULL,
-    journey_text INT NOT NULL,
-    journey_media INT NOT NULL,
 
     PRIMARY KEY(id)
 }
