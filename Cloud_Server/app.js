@@ -47,6 +47,7 @@ try
     privateKey = fs.readFileSync('sslcert/server.key', 'utf8');
 
     certificate = fs.readFileSync('sslcert/server.crt', 'utf8');
+    
     credentials = {key: privateKey, cert: certificate};
 
     creds = true;
@@ -80,32 +81,33 @@ if(creds)
     httpsServer.listen(port, (error) =>
     {
         if(error)
-            logg.errorLog("",error,1); //error10
+            log.errorLog("",error,1); //error10
         else
             console.log("App is listening on port ${port}.")
     });
 
-    app.post("/dup", (req,res) =>
+    app.post("/process", (req,res) =>
     {
-        let ok = false;
+        let ok = false, filenames = [], status = {};
 
-        let filenames;
-
-        [ok,filenames] = handle.uploads(res,req);
+        [ok,filenames,status] = handle.uploads(res,req);
 
         if(ok)
-            handle.data(res,req,filenames);
+            status = handle.data(res,req,filenames);
+        
+        res.status(status.code).send(status.message);         
     });
 
     app.get("/historics", (req,res) =>
     {
-        let initDate = req.ini;
-        
-        let endDate = req.end;
+        let initDate = req.ini, endDate = req.end, status = 500;
 
-        let Q = SQL.SEL({"*":"*"},"HISTORICS",{"dt":[initDate,endDate], "ops":"&","cond":">=,<="});
+        let Q = SQL.SEL({"*":"*"},"HISTORICS",{"dt":[initDate,endDate],"ops":"&","cond":">=,<="});
         
-        res.status(200).json(Q);
+        if(!Q.status)
+            status = 200;
+
+        res.status(status).json(Q);
     });
 }
 
