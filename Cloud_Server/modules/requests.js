@@ -55,6 +55,8 @@ module.exports.uploads = async (res,req) =>
         } 
         else 
         {
+            console.log(req);
+
             let details = JSON.parse(req.body.details);
             
             /*
@@ -66,13 +68,13 @@ module.exports.uploads = async (res,req) =>
                 details.TOKEN = TOKEN;
             }*/
             
-            console.log(req);
+           
 
             if(true)//(TOKEN && details.TOKEN == TOKEN)
             {
                 //Use the name of the input field (i.e. "avatar") to retrieve the uploaded file
-                let txt = req.files.txt;
-                
+                let data = req.files.data;
+
                 let Q;
                 
                 let flag = true;
@@ -84,30 +86,10 @@ module.exports.uploads = async (res,req) =>
                 let filename = details.filename;
                 
                 console.log(filename);
-
-                filename = filename.replace(/ /g,'_');
-
-                console.log(filename);
                 
-                let file;
+                let file = filename;
                 
                 let f = filename.split('.');
-
-                if(filename.length > 26)
-                {
-                    let l = f.length;
-
-                    if(f[l-1].length >= 25)
-                        file = filename.slice(0,22) + ".weird";
-                    else
-                        file = filename.slice(0,25 - f[l-1].length) + "." + f[l-1];
-
-                    console.log(file);
-
-                    f = file.split('.');
-                }
-                else
-                    file = filename;
                 
                 let dots = f.length;
 
@@ -123,7 +105,7 @@ module.exports.uploads = async (res,req) =>
                 {
                     let exists = util.promisify(fs.access);
 
-                    let save = util.promisify(audio.mv);
+                    let save = util.promisify(data.mv);
 
                     while(flag)
                     {
@@ -199,8 +181,8 @@ module.exports.uploads = async (res,req) =>
                             DATA: 
                             {
                                 NAME: file,
-                                MIMETYPE: audio.mimetype,
-                                SIZE: audio.size
+                                MIMETYPE: data.mimetype,
+                                SIZE: data.size
                             }
                         };
                 }
