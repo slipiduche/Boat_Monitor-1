@@ -4,6 +4,13 @@ CREATE DATABASE BOAT_MONITOR;
 
 USE BOAT_MONITOR;
 
+CREATE TABLE BOATS
+(
+    id INTEGER NOT NULL AUTO_INCREMENT,
+    boat_name TEXT,
+    identifier TEXT NOT NULL UNIQUE
+);
+
 CREATE TABLE JOURNEYS
 {
     id INTEGER NOT NULL AUTO_INCREMENT,
@@ -16,20 +23,26 @@ CREATE TABLE JOURNEYS
 CREATE TABLE HISTORICS
 (
     id INTEGER NOT NULL AUTO_INCREMENT,
+    boat_id TEXT NOT NULL, --unique identifier for pi in the boat
+    journey_id INT NOT NULL,
     container_status TEXT NOT NULL, --'OPEN' OR 'CLOSED'
     container_weight FLOAT NOT NULL, --KG
     boat_location TEXT NOT NULL, --LAT, LONG? gOOGLE COMPATIBLE
     dt DATETIME NOT NULL,
     fl_name TEXT NOT NULL,
     reg DATETIME NOT NULL,
-    journey_id INT NOT NULL,
+    
 
     PRIMARY KEY(id),
 
     CONSTRAINT FK_JOURNEY
         FOREIGN KEY (journey_id) 
         REFERENCES JOURNEYS (id)
-            ON DELETE CASCADE
+            ON DELETE CASCADE,
+
+    CONSTRAINT FK_BOAT
+        FOREIGN KEY (boat_id)
+        REFERENCES BOATS (identifier)
 );
 
 CREATE TABLE FILES
