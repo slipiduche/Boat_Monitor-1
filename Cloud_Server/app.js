@@ -44,9 +44,9 @@ var creds  = false;
 
 try
 {
-    privateKey = fs.readFileSync('sslcert/server.key', 'utf8');
+    privateKey = fs.readFileSync('sslcert/domain.key', 'utf8');
 
-    certificate = fs.readFileSync('sslcert/server.crt', 'utf8');
+    certificate = fs.readFileSync('sslcert/domain.crt', 'utf8');
     
     credentials = {key: privateKey, cert: certificate};
 
