@@ -21,7 +21,7 @@ function DBconnection()
   var con = mysql.createConnection({
   host: "localhost",
   user: "orbittas",
-  password: "P4s5w0rd++",
+  password: "#B04tTr4ck3r++",
   database: "BOAT_MONITOR"
   });
 

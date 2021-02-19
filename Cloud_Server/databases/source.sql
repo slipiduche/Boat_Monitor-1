@@ -67,7 +67,7 @@ CREATE TABLE FILES
             ON DELETE CASCADE
 }
 
-CREATE USER 'orbittas'@'localhost' IDENTIFIED WITH mysql_native_password BY 'P4s5w0rd++';
+CREATE USER 'orbittas'@'localhost' IDENTIFIED WITH mysql_native_password BY '#B04tTr4ck3r++';
 
 GRANT ALL PRIVILEGES ON STREAMING_SERVER.* TO 'orbittas'@'localhost';
 
