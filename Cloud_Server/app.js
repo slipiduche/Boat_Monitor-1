@@ -98,17 +98,21 @@ if(creds)
         res.status(code).send(status);         
     });
 
-    app.get("/historics", (req,res) =>
+    app.get("/historics", async (req,res) =>
     {
         let initDate = req.ini, endDate = req.end, code = 500;
 
-        let Q = SQL.SEL({"*":"*"},"HISTORICS",{"dt":[initDate,endDate],"ops":"&","cond":">=,<="});
+        let Q = [];
+        Q.push(SQL.SEL({"*":"*"},"HISTORICS",{"dt":[initDate,endDate],"ops":"&","cond":">=,<="}));
+        Q.push(SQL.SEL({"*":"*"},"FILES",{"dt":[initDate,endDate],"ops":"&","cond":">=,<="}));
         
         if(!Q.status)
             code = 200;
 
         res.status(code).json(Q);
-    });
+    }); 
+
+    app.get("files/:reg/:file",handle.downloads);
 }
 
 

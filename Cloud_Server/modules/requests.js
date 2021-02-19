@@ -7,12 +7,17 @@
 /**********************************MODULES*************************************/
 const fs   = require('fs');
 
+const path = require('path');
+
 const util = require('util');
 const { resourceLimits } = require('worker_threads');
 
 const log = require('./logging.js');
 
 const sql = require('./sql.js');
+
+const dir  = ["./files/historics/","./files/media/recordings/","./files/media/snapshots/"];
+
 
 /*********************************FUNCTIONS***********************************/
 
@@ -39,9 +44,80 @@ function charRemove(str,symbol,n)
 }
 /**********************************EXPORTS************************************/
 
+module.exports.downloads = async (res,req) =>
+{
+    let file = req.params.file;
+
+	let reg = parseInt(req.params.reg);
+
+	//Si el nombre no es nulo.
+	if (file!='' && (reg == 0 || reg == 1))
+	{
+		//Agrego el path local al file.
+		file = dir[reg]+file;
+
+		//Variable para el filesize.
+		let statFile;
+
+		//Intengo obtener el archivo.
+		try
+		{
+			//Traigo atributos del archivo.
+			statFile = fs.statSync(file);
+
+            let ext = path.extname(file);
+
+            let ct;
+
+            if(ext == "txt")
+                ct = "text/plain";
+            else if(ext == "mp4")
+                ct = "video/mpeg";
+            else
+                ct = "image/png";
+
+			//Armo headers.
+			res.writeHead(200, {'Content-Type': ct,'Content-Length': statFile.size});
+
+			console.log("Piping " + file + ".");
+
+			//Devuelvo streams del archivo atravez de un pipe.
+      let stream = fs.createReadStream(file).pipe(res);
+      
+      let hrstart = process.hrtime();
+
+      stream.on('finish', () =>
+      {
+        let hrend = process.hrtime(hrstart);
+
+        console.log("Done Streaming " + req.params.file + " on host " + req.get('host'));
+        console.log("%ds %dms",hrend[0],hrend[1]/1000000);
+
+      });
+      
+		}
+		catch(error)
+		{
+			console.log("File " + file + " can't be found.");
+
+			log.errorLog("download","File " + file + " can't be found.\n\r\n\r" + error.toString(),1);
+
+			res.status(404).send({STATUS:"NOT FOUND",MESSAGE:"FILE " + file + " CAN'T BE FOUND."});
+		}
+	}
+	else
+	{
+		console.log("Bad request; file not specified.");
+
+		log.errorLog("download","Bad request; file not specified.",2);
+
+		res.status(400).send({STATUS:"BAD REQUEST", MESSAGE:"FILE NOT SPECIFIED."});
+	}
+};
+
 module.exports.uploads = async (res,req) =>
 {
-    let filenames, ok = false, code;
+    let filenames = [], ok = false, code;
 
     try 
     {
@@ -80,8 +156,6 @@ module.exports.uploads = async (res,req) =>
                 let flag = true;
 
                 let n = 0;
-                
-                let path = "./files/historics/";
             
                 let filename = details.filename;
                 
@@ -101,8 +175,18 @@ module.exports.uploads = async (res,req) =>
                 
                 extension = f[dots];       
                 
-                if(extension == "mp3")
+                if(extension == "txt" || extension == "mp4" || extension == "png")
                 {
+                    let path;
+
+                    if(extension ==  txt)
+                        path = "./files/historics/";
+                    else if(extension == "mp4")
+                        path = "./files/media/recordings";
+                    else
+                        path = "./files/media/snapshots";
+
+
                     let exists = util.promisify(fs.access);
 
                     let save = util.promisify(data.mv);
@@ -129,17 +213,28 @@ module.exports.uploads = async (res,req) =>
 
                             await save(path + file);
 
+                            if(extension ==  txt)
+                                filenames.push(file);
+
                             console.log(file + " saved.");
 
                             let dt = {};
 
-                            dt.FIELD1 = details.song;
+                            dt.fl_name = file;
 
-                            dt.FIELD2 = details.artist;
+                            dt.fl_type = data.mimetype;
 
-                            dt.FIELD3 = file;
+                            dt.fl_path = path + file;
 
-                            Q = await SQL.INS("MUSIC", dt);
+                            dt.fl_url = "files/" + file;
+
+                            dt.dt = details.dt;
+
+                            dt.reg = new Date().toISOString().toString().replace("T"," ").replace("Z","");
+
+                            dt.journey_id = details.journey_id;
+
+                            Q = await SQL.INS("FILES", dt);
     
                             if(!Q.STATUS)
                                 Q = "SUCCEEDED ON MODIFYING DATABASE.";
@@ -237,7 +332,7 @@ module.exports.uploads = async (res,req) =>
     }
 
     return [ok,filenames,status,code];
-}
+};
 
 module.exports.data = async (res,req,filenames) =>
 {
@@ -321,7 +416,7 @@ module.exports.data = async (res,req,filenames) =>
     }
 
     return [result,code];
-}
+};
 
 module.exports.journey = async (req,res) =>
 {
@@ -346,4 +441,4 @@ module.exports.journey = async (req,res) =>
         res.status(200).json(result);
     else
         res.status(500).json(result);
-}
+};
