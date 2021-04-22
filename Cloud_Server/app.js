@@ -12,6 +12,8 @@ const https = require('https');
 
 const express = require('express');
 
+const basicAuth = require('express-basic-auth');
+
 const fileUpload = require('express-fileupload');
 
 const cors = require('cors');
@@ -30,15 +32,36 @@ const SQL = require('./modules/sql.js')
 
 /*************************VARIABLES AND INSTANCES*****************************/
 
-const port = 8443;
+const port = [8443,9443];
 
 var privateKey, certificate, credentials;
 
-var app, httpsServer;
+var collector, app, httpsServer;
 
 var creds  = false;
 
 /*********************************FUNCTIONS***********************************/
+async function appAuthorizer(username,password,cb)
+{
+    let u,p;
+
+    const userMatches = basicAuth.safeCompare(username, u);
+    
+    const passwordMatches = basicAuth.safeCompare(password, p)
+
+    if(userMatches & passwordMatches)
+        return cb(null,true);
+    
+    else
+        return cb(null,false);
+}
+
+function unauthorized(req)
+{
+    return req.auth
+        ? {message:"Invalid Username or Password",status:"failure"}
+        : {message:"No Username or Password were provided",status:"failure"};
+}
 
 /*******************************INITIALIZATION********************************/
 
@@ -61,29 +84,57 @@ catch(error)
 
 if(creds)
 {
-    app = express();
-
-    app.use(fileUpload(
+    collector = express();
+    
+    collector.use(fileUpload(
     {
         createParentPath: true
     }));
         
-    app.use(cors());
+    collector.use(cors());
     
-    app.use(bodyParser.json());
+    collector.use(bodyParser.json());
     
-    app.use(bodyParser.urlencoded({extended: true}));
+    collector.use(bodyParser.urlencoded({extended: true}));
     
-    app.use(morgan('dev'));
-        
-    httpsServer = https.createServer(credentials, app);
+    collector.use(morgan('dev'));
 
-    httpsServer.listen(port, (error) =>
+    authenticator = express();
+
+    var auth = basicAuth(
+    {
+        authorizer: appAuthorizer,
+        authorizeAsync: true,
+        unauthorizedResponse: unauthorized
+    });
+    
+    app = express();
+        
+    httpsServer[0] = https.createServer(credentials, collector);
+
+    httpsServer[1] = https.createServer(credentials, app);
+
+    httpsServer[0].listen(port[0], (error) =>
     {
         if(error)
             log.errorLog("",error,1); //error10
         else
             console.log("App is listening on port ${port}.")
+    });
+
+    httpsServer[1].listen(port[1], (error) =>
+    {
+        if(error)
+            log.errorLog("",error,1); //error10
+        else
+            console.log("App is listening on port ${port}.")
+    });
+
+    app.get("/login", auth, async (req,res) =>
+    {
+        let token = "eiubfqweiaowbroqrfyuiqwegajrui2iw[3y35dq59wt9634w4t4446r6i6j441";
+
+        res.status(200).send({token,status:"success"});
     });
 
     app.post("/process", (req,res) =>
