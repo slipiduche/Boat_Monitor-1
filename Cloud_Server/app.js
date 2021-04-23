@@ -118,7 +118,7 @@ if(creds)
         if(error)
             log.errorLog("",error,1); //error10
         else
-            console.log("App is listening on port " + port + ".")
+            console.log("App is listening on port " + port[0] + ".")
     });
 
     httpsServer[1].listen(port[1], (error) =>
@@ -126,7 +126,7 @@ if(creds)
         if(error)
             log.errorLog("",error,1); //error10
         else
-            console.log("App is listening on port " + port + ".")
+            console.log("App is listening on port " + port[1] + ".")
     });
 
     collector.post("/process", (req,res) =>
