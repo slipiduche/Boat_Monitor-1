@@ -36,7 +36,7 @@ const port = [8443,9443];
 
 var privateKey, certificate, credentials;
 
-var collector, app, httpsServer;
+var collector, app, httpsServer = [];
 
 var creds  = false;
 
@@ -118,7 +118,7 @@ if(creds)
         if(error)
             log.errorLog("",error,1); //error10
         else
-            console.log("App is listening on port ${port}.")
+            console.log("App is listening on port " + port + ".")
     });
 
     httpsServer[1].listen(port[1], (error) =>
@@ -126,7 +126,7 @@ if(creds)
         if(error)
             log.errorLog("",error,1); //error10
         else
-            console.log("App is listening on port ${port}.")
+            console.log("App is listening on port " + port + ".")
     });
 
     collector.post("/process", (req,res) =>
