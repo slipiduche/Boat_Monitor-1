@@ -99,7 +99,6 @@ if(creds)
     
     collector.use(morgan('dev'));
 
-    authenticator = express();
 
     var auth = basicAuth(
     {
@@ -130,14 +129,7 @@ if(creds)
             console.log("App is listening on port ${port}.")
     });
 
-    app.get("/login", auth, async (req,res) =>
-    {
-        let token = "eiubfqweiaowbroqrfyuiqwegajrui2iw[3y35dq59wt9634w4t4446r6i6j441";
-
-        res.status(200).send({token,status:"success"});
-    });
-
-    app.post("/process", (req,res) =>
+    collector.post("/process", (req,res) =>
     {
         let ok = false, filenames = [], status = {},code;
 
@@ -149,8 +141,144 @@ if(creds)
         res.status(code).send(status);         
     });
 
+    /**********************************************************************/
+
+    /*Authentication and Recovery*/
+
+    app.get("/login", auth, async (req,res) =>
+    {
+        let token = "eiubfqweiaowbroqrfyuiqwegajrui2iw[3y35dq59wt9634w4t4446r6i6j441";
+
+        res.status(200).send({token,status:"success"});
+    });
+
+    app.get("/recovery", async (req,res) => 
+    {
+        let token = "eiubfqweiaowbroqrfyuiqwegajrui2iw[3y35dq59wt9634w4t4446r6i6j441";
+
+        if(req.body.token && req.body.token == token)
+        {
+            if(req.body.mail)
+                res.status(200).send({status:"success"});
+            else
+                res.status(500).send({message:"No mail specfied",status:"failure"});
+        }
+        else
+        {
+            res.status(500).send({message:"Unauthorized",status:"failure"});
+        }
+    });
+
+    /*Data Visualization*/
+
+    app.get("/boats", async (req,res) => 
+    {
+        let token = "eiubfqweiaowbroqrfyuiqwegajrui2iw[3y35dq59wt9634w4t4446r6i6j441";
+
+        if(req.body.token && req.body.token == token)
+        {
+            let Q; 
+            
+            Q[0] = {id:1,mac:"b8:27:eb:4f:15:95",boat_name:"CAT",max_st:498.7,resp:1,st:1,ta:0,wa:0,ua:0,obs:null};
+
+            if(!Q.status)
+            {
+                if(Q[0])
+                    res.status(200).send({BOATS:Q,status:"success"});
+                else
+                    res.status(200).send({BOATS:Q,status:"empty"});
+            }     
+            else
+                res.status(500).send({Q});
+        }
+        else
+        {
+            res.status(500).send({message:"Unauthorized",status:"failure"});
+        }
+    });
+
+    app.get("/users", async (req,res) => 
+    {
+        let token = "eiubfqweiaowbroqrfyuiqwegajrui2iw[3y35dq59wt9634w4t4446r6i6j441";
+
+        if(req.body.token && req.body.token == token)
+        {
+            let Q; 
+            
+            Q[0] = {id:1,username:"@SlipiDuche",names:"Alejandro Camacaro",mail:"ale@gmail.com",usertype:3,blocked:0,st:1,reg:"2021/04/22 19:32:00"};
+
+            if(!Q.status)
+            {
+                if(Q[0])
+                    res.status(200).send({USERS:Q,status:"success"});
+                else
+                    res.status(200).send({USERS:Q,status:"empty"});
+            }     
+            else
+                res.status(500).send({Q});
+        }
+        else
+        {
+            res.status(500).send({message:"Unauthorized",status:"failure"});
+        }
+    });
+
+    app.get("/journeys", async (req,res) => 
+    {
+        let token = "eiubfqweiaowbroqrfyuiqwegajrui2iw[3y35dq59wt9634w4t4446r6i6j441";
+
+        if(req.body.token && req.body.token == token)
+        {
+            let Q; 
+            
+            Q[0] = {id:1,ini:"2021/04/22 19:32:00", ed:"2021/04/22 19:45:00",start_user:1,end_user:1,boat_id:1,i_weight:30.1,f_weight:371.2,s_img:0,total_img:0,synced:1,eta:null,obs:null};
+
+            if(!Q.status)
+            {
+                if(Q[0])
+                    res.status(200).send({JOURNEYS:Q,status:"success"});
+                else
+                    res.status(200).send({JOURNEYS:Q,status:"empty"});
+            }     
+            else
+                res.status(500).send({Q});
+        }
+        else
+        {
+            res.status(500).send({message:"Unauthorized",status:"failure"});
+        }
+    });
+
+    app.get("/files", async (res,req) => 
+    {
+        let token = "eiubfqweiaowbroqrfyuiqwegajrui2iw[3y35dq59wt9634w4t4446r6i6j441";
+
+        if(req.body.token && req.body.token == token)
+        {
+            let Q; 
+            
+            Q[0] = {id:1,fl_name:"B1_042220211937415959.txt",fl_url:"/files/1/",journey_id:1,boat_id:1,cam:null,rl:1,dt:"2021/04/22 19:37:41",reg:"2021/04/22 19:45:00"};
+
+            if(!Q.status)
+            {
+                if(Q[0])
+                    res.status(200).send({FILES:Q,status:"success"});
+                else
+                    res.status(200).send({FILES:Q,status:"empty"});
+            }     
+            else
+                res.status(500).send({Q});
+        }
+        else
+        {
+            res.status(500).send({message:"Unauthorized",status:"failure"});
+        }
+    });
+
     app.get("/historics", async (req,res) =>
     {
+        /*
+        
         let initDate = req.ini, endDate = req.end, code = 500;
 
         let Q = [];
@@ -161,6 +289,31 @@ if(creds)
             code = 200;
 
         res.status(code).json(Q);
+        
+        */
+
+        let token = "eiubfqweiaowbroqrfyuiqwegajrui2iw[3y35dq59wt9634w4t4446r6i6j441";
+
+        if(req.body.token && req.body.token == token)
+        {
+            let Q; 
+            
+            Q[0] = {id:1,boat_id:1,journey_id,cont_status:0,open_time:0,cont_weight:371.2,bat:90.7,dsk:5.7,temp:10.7,b_location:"lat:9,long:9",TiP:0.25,fl_name:"B1_042220211937415959.txt",dt:"2021/04/22 19:37:41",reg:"2021/04/22 19:45:00"};
+
+            if(!Q.status)
+            {
+                if(Q[0])
+                    res.status(200).send({HISTORICS:Q,status:"success"});
+                else
+                    res.status(200).send({HISTORICS:Q,status:"empty"});
+            }     
+            else
+                res.status(500).send({Q});
+        }
+        else
+        {
+            res.status(500).send({message:"Unauthorized",status:"failure"});
+        }
     }); 
 
     app.get("files/:reg/:file",handle.downloads);
