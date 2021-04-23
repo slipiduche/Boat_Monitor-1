@@ -43,7 +43,7 @@ var creds  = false;
 /*********************************FUNCTIONS***********************************/
 async function appAuthorizer(username,password,cb)
 {
-    let u,p;
+    let u = "@Orbittas",p = "test";
 
     const userMatches = basicAuth.safeCompare(username, u);
     
