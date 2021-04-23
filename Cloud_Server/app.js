@@ -26,7 +26,7 @@ const _ = require('lodash');
 
 const log = require('./modules/logging.js');
 
-const handle = require('./modules/request.js');
+const handle = require('./modules/requests.js');
 
 const SQL = require('./modules/sql.js')
 
