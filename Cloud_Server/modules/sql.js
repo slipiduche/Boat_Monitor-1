@@ -279,6 +279,10 @@ module.exports.UPD = async function UPD(TABLE,COLS,WHERE)
     let result = await DB.promise().query(Q);
 
     r = JSON.parse(JSON.stringify(result));
+
+    if(r[0].affectedRows == 0)
+      r = {message:"Either database entry doesn't exists or no new values where designated",status:"unchanged"};
+
   }
   catch(error) //sql-error8
   {

@@ -154,6 +154,8 @@ CREATE TABLE ALERTS
             ON DELETE CASCADE
 )
 
+INSERT INTO USERS (username,pswrd,names,mails,usertype,blocked,st,dt) VALUES ('@Orbittas',);
+
 CREATE USER 'orbittas'@'localhost' IDENTIFIED WITH mysql_native_password BY '#B04tTr4ck3r++';
 
 GRANT ALL PRIVILEGES ON STREAMING_SERVER.* TO 'orbittas'@'localhost';
