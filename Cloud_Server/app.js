@@ -14,6 +14,8 @@ const express = require('express');
 
 const basicAuth = require('express-basic-auth');
 
+const jwt = require('jsonwebtoken');
+
 const fileUpload = require('express-fileupload');
 
 const cors = require('cors');
@@ -32,7 +34,7 @@ const SQL = require('./modules/sql.js')
 
 /*************************VARIABLES AND INSTANCES*****************************/
 
-const port = [8443,9443];
+const port = [8443,9443,8883];
 
 var privateKey, certificate, credentials;
 
@@ -41,9 +43,61 @@ var collector, app, httpsServer = [];
 var creds  = false;
 
 /*********************************FUNCTIONS***********************************/
+async function verify(req)
+{
+    let authorized = false, message = null;
+
+    if (req.body.token)
+    {
+        let token = req.body.token;
+        
+        if(token.length > 1)
+        {
+            let id =  token[token.length - 1];
+
+            let password = "test";
+
+            token = token.slice(0,token.length-1);
+
+            try
+            {
+                let decoded =  jwt.verify(token,password);
+
+                if(decoded.id == id)
+                    authorized = true; 
+                else
+                    message = "Altered token";
+            }
+            catch(error)
+            {
+                console.log(error);
+
+                switch(error.name)
+                {
+                    case "TokenExpiredError":
+                    {
+                        message = "Token expired"
+                        
+                        break;
+                    }
+                    
+                    default:
+                    {
+                        message = "Bad token";
+
+                        break;
+                    }
+                }
+            }        
+        }        
+    }
+
+    return [authorized,message];
+}
+
 async function appAuthorizer(username,password,cb)
 {
-    let u = "@Orbittas",p = "test";
+    let u = "@Orbittas",p = "test", i = 1;
 
     const userMatches = basicAuth.safeCompare(username, u);
     
@@ -62,6 +116,7 @@ function unauthorized(req)
         ? {message:"Invalid Username or Password",status:"failure"}
         : {message:"No Username or Password were provided",status:"failure"};
 }
+
 
 /*******************************INITIALIZATION********************************/
 
@@ -147,16 +202,22 @@ if(creds)
 
     app.get("/login", auth, async (req,res) =>
     {
-        let token = "eiubfqweiaowbroqrfyuiqwegajrui2iw[3y35dq59wt9634w4t4446r6i6j441";
+        let user = req.auth.user, password = req.auth.password;
+
+        let id = 1;
+
+        let token = jwt.sign({user,id},password,{expiresIn:60*60}) + id;
 
         res.status(200).send({token,status:"success"});
     });
 
     app.get("/recovery", async (req,res) => 
     {
-        let token = "eiubfqweiaowbroqrfyuiqwegajrui2iw[3y35dq59wt9634w4t4446r6i6j441";
+        let authorized, message;
 
-        if(req.body.token && req.body.token == token)
+        [authorized,message] =  verify(req);
+
+        if(authorized)
         {
             if(req.body.mail)
                 res.status(200).send({status:"success"});
@@ -165,7 +226,7 @@ if(creds)
         }
         else
         {
-            res.status(500).send({message:"Unauthorized",status:"failure"});
+            res.status(500).send({message,status:"unauthorized"});
         }
     });
 
@@ -173,9 +234,11 @@ if(creds)
 
     app.get("/boats", async (req,res) => 
     {
-        let token = "eiubfqweiaowbroqrfyuiqwegajrui2iw[3y35dq59wt9634w4t4446r6i6j441";
+        let authorized, message;
 
-        if(req.body.token && req.body.token == token)
+        [authorized,message] =  verify(req);
+
+        if(authorized)
         {
             let Q; 
             
@@ -193,15 +256,17 @@ if(creds)
         }
         else
         {
-            res.status(500).send({message:"Unauthorized",status:"failure"});
+            res.status(500).send({message,status:"unauthorized"});
         }
     });
 
     app.get("/users", async (req,res) => 
     {
-        let token = "eiubfqweiaowbroqrfyuiqwegajrui2iw[3y35dq59wt9634w4t4446r6i6j441";
+        let authorized, message;
 
-        if(req.body.token && req.body.token == token)
+        [authorized,message] =  verify(req);
+
+        if(authorized)
         {
             let Q; 
             
@@ -219,15 +284,17 @@ if(creds)
         }
         else
         {
-            res.status(500).send({message:"Unauthorized",status:"failure"});
+            res.status(500).send({message,status:"unauthorized"});
         }
     });
 
     app.get("/journeys", async (req,res) => 
     {
-        let token = "eiubfqweiaowbroqrfyuiqwegajrui2iw[3y35dq59wt9634w4t4446r6i6j441";
+        let authorized, message;
 
-        if(req.body.token && req.body.token == token)
+        [authorized,message] =  verify(req);
+
+        if(authorized)
         {
             let Q; 
             
@@ -245,15 +312,17 @@ if(creds)
         }
         else
         {
-            res.status(500).send({message:"Unauthorized",status:"failure"});
+            res.status(500).send({message,status:"unauthorized"});
         }
     });
 
     app.get("/files", async (res,req) => 
     {
-        let token = "eiubfqweiaowbroqrfyuiqwegajrui2iw[3y35dq59wt9634w4t4446r6i6j441";
+        let authorized, message;
 
-        if(req.body.token && req.body.token == token)
+        [authorized,message] =  verify(req);
+
+        if(authorized)
         {
             let Q; 
             
@@ -271,7 +340,7 @@ if(creds)
         }
         else
         {
-            res.status(500).send({message:"Unauthorized",status:"failure"});
+            res.status(500).send({message,status:"unauthorized"});
         }
     });
 
@@ -292,9 +361,11 @@ if(creds)
         
         */
 
-        let token = "eiubfqweiaowbroqrfyuiqwegajrui2iw[3y35dq59wt9634w4t4446r6i6j441";
+        let authorized, message;
 
-        if(req.body.token && req.body.token == token)
+        [authorized,message] =  verify(req);
+
+        if(authorized)
         {
             let Q; 
             
@@ -312,7 +383,7 @@ if(creds)
         }
         else
         {
-            res.status(500).send({message:"Unauthorized",status:"failure"});
+            res.status(500).send({message,status:"unauthorized"});
         }
     }); 
 
