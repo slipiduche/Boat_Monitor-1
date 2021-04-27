@@ -55,7 +55,7 @@ module.exports.SEL = async function SEL(S,EX,TABLE,WHERE,RANGE)
       catch
       {}
       
-      errorLog("sql",error,3);
+      log.errorLog("sql",error,3);
 
       r = {message:error,status:"failure"};
     }  
@@ -98,7 +98,7 @@ module.exports.SEL = async function SEL(S,EX,TABLE,WHERE,RANGE)
     {
       q3 += "((ini >= '" + RANGE[0] + "' AND ini <= '" + RANGE[1] + "') ";
 
-      q3 += "OR (end >= '" + RANGE[0] + "' AND end <= '" + RANGE[1] + "'));"
+      q3 += "OR (ed >= '" + RANGE[0] + "' AND ed <= '" + RANGE[1] + "'));"
     }
     else
     {
@@ -123,7 +123,7 @@ module.exports.SEL = async function SEL(S,EX,TABLE,WHERE,RANGE)
   }
   catch(error) //sql-error4
   {
-    errorLog("sql",error,4);
+    log.errorLog("sql",error,4);
     
     r = {message:error,status:"failure"};
   }
@@ -163,7 +163,7 @@ module.exports.INS = async function INS(TABLE,COLS)
       catch
       {}
       
-      errorLog("sql",error,5); //sql-error5
+      log.errorLog("sql",error,5); //sql-error5
       
       r = {message:error,status:"failure"};
     }  
@@ -204,7 +204,7 @@ module.exports.INS = async function INS(TABLE,COLS)
   }
   catch(error) //sql-error6
   {
-      errorLog("sql",error,6);
+      log.errorLog("sql",error,6);
 
       r = {message:error,status:"failure"};
   }
@@ -242,7 +242,7 @@ module.exports.UPD = async function UPD(TABLE,COLS,WHERE)
       catch
       {}
       
-      errorLog("sql",error,7); //sql-error7
+      log.errorLog("sql",error,7); //sql-error7
 
       r = {message:error,status:"failure"};
     }  
@@ -282,7 +282,7 @@ module.exports.UPD = async function UPD(TABLE,COLS,WHERE)
   }
   catch(error) //sql-error8
   {
-      errorLog("sql",error,8);
+      log.errorLog("sql",error,8);
 
       r = {message:error,status:"failure"};
   }
@@ -316,7 +316,7 @@ module.exports.DEL = async function DEL(TAB,WHERE)
       catch
       {}
       
-      errorLog("sql",error,9); //sql-error9
+      log.errorLog("sql",error,9); //sql-error9
 
       r = {message:error,status:"failure"};
     }  
@@ -338,7 +338,7 @@ module.exports.DEL = async function DEL(TAB,WHERE)
   }
   catch(error) //sql-error10
   { 
-    errorLog("sql",error,10);
+    log.errorLog("sql",error,10);
 
     r = {message:error,status:"failure"};
   }

@@ -27,7 +27,7 @@ CREATE TABLE USERS
     usertype INTEGER NOT NULL, -- 1 Viewer, 2 Supervisor, 3 Admin, 4 Super Admin
     blocked BIT NOT NULL,
     st BIT NOT NULL, --0 DISABLED, 1 ENABLED
-    reg DATETIME NOT NULL,
+    dt DATETIME NOT NULL,
 
     PRIMARY KEY(id)
 };
@@ -122,6 +122,37 @@ CREATE TABLE FILES
         REFERENCES BOATS (id)
             ON DELETE CASCADE
 );
+
+CREATE TABLE ALERTS
+(
+    id INTEGER NOT NULL AUTO_INCREMENT,
+    hist_id INTEGER,
+    boat_id INTEGER NOT NULL,
+    journey_id INTEGER NOT NULL,
+    ta BIT NOT NULL,
+    wa BIT NOT NULL,
+    sus BIT NOT NULL,
+    dt DATETIME NOT NULL,
+    obs TEXT,
+
+    PRIMARY KEY(id),
+
+    
+    CONSTRAINT FK_HIST_A
+        FOREIGN KEY (hist_id)
+        REFERENCES HISTORICS (id)
+            ON DELETE CASCADE,
+    
+    CONSTRAINT FK_BOAT_A
+        FOREIGN KEY (boat_id)
+        REFERENCES BOATS (id)
+            ON DELETE CASCADE,
+
+    CONSTRAINT FK_JOURNEY_A
+        FOREIGN KEY (journey_id) 
+        REFERENCES JOURNEYS (id)
+            ON DELETE CASCADE
+)
 
 CREATE USER 'orbittas'@'localhost' IDENTIFIED WITH mysql_native_password BY '#B04tTr4ck3r++';
 

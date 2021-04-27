@@ -98,7 +98,7 @@ async function filter(tab,params,command)
 
         case "UPD":
         {
-            Q = await sql.UPD(tab,params,params.id)
+            Q = await sql.UPD(tab,params,id)
             
             break;
         }
