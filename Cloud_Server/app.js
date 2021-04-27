@@ -30,7 +30,8 @@ const log = require('./modules/logging.js');
 
 const handle = require('./modules/requests.js');
 
-const SQL = require('./modules/sql.js')
+const SQL = require('./modules/sql.js');
+const { stdout } = require('process');
 
 /*************************VARIABLES AND INSTANCES*****************************/
 
@@ -43,6 +44,76 @@ var collector, app, httpsServer = [];
 var creds  = false;
 
 /*********************************FUNCTIONS***********************************/
+async function filter(tab,params,command)
+{
+    let range = null, id = null;
+    
+    delete params.token;
+
+    if(params.tab)
+        delete params.tab;
+    
+    if(params.id)
+    {
+        id = params.id;
+
+        delete params.id;
+    }
+
+    if(params.ini && params.end)
+    {
+        range = [params.ini,params.end];
+
+        delete params.ini;
+
+        delete params.end;
+    }
+    
+    process.stdout.write("Parameters: ");
+
+    console.log(params);
+    
+    let Q  = [];
+
+    switch(command)
+    {
+        case "SEL":
+        {
+            let where = null;
+
+            if(Object.keys(params).length > 0)
+                where = params;
+
+            Q = await sql.SEL("*",tab,where,range);
+
+            break;
+        }
+
+        case "INS":
+        {
+            Q = await sql.INS(tab,params);
+            
+            break;
+        }
+
+        case "UPD":
+        {
+            Q = await sql.UPD(tab,params,params.id)
+            
+            break;
+        }
+
+        case "DEL":
+        {
+            Q = await sql.DEL(tab,params);
+            
+            break;
+        }
+    }
+
+    return Q;   
+}
+
 async function verify(req)
 {
     let authorized = false, message = null;

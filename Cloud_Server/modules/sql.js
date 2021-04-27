@@ -13,32 +13,36 @@ const fs   = require('fs');
 const util = require('util');
 
 const log = require('./logging.js');
+const { toNamespacedPath } = require('path');
 
 /*********************************FUNCTIONS***********************************/
 
 function DBconnection()
 {
-  var con = mysql.createConnection({
-  host: "localhost",
-  user: "orbittas",
-  password: "#B04tTr4ck3r++",
-  database: "BOAT_MONITOR"
+  var connection = mysql.createConnection(
+  {
+    host: "localhost",
+    user: "orbittas",
+    password: "#B04tTr4ck3r++",
+    database: "BOAT_MONITOR"
   });
 
-  return con;
+  connection.on("error",(err) => {console.log(err);});
+
+  return connection;
 }
 
 /**********************************EXPORTS************************************/
 
 /*SELECT QUERY*/
 
-module.exports.SEL = async function SEL(S,TABLE,WHERE)
+module.exports.SEL = async function SEL(S,EX,TABLE,WHERE,RANGE)
 {  
   let DB = DBconnection(), r = "";
 
   let q1 = "SELECT ",q2 = " FROM " + TABLE, q3 = " WHERE ", Q;
 
-  let keys = Object.keys(S), wkeys = "", ops = 0, conds = "";
+  let keys = null;
 
   DB.connect( (error) =>
   {
@@ -46,16 +50,14 @@ module.exports.SEL = async function SEL(S,TABLE,WHERE)
     {
       try
       {
-        DB.end();
+        DB.destroy();
       }
       catch
-      {
-
-      }
+      {}
       
       errorLog("sql",error,3);
 
-      r = {}; r.STATUS = error;
+      r = {message:error,status:"failure"};
     }  
   });
 
@@ -66,54 +68,46 @@ module.exports.SEL = async function SEL(S,TABLE,WHERE)
 
   if(WHERE)
   {
-    wkeys = Object.keys(WHERE);
+    keys = Object.keys(WHERE);
 
-    if(WHERE.ops)
-      ops = WHERE.ops.length;
+    let iter = key.length;
 
-    if(WHERE.conds)
-      conds = WHERE.conds.split(',');
-  }
+    for(let i = 0; i < iter; i++)
+    {      
+      let value = WHERE[keys[i]];
 
-  let columns = keys.length, conditions = wkeys.length, iter;
-
-  if(columns > conditions)
-    iter = columns;
-  else
-    iter = conditions;
-
-  for(let i = 0; i < iter; i++)
-  {
-    if(i <= (columns - 1))
-      q1 += S[keys[i]];
-    if(i <= (conditions - 2))
-    {
-      if(!conds)
-        q3 += wkeys[i] +  " = ";
+      if(isNaN(value))
+        value = "'" + value +"'";
       else
-        q3 += wkeys[i] +  " " + conds[i] + " ";
-      
-    }
-      q3 += wkeys[i] +  " = ";
+        value = value.toString();
 
-    if(i <= (conditions - 2) && isNaN(WHERE[wkeys[i]]))
-      q3 += "'" + WHERE[wkeys[i]] + "'";
-    else if(i <= (conditions - 2))
-      q3 += WHERE[wkeys[i]];
-      
-    if(i < (columns - 1))
-      q1 += ",";    
-    if(i < ops)
-    {
-      if(WHERE.ops[i] == "&")
+      if(i > 0)
         q3 += " AND ";
-      else if(WHERE.ops[i] == "|")
-        q3 += " OR ";
+
+      q3 =  keys[i] + " = " + value;
+      
     }
   }
 
-  Q = q1 + q2;
-  
+  if(RANGE)
+  {
+    if(WHERE)
+      q3 +=  " AND ";
+
+    if(TABLE == "JOURNEYS")
+    {
+      q3 += "((ini >= '" + RANGE[0] + "' AND ini <= '" + RANGE[1] + "') ";
+
+      q3 += "OR (end >= '" + RANGE[0] + "' AND end <= '" + RANGE[1] + "'));"
+    }
+    else
+    {
+      q3 += "dt >= '" + RANGE[0] + "' AND dt <= '" + RANGE[1] + "';";
+    }
+  }
+
+  Q = q1 + S + q2 + TABLE;
+
   if(WHERE)
     Q += q3;
     
@@ -131,10 +125,15 @@ module.exports.SEL = async function SEL(S,TABLE,WHERE)
   {
     errorLog("sql",error,4);
     
-    r = {}; r.STATUS = error;
+    r = {message:error,status:"failure"};
   }
   
-  DB.end();
+  try
+  {
+    DB.destroy();
+  }
+  catch
+  {}
 
   console.log(r);
 
@@ -149,7 +148,7 @@ module.exports.INS = async function INS(TABLE,COLS)
   
   let q1 = "INSERT INTO " + TABLE, q2 = " (", q3 = "VALUES (", Q;
 
-  let keys = Object.keys(COLS), values = Object.values(COLS);
+  let keys = Object.keys(COLS), values = COLS;
 
   let columns = keys.length;
 
@@ -159,14 +158,14 @@ module.exports.INS = async function INS(TABLE,COLS)
     {
       try
       {
-        DB.end();
+        DB.destroy();
       }
       catch
       {}
       
       errorLog("sql",error,5); //sql-error5
       
-      r = {}; r.STATUS = error;
+      r = {message:error,status:"failure"};
     }  
   });
 
@@ -177,23 +176,23 @@ module.exports.INS = async function INS(TABLE,COLS)
 
   for(let i = 0; i < columns; i++)
   {
-    q2 += keys[i];
-
-    if(isNaN(values[i]))
-      q3 += "'" + values[i] + "'";
-    else
-      q3 += values[i];
-
-    if(i != (columns - 1))
+    if(i > 0)
     {
       q2 += ","; q3 += ","
     }
 
+    q2 += keys[i];
+
+    if(isNaN(values[keys[i]]))
+      q3 += "'" + values[keys[i]] + "'";
+    else
+      q3 += values[keys[i]];
+
   }
 
-  q2 += ") "; q3 += ")";
+  q2 += ") "; q3 += ");";
 
-  Q = q1 + q2 + q3 + ";";
+  Q = q1 + q2 + q3;
 
   console.log(Q);
 
@@ -207,10 +206,15 @@ module.exports.INS = async function INS(TABLE,COLS)
   {
       errorLog("sql",error,6);
 
-      r = {}; r.STATUS = error;   
+      r = {message:error,status:"failure"};
   }
 
-  DB.end();
+  try
+  {
+    DB.destroy();
+  }
+  catch
+  {}
 
   console.log(r);
 
@@ -219,15 +223,13 @@ module.exports.INS = async function INS(TABLE,COLS)
 
 /*UPDATE QUERY*/
 
-module.exports.UPDT = async function UPDT(TABLE,COLS,WHERE)
+module.exports.UPD = async function UPD(TABLE,COLS,WHERE)
 {
   let DB = DBconnection(), r = "";
 
-  let q1 = "UPDATE " + TABLE, q2 = " SET ", q3 = " WHERE ", Q;
+  let q1 = "UPDATE " + TABLE, q2 = " SET ", q3 = " WHERE id = " + WHERE.toString(), Q;
 
-  let keys = Object.keys(COLS), values = Object.values(COLS);
-
-  let wkeys = "", wvalues = "", ops = 0;
+  let keys = Object.keys(COLS), values = COLS;
     
   DB.connect( (error) =>
   {
@@ -235,14 +237,14 @@ module.exports.UPDT = async function UPDT(TABLE,COLS,WHERE)
     {
       try
       {
-        DB.end();
+        DB.destroy();
       }
       catch
       {}
       
       errorLog("sql",error,7); //sql-error7
 
-      r = {}; r.STATUS = error;
+      r = {message:error,status:"failure"};
     }  
   });
 
@@ -250,56 +252,25 @@ module.exports.UPDT = async function UPDT(TABLE,COLS,WHERE)
     return r;
 
   console.log("UPDATE");
-
-  if(WHERE)
-  {
-    wkeys = Object.keys(WHERE);
-    wvalues = Object.values(WHERE);
-
-    if(WHERE.ops)
-      ops = WHERE.ops.length;
-  }
-
-  let columns = keys.length, conditions = wkeys.length, iter;
-
-  if(columns > conditions)
-    iter = columns;
-  else
-    iter = conditions;
+ 
+  let iter = key.length;
 
   for(let i = 0; i < iter; i++)
-  {
-    if(i <= (columns - 1))
-      q2 += keys[i] + " = ";
-    if(i <= (conditions - 2))
-      q3 += wkeys[i] +  " = ";
-
-    if(i <= (columns - 1) && isNaN(values[i]))
-      q2 += "'" + values[i] + "'";
-    else if(i <= (columns - 1))
-      q2 += values[i];
-    if(i <= (conditions - 2) && isNaN(wvalues[i]))
-      q3 += "'" + wvalues[i] + "'";
-    else if(i <= (conditions - 2))
-      q3 += wvalues[i];
-      
-    if(i < (columns - 1))
-      q2 += ",";    
-    if(i < ops)
-    {
-      if(WHERE.ops[i] == "&")
-        q3 += " AND ";
-      else if(WHERE.ops[i] == "|")
-        q3 += " OR ";
-    }
-  }
-
-  Q = q1 + q2;
-  
-  if(WHERE)
-    Q += q3;
+  {      
+    let value = values[keys[i]];
     
-  Q += ";";
+    if(i > 0)
+      q2 += ",";
+
+    if(isNaN(value))
+      value = "'" + value +"'";
+    else
+      value = value.toString();
+
+    q2 =  keys[i] + " = " + value;
+    
+  }
+  Q = q1 + q2 + q3 + "";
 
   console.log(Q);
   
@@ -313,10 +284,15 @@ module.exports.UPDT = async function UPDT(TABLE,COLS,WHERE)
   {
       errorLog("sql",error,8);
 
-      r = {}; r.STATUS = error;
+      r = {message:error,status:"failure"};
   }
 
-  DB.end();
+  try
+  {
+    DB.destroy();
+  }
+  catch
+  {}
 
   console.log(r);
 
@@ -335,14 +311,14 @@ module.exports.DEL = async function DEL(TAB,WHERE)
     {
       try
       {
-        DB.end();
+        DB.destroy();
       }
       catch
       {}
       
       errorLog("sql",error,9); //sql-error9
 
-      r = {"STATUS":error};
+      r = {message:error,status:"failure"};
     }  
   });
 
@@ -364,10 +340,15 @@ module.exports.DEL = async function DEL(TAB,WHERE)
   { 
     errorLog("sql",error,10);
 
-    r = {};  r.STATUS = error;
+    r = {message:error,status:"failure"};
   }
 
-  DB.end();
+  try
+  {
+    DB.destroy();
+  }
+  catch
+  {}
 
   console.log(r);
 
