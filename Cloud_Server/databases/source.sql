@@ -173,7 +173,7 @@ INSERT INTO USERS (username,pswrd,names,mail,usertype,latt,blocked,st,dt)
 
 CREATE USER IF NOT EXISTS 'orbittas_b'@'localhost' IDENTIFIED WITH mysql_native_password BY '#B04tTr4ck3r++';
 
-GRANT ALL PRIVILEGES ON STREAMING_SERVER.* TO 'orbittas'@'localhost';
+GRANT ALL PRIVILEGES ON STREAMING_SERVER.* TO 'orbittas_b'@'localhost';
 
 FLUSH PRIVILEGES;
 
