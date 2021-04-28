@@ -555,12 +555,7 @@ if(creds)
 
     app.post("/singup", async () => 
     {
-        let authorized, http_code, status, code, message;
 
-        [authorized,http_code,status,code,message] =  verify(req);
-
-        if(authorized)
-        {
             let params = req.body;
 
             let  TZOfsset = (new Date()).getTimezoneOffset() * 60000; 
@@ -577,9 +572,7 @@ if(creds)
             }     
             else
                 res.status(500).send({Q});
-        }
-        else
-            res.status(http_code).send({status,code,message});
+
     });
 
     app.post("/create", async () => 
