@@ -293,13 +293,32 @@ if(creds)
 
     app.get("/login", auth, async (req,res) =>
     {
-        let user = req.auth.user, password = req.auth.password;
+        let u = {username:req.auth.user};
 
-        let id = 1;
 
-        let token = jwt.sign({user,id},password,{expiresIn:60*60}) + id;
+        let id = null,secret = null,token = null;
 
-        res.status(200).send({token,status:"success"});
+        let Q = sql.SEL("*",null,"USERS",u,null);
+
+        if(!Q.status && Q[0])
+        {
+            if(Q[0].pswrd && Q[0].id)
+            {
+                id = Q[0].id;
+
+                secret = Q[0].pswrd;
+
+                token = jwt.sign({user,id},secret,{expiresIn:60*60}) + id.toString();
+            }
+        }
+
+        if(token)
+            res.status(200).send({token,status:"success"});
+        else if(Q.status)
+            res.status(500).send(Q);
+        else
+            res.status(500).send({message:"Unknown Error",status:"failure"});
+
     });
 
     app.get("/recovery", async (req,res) => 
