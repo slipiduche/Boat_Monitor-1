@@ -44,6 +44,16 @@ var collector, app, httpsServer = [];
 
 var creds  = false;
 
+//Status Codes:
+/*
+1: Success
+2: Empty
+3: Failure
+4: SQL Failure
+5: Unavailable
+6: Unauthrized
+7: Blocked
+*/
 /*********************************FUNCTIONS***********************************/
 async function filter(tab,params,command)
 {
@@ -117,7 +127,7 @@ async function filter(tab,params,command)
 
 async function verify(req)
 {
-    let authorized = false, message = null, error = false;
+    let authorized = false, http_code = 500, status = null, code = null, message = null;
 
     if (req.body.token)
     {
@@ -139,10 +149,43 @@ async function verify(req)
                 {
                     let decoded =  jwt.verify(token,password);
 
-                    if(decoded.id == id)
+                    if(!Q[0].st)
+                    {
+                        http_code = 409;
+                        
+                        status = "unavailable";
+                        
+                        code = 5;
+
+                        message = "User is not enabled";
+                    } 
+                    if(Q[0].blocked)
+                    {
+                        http_code = 409;
+                        
+                        status = "blocked";
+
+                        code = 7;
+
+                        message = "Blocked User";
+                    }   
+                    else if(decoded.id == id)
+                    {
+                        code = 0;
+
                         authorized = true; 
-                    else
+                    }
+                    else if(decoded.id != id)
+                    {
+                        http_code = 400;
+
+                        status = "unauthorized";
+
+                        code = 6;
+                        
                         message = "Altered token";
+                    }
+                        
                 }
                 catch(error)
                 {
@@ -152,6 +195,12 @@ async function verify(req)
                     {
                         case "TokenExpiredError":
                         {
+                            http_code = 401;
+
+                            status = "unauthorized";
+                           
+                            code = 6;
+                           
                             message = "Token expired"
                             
                             break;
@@ -159,8 +208,14 @@ async function verify(req)
                         
                         default:
                         {
-                            message = "Bad token";
+                            http_code = 400;
 
+                            status = "unauthorized";
+
+                            cod = 6;
+
+                            message = "Bad token";
+                            
                             break;
                         }
                     }
@@ -168,14 +223,16 @@ async function verify(req)
             }
             else
             {
+                status = "failure";
+                
+                code = 4;
+                
                 message = Q.message;
-
-                error = true;
             }                            
         }        
     }
 
-    return [error,authorized,message];
+    return [authorized,http_code,status,code,message];
 }
 
 async function appAuthorizer(username,password,cb)
@@ -324,9 +381,9 @@ if(creds)
 
     app.get("/recovery", async (req,res) => 
     {
-        let error, authorized, message;
+        let authorized, message;
 
-        [error,authorized,message] =  verify(req);
+        [st,error,authorized,message] =  verify(req);
 
         if(authorized)
         {
@@ -349,9 +406,9 @@ if(creds)
 
     app.get("/boats", async (req,res) => 
     {
-        let error, authorized, message;
+        let authorized, http_code, status, code, message;
 
-        [error,authorized,message] =  verify(req);
+        [authorized,http_code,status,code,message] =  verify(req);
 
         if(authorized)
         {
@@ -369,21 +426,16 @@ if(creds)
             else
                 res.status(500).send({Q});
         }
-        else if(error)
-        {
-            res.status(500).send({message,status:"failure"});
-        }
         else
-        {
-            res.status(401).send({message,status:"unauthorized"});
-        }
+            res.status(http_code).send({status,code,message});
+        
     });
 
     app.get("/users", async (req,res) => 
     {
-        let error, authorized, message;
+        let authorized, http_code, status, code, message;
 
-        [error,authorized,message] =  verify(req);
+        [authorized,http_code,status,code,message] =  verify(req);
 
         if(authorized)
         {
@@ -401,21 +453,15 @@ if(creds)
             else
                 res.status(500).send({Q});
         }
-        else if(error)
-        {
-            res.status(500).send({message,status:"failure"});
-        }
         else
-        {
-            res.status(401).send({message,status:"unauthorized"});
-        }
+            res.status(http_code).send({status,code,message});
     });
 
     app.get("/journeys", async (req,res) => 
     {
-        let error, authorized, message;
+        let authorized, http_code, status, code, message;
 
-        [error,authorized,message] =  verify(req);
+        [authorized,http_code,status,code,message] =  verify(req);
 
         if(authorized)
         {
@@ -433,21 +479,15 @@ if(creds)
             else
                 res.status(500).send({Q});
         }
-        else if(error)
-        {
-            res.status(500).send({message,status:"failure"});
-        }
         else
-        {
-            res.status(401).send({message,status:"unauthorized"});
-        }
+            res.status(http_code).send({status,code,message});
     });
 
     app.get("/files", async (res,req) => 
     {
-        let error,authorized, message;
+        let authorized, http_code, status, code, message;
 
-        [error,authorized,message] =  verify(req);
+        [authorized,http_code,status,code,message] =  verify(req);
 
         if(authorized)
         {
@@ -465,14 +505,8 @@ if(creds)
             else
                 res.status(500).send({Q});
         }
-        else if(error)
-        {
-            res.status(500).send({message,status:"failure"});
-        }
         else
-        {
-            res.status(401).send({message,status:"unauthorized"});
-        }
+            res.status(http_code).send({status,code,message});
     });
 
     app.get("/historics", async (req,res) =>
@@ -492,9 +526,9 @@ if(creds)
         
         */
 
-        let error, authorized, message;
+        let authorized, http_code, status, code, message;
 
-        [error,authorized,message] =  verify(req);
+        [authorized,http_code,status,code,message] =  verify(req);
 
         if(authorized)
         {
@@ -512,17 +546,40 @@ if(creds)
             else
                 res.status(500).send({Q});
         }
-        else if(error)
-        {
-            res.status(500).send({message,status:"failure"});
-        }
         else
-        {
-            res.status(401).send({message,status:"unauthorized"});
-        }
+            res.status(http_code).send({status,code,message});
     }); 
 
     app.get("files/:reg/:file",handle.downloads);
+
+    app.post("/singup", async () => 
+    {
+        let authorized, http_code, status, code, message;
+
+        [authorized,http_code,status,code,message] =  verify(req);
+
+        if(authorized)
+        {
+            let params = req.body;
+
+            let  TZOfsset = (new Date()).getTimezoneOffset() * 60000; 
+
+            let dt = (new Date(Date.now() - TZOfsset)).toISOString().replace(/T|Z/g,' ');
+
+            params.usertype = 1; params.st = 0; params.blocked = 0; params.dt = dt;
+
+            let Q = filter("USERS",req.body,"INS"); 
+
+            if(!Q.status)
+            {
+                res.status(200).send({status:"success",code:1});
+            }     
+            else
+                res.status(500).send({Q});
+        }
+        else
+            res.status(http_code).send({status,code,message});
+    });
 }
 
 
