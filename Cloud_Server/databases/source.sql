@@ -154,7 +154,18 @@ CREATE TABLE ALERTS
             ON DELETE CASCADE
 )
 
-INSERT INTO USERS (username,pswrd,names,mails,usertype,blocked,st,dt) VALUES ('@Orbittas',);
+INSERT INTO USERS (username,pswrd,names,mail,usertype,blocked,st,dt) 
+    VALUES 
+    (
+        '@Orbittas',
+        '$2b$10$wLj4ndTj2fr5tSjcU4tUYu728JpxjlngTBFrFI5UeZDFeccUk6BPy',
+        'Orbittas',
+        'ricardo@orbittas.com',
+        1,
+        0,
+        1,
+        '2021/4/27 19:35:00'  
+    );
 
 CREATE USER 'orbittas'@'localhost' IDENTIFIED WITH mysql_native_password BY '#B04tTr4ck3r++';
 

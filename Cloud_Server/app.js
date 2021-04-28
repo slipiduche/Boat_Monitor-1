@@ -16,6 +16,8 @@ const basicAuth = require('express-basic-auth');
 
 const jwt = require('jsonwebtoken');
 
+const bcrypt = require('bcrypt');
+
 const fileUpload = require('express-fileupload');
 
 const cors = require('cors');
@@ -31,7 +33,6 @@ const log = require('./modules/logging.js');
 const handle = require('./modules/requests.js');
 
 const SQL = require('./modules/sql.js');
-const { stdout } = require('process');
 
 /*************************VARIABLES AND INSTANCES*****************************/
 
@@ -126,40 +127,50 @@ async function verify(req)
         {
             let id =  token[token.length - 1];
 
-            let password = "test";
+            req.body.id = id;
 
-            token = token.slice(0,token.length-1);
+            let Q = filter("USERS",req.body,"SEL");
 
-            try
+            if(!Q.status && Q[0])
             {
-                let decoded =  jwt.verify(token,password);
+                let password = Q[0].pswrd;
 
-                if(decoded.id == id)
-                    authorized = true; 
-                else
-                    message = "Altered token";
-            }
-            catch(error)
-            {
-                console.log(error);
+                token = token.slice(0,token.length-1);
 
-                switch(error.name)
+                try
                 {
-                    case "TokenExpiredError":
-                    {
-                        message = "Token expired"
-                        
-                        break;
-                    }
-                    
-                    default:
-                    {
-                        message = "Bad token";
+                    let decoded =  jwt.verify(token,password);
 
-                        break;
-                    }
+                    if(decoded.id == id)
+                        authorized = true; 
+                    else
+                        message = "Altered token";
                 }
-            }        
+                catch(error)
+                {
+                    console.log(error);
+
+                    switch(error.name)
+                    {
+                        case "TokenExpiredError":
+                        {
+                            message = "Token expired"
+                            
+                            break;
+                        }
+                        
+                        default:
+                        {
+                            message = "Bad token";
+
+                            break;
+                        }
+                    }
+                } 
+            }
+            else
+                message = Q.message;
+                   
         }        
     }
 
@@ -167,16 +178,25 @@ async function verify(req)
 }
 
 async function appAuthorizer(username,password,cb)
-{
-    let u = "@Orbittas",p = "test", i = 1;
+{   
+    let u = {username}, p = null, exists = false;
 
-    const userMatches = basicAuth.safeCompare(username, u);
-    
-    const passwordMatches = basicAuth.safeCompare(password, p)
+    let Q = sql.SEL("*",null,"USERS",u,null);
 
-    if(userMatches & passwordMatches)
+    if(!Q.status && Q[0])
+    {
+        if(Q[0].pswrd)
+        {
+            p = Q[0].pswrd;
+
+            exists = true;
+        }           
+    }
+
+    let passwordMatches = await bcrypt.compare(password, p);
+
+    if(exists & passwordMatches)
         return cb(null,true);
-    
     else
         return cb(null,false);
 }
