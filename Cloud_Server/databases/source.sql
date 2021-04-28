@@ -1,4 +1,5 @@
 /*FIRST TIME USE SQL SCRIPT*/
+DROP DATABASE IF EXISTS BOAT_MONITOR;
 
 CREATE DATABASE BOAT_MONITOR;
 
@@ -167,7 +168,7 @@ INSERT INTO USERS (username,pswrd,names,mail,usertype,blocked,st,dt)
         '2021/4/27 19:35:00'  
     );
 
-CREATE USER 'orbittas'@'localhost' IDENTIFIED WITH mysql_native_password BY '#B04tTr4ck3r++';
+CREATE USER IF NOT EXISTS 'orbittas_b'@'localhost' IDENTIFIED WITH mysql_native_password BY '#B04tTr4ck3r++';
 
 GRANT ALL PRIVILEGES ON STREAMING_SERVER.* TO 'orbittas'@'localhost';
 
