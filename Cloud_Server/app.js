@@ -96,28 +96,28 @@ async function filter(tab,params,command)
             if(Object.keys(params).length > 0)
                 where = params;
 
-            Q = await sql.SEL("*",tab,where,range);
+            Q = await SQL.SEL("*",tab,where,range);
 
             break;
         }
 
         case "INS":
         {
-            Q = await sql.INS(tab,params);
+            Q = await SQL.INS(tab,params);
             
             break;
         }
 
         case "UPD":
         {
-            Q = await sql.UPD(tab,params,id)
+            Q = await SQL.UPD(tab,params,id)
             
             break;
         }
 
         case "DEL":
         {
-            Q = await sql.DEL(tab,params);
+            Q = await SQL.DEL(tab,params);
             
             break;
         }
@@ -138,7 +138,7 @@ async function verify(req)
         {
             let id =  token[token.length - 1];
 
-            let Q = sql.SEL("*",null,"USERS",{id},null);
+            let Q = SQL.SEL("*",null,"USERS",{id},null);
 
             if(!Q.status && Q[0])
             {
@@ -240,7 +240,7 @@ async function appAuthorizer(username,password,cb)
 {   
     let u = {username}, p = null, exists = false;
 
-    let Q = sql.SEL("*",null,"USERS",u,null);
+    let Q = SQL.SEL("*",null,"USERS",u,null);
 
     if(!Q.status && Q[0])
     {
@@ -356,7 +356,7 @@ if(creds)
  
         let id = null, secret = null, token = null;
 
-        let Q = sql.SEL("*",null,"USERS",u,null);
+        let Q = SQL.SEL("*",null,"USERS",u,null);
 
         if(!Q.status && Q[0])
         {
