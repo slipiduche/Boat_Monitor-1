@@ -57,7 +57,7 @@ module.exports.SEL = async function SEL(S,EX,TABLE,WHERE,RANGE)
       
       log.errorLog("sql",error,3);
 
-      r = {message:error,status:"failure"};
+      r = {message:error,status:"failure",code:5};
     }  
   });
 
@@ -125,7 +125,7 @@ module.exports.SEL = async function SEL(S,EX,TABLE,WHERE,RANGE)
   {
     log.errorLog("sql",error,4);
     
-    r = {message:error,status:"failure"};
+    r = {message:error,status:"failure",code:5};
   }
   
   try
@@ -165,7 +165,7 @@ module.exports.INS = async function INS(TABLE,COLS)
       
       log.errorLog("sql",error,5); //sql-error5
       
-      r = {message:error,status:"failure"};
+      r = {message:error,status:"failure",code:5};
     }  
   });
 
@@ -206,7 +206,7 @@ module.exports.INS = async function INS(TABLE,COLS)
   {
       log.errorLog("sql",error,6);
 
-      r = {message:error,status:"failure"};
+      r = {message:error,status:"failure",code:5};
   }
 
   try
@@ -244,7 +244,7 @@ module.exports.UPD = async function UPD(TABLE,COLS,WHERE)
       
       log.errorLog("sql",error,7); //sql-error7
 
-      r = {message:error,status:"failure"};
+      r = {message:error,status:"failure",code:5};
     }  
   });
 
@@ -281,14 +281,14 @@ module.exports.UPD = async function UPD(TABLE,COLS,WHERE)
     r = JSON.parse(JSON.stringify(result));
 
     if(r[0].affectedRows == 0)
-      r = {message:"Either database entry doesn't exists or no new values where designated",status:"unchanged"};
+      r = {message:"Either database entry doesn't exists or no new values where designated",status:"unchanged",code:3};
 
   }
   catch(error) //sql-error8
   {
       log.errorLog("sql",error,8);
 
-      r = {message:error,status:"failure"};
+      r = {message:error,status:"failure",code:5};
   }
 
   try
@@ -322,7 +322,7 @@ module.exports.DEL = async function DEL(TAB,WHERE)
       
       log.errorLog("sql",error,9); //sql-error9
 
-      r = {message:error,status:"failure"};
+      r = {message:error,status:"failure",code:5};
     }  
   });
 
@@ -344,7 +344,7 @@ module.exports.DEL = async function DEL(TAB,WHERE)
   { 
     log.errorLog("sql",error,10);
 
-    r = {message:error,status:"failure"};
+    r = {message:error,status:"failure",code:5};
   }
 
   try

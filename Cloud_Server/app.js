@@ -48,11 +48,12 @@ var creds  = false;
 /*
 1: Success
 2: Empty
-3: Failure
-4: SQL Failure
-5: Unavailable
-6: Unauthrized
-7: Blocked
+3: Unchanged
+4: Failure
+5: SQL Failure
+6: Unavailable
+7: Unauthorized
+8: Blocked
 */
 /*********************************FUNCTIONS***********************************/
 async function filter(tab,params,command)
@@ -155,7 +156,7 @@ async function verify(req)
                         
                         status = "unavailable";
                         
-                        code = 5;
+                        code = 6;
 
                         message = "User is not enabled";
                     } 
@@ -165,7 +166,7 @@ async function verify(req)
                         
                         status = "blocked";
 
-                        code = 7;
+                        code = 8;
 
                         message = "Blocked User";
                     }   
@@ -181,7 +182,7 @@ async function verify(req)
 
                         status = "unauthorized";
 
-                        code = 6;
+                        code = 7;
                         
                         message = "Altered token";
                     }
@@ -199,7 +200,7 @@ async function verify(req)
 
                             status = "unauthorized";
                            
-                            code = 6;
+                            code = 7;
                            
                             message = "Token expired"
                             
@@ -212,7 +213,7 @@ async function verify(req)
 
                             status = "unauthorized";
 
-                            cod = 6;
+                            code = 7;
 
                             message = "Bad token";
                             
@@ -225,7 +226,7 @@ async function verify(req)
             {
                 status = "failure";
                 
-                code = 4;
+                code = 5;
                 
                 message = Q.message;
             }                            
@@ -568,7 +569,37 @@ if(creds)
 
             params.usertype = 4; params.st = 0; params.blocked = 0; params.dt = dt;
 
-            let Q = filter("USERS",req.body,"INS"); 
+            let Q = filter("USERS",params,"INS"); 
+
+            if(!Q.status)
+            {
+                res.status(200).send({status:"success",code:1});
+            }     
+            else
+                res.status(500).send({Q});
+        }
+        else
+            res.status(http_code).send({status,code,message});
+    });
+
+    app.post("/create", async () => 
+    {
+        let authorized, http_code, status, code, message;
+
+        [authorized,http_code,status,code,message] =  verify(req);
+
+        if(authorized)
+        {
+            if(params.dt)
+            {
+                let  TZOfsset = (new Date()).getTimezoneOffset() * 60000; 
+
+                let dt = (new Date(Date.now() - TZOfsset)).toISOString().replace(/T|Z/g,' ');
+
+                params.dt = dt;
+            }
+            
+            let Q = filter(params.tab,params,"INS"); 
 
             if(!Q.status)
             {
