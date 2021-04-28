@@ -117,7 +117,7 @@ async function filter(tab,params,command)
 
 async function verify(req)
 {
-    let authorized = false, message = null;
+    let authorized = false, message = null, error = false;
 
     if (req.body.token)
     {
@@ -169,12 +169,17 @@ async function verify(req)
                 } 
             }
             else
+            {
                 message = Q.message;
+
+                error = true;
+            }
+                
                    
         }        
     }
 
-    return [authorized,message];
+    return [error,authorized,message];
 }
 
 async function appAuthorizer(username,password,cb)
@@ -323,20 +328,24 @@ if(creds)
 
     app.get("/recovery", async (req,res) => 
     {
-        let authorized, message;
+        let error, authorized, message;
 
-        [authorized,message] =  verify(req);
+        [error,authorized,message] =  verify(req);
 
         if(authorized)
         {
             if(req.body.mail)
                 res.status(200).send({status:"success"});
             else
-                res.status(500).send({message:"No mail specfied",status:"failure"});
+                res.status(400).send({message:"No mail specfied",status:"failure"});
+        }
+        else if(error)
+        {
+            res.status(500).send({message,status:"failure"});
         }
         else
         {
-            res.status(500).send({message,status:"unauthorized"});
+            res.status(401).send({message,status:"unauthorized"});
         }
     });
 
@@ -344,9 +353,9 @@ if(creds)
 
     app.get("/boats", async (req,res) => 
     {
-        let authorized, message;
+        let error, authorized, message;
 
-        [authorized,message] =  verify(req);
+        [error,authorized,message] =  verify(req);
 
         if(authorized)
         {
@@ -364,17 +373,21 @@ if(creds)
             else
                 res.status(500).send({Q});
         }
+        else if(error)
+        {
+            res.status(500).send({message,status:"failure"});
+        }
         else
         {
-            res.status(500).send({message,status:"unauthorized"});
+            res.status(401).send({message,status:"unauthorized"});
         }
     });
 
     app.get("/users", async (req,res) => 
     {
-        let authorized, message;
+        let error, authorized, message;
 
-        [authorized,message] =  verify(req);
+        [error,authorized,message] =  verify(req);
 
         if(authorized)
         {
@@ -392,17 +405,21 @@ if(creds)
             else
                 res.status(500).send({Q});
         }
+        else if(error)
+        {
+            res.status(500).send({message,status:"failure"});
+        }
         else
         {
-            res.status(500).send({message,status:"unauthorized"});
+            res.status(401).send({message,status:"unauthorized"});
         }
     });
 
     app.get("/journeys", async (req,res) => 
     {
-        let authorized, message;
+        let error, authorized, message;
 
-        [authorized,message] =  verify(req);
+        [error,authorized,message] =  verify(req);
 
         if(authorized)
         {
@@ -420,17 +437,21 @@ if(creds)
             else
                 res.status(500).send({Q});
         }
+        else if(error)
+        {
+            res.status(500).send({message,status:"failure"});
+        }
         else
         {
-            res.status(500).send({message,status:"unauthorized"});
+            res.status(401).send({message,status:"unauthorized"});
         }
     });
 
     app.get("/files", async (res,req) => 
     {
-        let authorized, message;
+        let error,authorized, message;
 
-        [authorized,message] =  verify(req);
+        [error,authorized,message] =  verify(req);
 
         if(authorized)
         {
@@ -448,9 +469,13 @@ if(creds)
             else
                 res.status(500).send({Q});
         }
+        else if(error)
+        {
+            res.status(500).send({message,status:"failure"});
+        }
         else
         {
-            res.status(500).send({message,status:"unauthorized"});
+            res.status(401).send({message,status:"unauthorized"});
         }
     });
 
@@ -471,9 +496,9 @@ if(creds)
         
         */
 
-        let authorized, message;
+        let error, authorized, message;
 
-        [authorized,message] =  verify(req);
+        [error,authorized,message] =  verify(req);
 
         if(authorized)
         {
@@ -491,9 +516,13 @@ if(creds)
             else
                 res.status(500).send({Q});
         }
+        else if(error)
+        {
+            res.status(500).send({message,status:"failure"});
+        }
         else
         {
-            res.status(500).send({message,status:"unauthorized"});
+            res.status(401).send({message,status:"unauthorized"});
         }
     }); 
 
