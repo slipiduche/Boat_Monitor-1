@@ -590,6 +590,8 @@ if(creds)
 
         if(authorized)
         {
+            let params = req.body;
+
             if(params.dt)
             {
                 let  TZOfsset = (new Date()).getTimezoneOffset() * 60000; 
