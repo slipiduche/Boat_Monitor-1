@@ -127,9 +127,7 @@ async function verify(req)
         {
             let id =  token[token.length - 1];
 
-            req.body.id = id;
-
-            let Q = filter("USERS",req.body,"SEL");
+            let Q = sql.SEL("*",null,"USERS",{id},null);
 
             if(!Q.status && Q[0])
             {
@@ -173,9 +171,7 @@ async function verify(req)
                 message = Q.message;
 
                 error = true;
-            }
-                
-                   
+            }                            
         }        
     }
 
