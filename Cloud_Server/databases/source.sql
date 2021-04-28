@@ -26,6 +26,8 @@ CREATE TABLE USERS
     names TEXT NOT NULL,
     mail TEXT UNIQUE,
     usertype INTEGER NOT NULL, -- 1 Viewer, 2 Supervisor, 3 Admin, 4 Super Admin
+    latt INTEGER NOT NULL, -- number of longin attempts withinv X mins
+    ldt DATETIME, -- date of last login Attepmt
     blocked BIT NOT NULL,
     st BIT NOT NULL, --0 DISABLED, 1 ENABLED
     dt DATETIME NOT NULL,
@@ -155,7 +157,7 @@ CREATE TABLE ALERTS
             ON DELETE CASCADE
 )
 
-INSERT INTO USERS (username,pswrd,names,mail,usertype,blocked,st,dt) 
+INSERT INTO USERS (username,pswrd,names,mail,usertype,latt,blocked,st,dt) 
     VALUES 
     (
         '@Orbittas',
@@ -163,6 +165,7 @@ INSERT INTO USERS (username,pswrd,names,mail,usertype,blocked,st,dt)
         'Orbittas',
         'ricardo@orbittas.com',
         1,
+        0,
         0,
         1,
         '2021/4/27 19:35:00'  

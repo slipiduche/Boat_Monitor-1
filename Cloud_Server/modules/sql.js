@@ -40,7 +40,7 @@ module.exports.SEL = async function SEL(S,EX,TABLE,WHERE,RANGE)
 {  
   let DB = DBconnection(), r = "";
 
-  let q1 = "SELECT ",q2 = " FROM " + TABLE, q3 = " WHERE ", Q;
+  let q1 = "SELECT ",q2 = " FROM " + TABLE, q3 = " WHERE ", Q, params = [];
 
   let keys = null;
 
@@ -76,15 +76,12 @@ module.exports.SEL = async function SEL(S,EX,TABLE,WHERE,RANGE)
     {      
       let value = WHERE[keys[i]];
 
-      if(isNaN(value))
-        value = "'" + value +"'";
-      else
-        value = value.toString();
+      params.push(value);
 
       if(i > 0)
         q3 += " AND ";
 
-      q3 =  keys[i] + " = " + value;
+      q3 =  keys[i] + " = ?";
       
     }
   }
@@ -96,13 +93,19 @@ module.exports.SEL = async function SEL(S,EX,TABLE,WHERE,RANGE)
 
     if(TABLE == "JOURNEYS")
     {
-      q3 += "((ini >= '" + RANGE[0] + "' AND ini <= '" + RANGE[1] + "') ";
+      q3 += "((ini >= ? AND ini <= ?) ";
+      
+      params.push(RANGE[0]);  params.push(RANGE[1]);
 
-      q3 += "OR (ed >= '" + RANGE[0] + "' AND ed <= '" + RANGE[1] + "'));"
+      q3 += "OR (ed >= ? AND ed <= ?));"
+    
+      params.push(RANGE[0]);  params.push(RANGE[1]);
     }
     else
     {
-      q3 += "dt >= '" + RANGE[0] + "' AND dt <= '" + RANGE[1] + "';";
+      q3 += "dt >= ? AND dt <= ?;";
+
+      params.push(RANGE[0]);  params.push(RANGE[1]);
     }
   }
 
@@ -115,9 +118,11 @@ module.exports.SEL = async function SEL(S,EX,TABLE,WHERE,RANGE)
 
   console.log(Q);
 
+  process.stdout.write("Params: "); console.log(params);
+
   try
   {
-    let [result,fields] = await DB.promise().query(Q);
+    let [result,fields] = await DB.promise().query(Q,params);
 
     r = JSON.parse(JSON.stringify(result));  
   }
@@ -146,7 +151,7 @@ module.exports.INS = async function INS(TABLE,COLS)
 {
   let DB = DBconnection(), r = "";
   
-  let q1 = "INSERT INTO " + TABLE, q2 = " (", q3 = "VALUES (", Q;
+  let q1 = "INSERT INTO " + TABLE, q2 = " (", q3 = "VALUES (", Q, params = [];
 
   let keys = Object.keys(COLS), values = COLS;
 
@@ -182,12 +187,10 @@ module.exports.INS = async function INS(TABLE,COLS)
     }
 
     q2 += keys[i];
+    
+    q3 += "?";
 
-    if(isNaN(values[keys[i]]))
-      q3 += "'" + values[keys[i]] + "'";
-    else
-      q3 += values[keys[i]];
-
+    params.push(values[keys[i]]);
   }
 
   q2 += ") "; q3 += ");";
@@ -196,9 +199,11 @@ module.exports.INS = async function INS(TABLE,COLS)
 
   console.log(Q);
 
+  process.stdout.write("Params: "); console.log(params);
+
   try
   {
-    let result = await DB.promise().query(Q);
+    let result = await DB.promise().query(Q,params);
 
     r = JSON.parse(JSON.stringify(result));
   }
@@ -227,7 +232,7 @@ module.exports.UPD = async function UPD(TABLE,COLS,WHERE)
 {
   let DB = DBconnection(), r = "";
 
-  let q1 = "UPDATE " + TABLE, q2 = " SET ", q3 = " WHERE id = " + WHERE.toString(), Q;
+  let q1 = "UPDATE " + TABLE, q2 = " SET ", q3 = " WHERE id = " + WHERE.toString(), Q, params = [];
 
   let keys = Object.keys(COLS), values = COLS;
     
@@ -262,21 +267,20 @@ module.exports.UPD = async function UPD(TABLE,COLS,WHERE)
     if(i > 0)
       q2 += ",";
 
-    if(isNaN(value))
-      value = "'" + value +"'";
-    else
-      value = value.toString();
-
-    q2 =  keys[i] + " = " + value;
+    q2 =  keys[i] + " = ?";
     
+    params.push(value);
   }
-  Q = q1 + q2 + q3 + "";
+
+  Q = q1 + q2 + q3 + ";";
 
   console.log(Q);
+
+  process.stdout.write("Params: "); console.log(params);
   
   try
   {
-    let result = await DB.promise().query(Q);
+    let result = await DB.promise().query(Q,params);
 
     r = JSON.parse(JSON.stringify(result));
 

@@ -353,9 +353,8 @@ if(creds)
     app.get("/login", auth, async (req,res) =>
     {
         let u = {username:req.auth.user};
-
-
-        let id = null,secret = null,token = null;
+ 
+        let id = null, secret = null, token = null;
 
         let Q = sql.SEL("*",null,"USERS",u,null);
 
@@ -555,14 +554,13 @@ if(creds)
 
     app.post("/singup", async () => 
     {
-
             let params = req.body;
 
             let  TZOfsset = (new Date()).getTimezoneOffset() * 60000; 
 
             let dt = (new Date(Date.now() - TZOfsset)).toISOString().replace(/T|Z/g,' ');
 
-            params.usertype = 4; params.st = 0; params.blocked = 0; params.dt = dt;
+            params.usertype = 4; params.latt = 0; params.st = 0; params.blocked = 0; params.dt = dt;
 
             let Q = filter("USERS",params,"INS"); 
 
