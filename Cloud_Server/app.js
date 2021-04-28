@@ -566,7 +566,7 @@ if(creds)
 
             let dt = (new Date(Date.now() - TZOfsset)).toISOString().replace(/T|Z/g,' ');
 
-            params.usertype = 1; params.st = 0; params.blocked = 0; params.dt = dt;
+            params.usertype = 4; params.st = 0; params.blocked = 0; params.dt = dt;
 
             let Q = filter("USERS",req.body,"INS"); 
 
