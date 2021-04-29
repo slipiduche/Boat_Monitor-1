@@ -57,6 +57,7 @@ var creds  = false;
 8: Blocked
 9: Access Denied
 10: Missing Data
+11: Untregistered
 */
 /*********************************FUNCTIONS***********************************/
 async function filter(tab,params,command)
@@ -331,8 +332,14 @@ async function appAuthorizer(username,password,signup)
 
         data = Q;
     }
+    else if (!Q[0])
+        data = {message:"User not registered",status:"unregistered",code:11}
 
-    let passwordMatches = await bcrypt.compare(password, p);
+
+    let passwordMatches = false;
+
+    if(exists)
+        passwordMatches = await bcrypt.compare(password, p);
 
     if((exists | error) & passwordMatches & !sus)
     { 

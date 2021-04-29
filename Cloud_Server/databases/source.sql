@@ -12,7 +12,7 @@ CREATE TABLE BOATS
     boat_name TEXT,
     max_st FLOAT,
     resp TEXT,
-    st BIT NOT NULL, #-- 0 Disabled, 1 Enabled
+    st TINYINT NOT NULL, #-- 0 Disabled, 1 Enabled
     obs TEXT,
 
     PRIMARY KEY(id)
@@ -28,8 +28,8 @@ CREATE TABLE USERS
     usertype INTEGER NOT NULL, #--1 Viewer, 2 Supervisor, 3 Admin, 4 Super Admin
     latt INTEGER NOT NULL, #--number of longin attempts withinv X mins
     ldt DATETIME, #--date of last login Attepmt
-    blocked BIT NOT NULL,
-    st BIT NOT NULL, #--0 DISABLED, 1 ENABLED
+    blocked TINYINT NOT NULL,
+    st TINYINT NOT NULL, #--0 DISABLED, 1 ENABLED
     dt DATETIME NOT NULL,
 
     PRIMARY KEY(id)
@@ -47,7 +47,7 @@ CREATE TABLE JOURNEYS
     f_weight FLOAT,
     s_img INTEGER,
     total_img INTEGER,
-    synced BIT NOT NULL,
+    synced TINYINT NOT NULL,
     eta FLOAT,
     obs TEXT,
 
@@ -130,9 +130,9 @@ CREATE TABLE ALERTS
     hist_id INTEGER,
     boat_id INTEGER NOT NULL,
     journey_id INTEGER NOT NULL,
-    ta BIT NOT NULL,
-    wa BIT NOT NULL,
-    sus BIT NOT NULL,
+    ta TINYINT NOT NULL,
+    wa TINYINT NOT NULL,
+    sus TINYINT NOT NULL,
     dt DATETIME NOT NULL,
     obs TEXT,
 
@@ -157,10 +157,10 @@ CREATE TABLE ALERTS
 
 INSERT INTO USERS (username,pswrd,names,mail,usertype,latt,blocked,st,dt) VALUES 
     (
-        'orbittas@orbittas.com',
+        'ortinyinttas@ortinyinttas.com',
         '$2b$10$wLj4ndTj2fr5tSjcU4tUYu728JpxjlngTBFrFI5UeZDFeccUk6BPy',
-        'Orbittas',
-        'ricardo@orbittas.com',
+        'Ortinyinttas',
+        'ricardo@ortinyinttas.com',
         1,
         0,
         0,
@@ -171,10 +171,10 @@ INSERT INTO USERS (username,pswrd,names,mail,usertype,latt,blocked,st,dt) VALUES
 INSERT INTO USERS (username,pswrd,names,mail,usertype,latt,blocked,st,dt) 
     VALUES 
     (
-        'SUD@orbittas.com',
+        'SUD@ortinyinttas.com',
         '$2b$10$tKgldLwEBI7vjXKcKWue/Of636wzx0xwJ/BsywDERHS2bwodNO1R6',
         '-',
-        'ricardo@orbittas.com',
+        'ricardo@ortinyinttas.com',
         4,
         0,
         0,
@@ -183,9 +183,9 @@ INSERT INTO USERS (username,pswrd,names,mail,usertype,latt,blocked,st,dt)
     );
 
 
-CREATE USER IF NOT EXISTS 'orbittas_b'@'localhost' IDENTIFIED WITH mysql_native_password BY '#B04tTr4ck3r++';
+CREATE USER IF NOT EXISTS 'ortinyinttas_b'@'localhost' IDENTIFIED WITH mysql_native_password BY '#B04tTr4ck3r++';
 
-GRANT ALL PRIVILEGES ON BOAT_MONITOR.* TO 'orbittas_b'@'localhost';
+GRANT ALL PRIVILEGES ON BOAT_MONITOR.* TO 'ortinyinttas_b'@'localhost';
 
 FLUSH PRIVILEGES;
 
