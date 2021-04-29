@@ -723,6 +723,8 @@ if(creds)
 
     app.post("/signup", sup, async (req,res) => 
     {
+        console.log(req);
+        
         let params = req.body;
 
         let username = params.username;
