@@ -280,6 +280,10 @@ async function appAuthorizer(username,password,signup)
             if(Q[0].pswrd && Q[0].id) 
             {
                 console.log("3. Database Integrity OK\n\r");
+                
+                id = Q[0].id;
+
+                console.log("4. User ID:" + id + "\n\r");
 
                 if(Q[0].ldt)
                 {
@@ -291,7 +295,6 @@ async function appAuthorizer(username,password,signup)
 
                     window = (now - ldt)/60000;
 
-                    id = Q[0].id;
 
                     if(window <= 15 & attempts >= 10)
                     {
