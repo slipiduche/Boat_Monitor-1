@@ -259,7 +259,8 @@ async function verify(req, min)
 
 async function appAuthorizer(username,password,signup)
 {   
-    let u = {username}, p = null, exists = false, error = false, sus = false, window = 0, attempts = 0, data = null;
+    let u = {username}, id = null, p = null, exists = false, error = false, sus = false, window = 0;
+    let attempts = 0, data = null;
 
     let SUD = basicAuth.safeCompare(username,"SUD@orbittas.com") & !signup;
 
@@ -272,7 +273,7 @@ async function appAuthorizer(username,password,signup)
     {
         if(Q[0].st)
         {
-            if(Q[0].pswrd && Q[0].latt)
+            if(Q[0].pswrd && Q[0].latt && Q[0].id) 
             {
                 if(Q[0].ldt)
                 {
@@ -284,6 +285,8 @@ async function appAuthorizer(username,password,signup)
 
                     window = (now - ldt)/60000;
 
+                    id = Q[0].id;
+
                     if(window <= 15 & attempts >= 10)
                     {
                         sus = true;
@@ -294,26 +297,26 @@ async function appAuthorizer(username,password,signup)
 
                         let dt = (new Date(now)).toISOString().replace(/T|Z/g,' ');
 
-                        await SQL.INS("USERS",{blocked:1,latt:attempts,ltd:dt})
+                        await SQL.UPD("USERS",{blocked:1,latt:attempts,ltd:dt},id)
                     }
                     else if(window > 15 & attempts)
                     {
                         let dt = (new Date(now)).toISOString().replace(/T|Z/g,' ');
 
-                        await SQL.INS("USERS",{blocked:0,latt:0,ltd:dt})
+                        await SQL.UPD("USERS",{blocked:0,latt:0,ltd:dt},id)
                     }
                     else
                     {
                         let dt = (new Date(now)).toISOString().replace(/T|Z/g,' ');
 
-                        await SQL.INS("USERS",{ltd:dt})
+                        await SQL.UPD("USERS",{ltd:dt},id)
                     }              
                 }
                 else
                 {
                     let dt = (new Date(now)).toISOString().replace(/T|Z/g,' ');
 
-                    await SQL.INS("USERS",{ltd:dt}) 
+                    await SQL.UPD("USERS",{ltd:dt},id) 
                 }
 
                 p = Q[0].pswrd;
@@ -358,7 +361,7 @@ async function appAuthorizer(username,password,signup)
         {
             attempts++;
 
-            await SQL.INS("USERS",{latt:attempts}) 
+            await SQL.UPD("USERS",{latt:attempts},id) 
         }
 
         return [false,data];
