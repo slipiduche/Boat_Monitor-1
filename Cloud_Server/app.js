@@ -413,7 +413,7 @@ function unauthorized(req,data)
     if(!data)
         return req.auth
                ? {message:"Invalid Username or Password",status:"unauthorized",code:7}
-               : {message:"Authentication parameter not prvided",status:"failure",code:4};
+               : {message:"Authentication parameters not prvided",status:"failure",code:4};
     else
         return data;
 }
@@ -721,7 +721,7 @@ if(creds)
 
     app.get("files/:reg/:file",handle.downloads);
 
-    app.post("/signup", sup, async () => 
+    app.post("/signup", sup, async (req,res) => 
     {
         let params = req.body;
 
