@@ -157,10 +157,10 @@ CREATE TABLE ALERTS
 
 INSERT INTO USERS (username,pswrd,names,mail,usertype,latt,blocked,st,dt) VALUES 
     (
-        'ortinyinttas@ortinyinttas.com',
+        'orbittas@orbittas.com',
         '$2b$10$wLj4ndTj2fr5tSjcU4tUYu728JpxjlngTBFrFI5UeZDFeccUk6BPy',
-        'Ortinyinttas',
-        'ricardo@ortinyinttas.com',
+        'Orbittas',
+        'ricardo@orbittas.com',
         1,
         0,
         0,
@@ -171,10 +171,10 @@ INSERT INTO USERS (username,pswrd,names,mail,usertype,latt,blocked,st,dt) VALUES
 INSERT INTO USERS (username,pswrd,names,mail,usertype,latt,blocked,st,dt) 
     VALUES 
     (
-        'SUD@ortinyinttas.com',
+        'SUD@orbittas.com',
         '$2b$10$tKgldLwEBI7vjXKcKWue/Of636wzx0xwJ/BsywDERHS2bwodNO1R6',
         '-',
-        'ricardo@ortinyinttas.com',
+        'ricardo@orbittas.com',
         4,
         0,
         0,
@@ -183,9 +183,9 @@ INSERT INTO USERS (username,pswrd,names,mail,usertype,latt,blocked,st,dt)
     );
 
 
-CREATE USER IF NOT EXISTS 'ortinyinttas_b'@'localhost' IDENTIFIED WITH mysql_native_password BY '#B04tTr4ck3r++';
+CREATE USER IF NOT EXISTS 'orbittas_b'@'localhost' IDENTIFIED WITH mysql_native_password BY '#B04tTr4ck3r++';
 
-GRANT ALL PRIVILEGES ON BOAT_MONITOR.* TO 'ortinyinttas_b'@'localhost';
+GRANT ALL PRIVILEGES ON BOAT_MONITOR.* TO 'orbittas_b'@'localhost';
 
 FLUSH PRIVILEGES;
 
