@@ -12,8 +12,6 @@ const https = require('https');
 
 const express = require('express');
 
-const basicAuth = require('express-basic-auth');
-
 const jwt = require('jsonwebtoken');
 
 const bcrypt = require('bcrypt');
@@ -28,11 +26,14 @@ const morgan = require('morgan');
 
 const _ = require('lodash');
 
+const basicAuth = require('.modules/basic.js');
+
 const log = require('./modules/logging.js');
 
 const handle = require('./modules/requests.js');
 
 const SQL = require('./modules/sql.js');
+const { sign } = require('crypto');
 
 /*************************VARIABLES AND INSTANCES*****************************/
 
@@ -54,6 +55,7 @@ var creds  = false;
 6: Unavailable
 7: Unauthorized
 8: Blocked
+9: Access Denied
 */
 /*********************************FUNCTIONS***********************************/
 async function filter(tab,params,command)
@@ -61,6 +63,12 @@ async function filter(tab,params,command)
     let range = null, id = null;
     
     delete params.token;
+
+    if(params.auth)
+        delete params.auth;
+
+    if(params.data)
+        delete params.data;
 
     if(params.tab)
         delete params.tab;
@@ -126,7 +134,7 @@ async function filter(tab,params,command)
     return Q;   
 }
 
-async function verify(req)
+async function verify(req, min)
 {
     let authorized = false, http_code = 500, status = null, code = null, message = null;
 
@@ -152,7 +160,7 @@ async function verify(req)
 
                     if(!Q[0].st)
                     {
-                        http_code = 409;
+                        http_code = 403;
                         
                         status = "unavailable";
                         
@@ -162,23 +170,27 @@ async function verify(req)
                     } 
                     if(Q[0].blocked)
                     {
-                        http_code = 409;
+                        http_code = 403;
                         
                         status = "blocked";
 
                         code = 8;
 
                         message = "Blocked User";
-                    }   
-                    else if(decoded.id == id)
+                    } 
+                    else if(Q[0].usertype < min)
                     {
-                        code = 0;
+                        http_code = 403;
 
-                        authorized = true; 
-                    }
+                        status = "unauthorized";
+
+                        code = 9;
+                        
+                        message = "Access Denied"; 
+                    }  
                     else if(decoded.id != id)
                     {
-                        http_code = 400;
+                        http_code = 403;
 
                         status = "unauthorized";
 
@@ -186,6 +198,13 @@ async function verify(req)
                         
                         message = "Altered token";
                     }
+                    else
+                    {
+                        code = 0;
+
+                        authorized = true; 
+                    }
+                    
                         
                 }
                 catch(error)
@@ -236,66 +255,95 @@ async function verify(req)
     return [authorized,http_code,status,code,message];
 }
 
-async function appAuthorizer(username,password,cb)
+async function appAuthorizer(username,password,signup)
 {   
-    let u = {username}, p = null, exists = false, sus = false, window = 0, attempts = 0;
+    let u = {username}, p = null, exists = false, error = false, sus = false, window = 0, attempts = 0, data = null;
 
-    let Q = await SQL.SEL("*",null,"USERS",u,null);
+    let SUD = basicAuth.safeCompare(username,"SUD@orbittas.com") & !signup;
 
-    if(!Q.status && Q[0])
+    let Q;
+    
+    if(!SUD)
+        Q = await SQL.SEL("*",null,"USERS",u,null);
+                    
+    if(!Q.status && Q[0] && !SUD)
     {
-        if(Q[0].pswrd && Q[0].latt)
+        if(Q[0].st)
         {
-            if(Q[0].ldt)
+            if(Q[0].pswrd && Q[0].latt)
             {
-                let str = Q[0].ldt;
-                
-                attempts = Q[0].latt;
-
-                let ldt = Date.parse(str), now = Date.now();
-
-                window = (now - ldt)/60000;
-
-                if(window <= 15 & attempts >= 10)
+                if(Q[0].ldt)
                 {
-                    sus = true;
+                    let str = Q[0].ldt;
+                    
+                    attempts = Q[0].latt;
 
-                    attempts++;
+                    let ldt = Date.parse(str), now = Date.now();
 
-                    let dt = (new Date(now)).toISOString().replace(/T|Z/g,' ');
+                    window = (now - ldt)/60000;
 
-                    await SQL.INS("USERS",{blocked:1,latt:attempts,ltd:dt})
-                }
-                else if(window > 15 & attempts)
-                {
-                    let dt = (new Date(now)).toISOString().replace(/T|Z/g,' ');
+                    if(window <= 15 & attempts >= 10)
+                    {
+                        sus = true;
 
-                    await SQL.INS("USERS",{blocked:0,latt:0,ltd:dt})
+                        data = {message:"Blocked User",status:"blocked", code:8};
+                               
+                        attempts++;
+
+                        let dt = (new Date(now)).toISOString().replace(/T|Z/g,' ');
+
+                        await SQL.INS("USERS",{blocked:1,latt:attempts,ltd:dt})
+                    }
+                    else if(window > 15 & attempts)
+                    {
+                        let dt = (new Date(now)).toISOString().replace(/T|Z/g,' ');
+
+                        await SQL.INS("USERS",{blocked:0,latt:0,ltd:dt})
+                    }
+                    else
+                    {
+                        let dt = (new Date(now)).toISOString().replace(/T|Z/g,' ');
+
+                        await SQL.INS("USERS",{ltd:dt})
+                    }              
                 }
                 else
                 {
                     let dt = (new Date(now)).toISOString().replace(/T|Z/g,' ');
 
-                    await SQL.INS("USERS",{ltd:dt})
-                }              
-            }
-            else
-            {
-                let dt = (new Date(now)).toISOString().replace(/T|Z/g,' ');
+                    await SQL.INS("USERS",{ltd:dt}) 
+                }
 
-                await SQL.INS("USERS",{ltd:dt}) 
-            }
+                p = Q[0].pswrd;
 
-            p = Q[0].pswrd;
+                exists = true;
+            }           
+        }
+        else
+        {
+            data = {message:"User is not enabled",status:"unavailable",code:6}
+        }      
+    }
+    else if(!SUD)
+    {
+        error = true;
 
-            exists = true;
-        }           
+        data = Q;
     }
 
     let passwordMatches = await bcrypt.compare(password, p);
 
-    if(exists & passwordMatches & !sus)
-        return cb(null,true);
+    if((exists | error) & passwordMatches & !sus)
+    { 
+        if(!error)
+        {
+            let id = Q[0].id, secret = Q[0].pswrd, usertype = Q[0].usertype;
+
+            data = {id,secret,usertype};
+        }          
+
+        return [true,data];
+    }     
     else
     {
         if(window <= 15 & attempts < 10)
@@ -305,16 +353,38 @@ async function appAuthorizer(username,password,cb)
             await SQL.INS("USERS",{latt:attempts}) 
         }
 
-        return cb(null,false);
+        return [false,data];
     }
        
 }
 
-function unauthorized(req)
+async function OPAuth(username,password,cb)
 {
-    return req.auth
-        ? {message:"Invalid Username or Password",status:"failure"}
-        : {message:"No Username or Password were provided",status:"failure"};
+    let r, data;
+
+    [r,data] = await appAuthorizer(username,password,false);
+
+    return cb(null,r,data);
+
+}
+
+async function SUAuth(username,password,cb)
+{
+    let r, data;
+
+    [r,data] = await appAuthorizer(username,password,true);
+
+    return cb(null,r,data);
+}
+
+function unauthorized(req,data)
+{
+    if(!data)
+        return req.auth
+               ? {message:"Invalid Username or Password",status:"failure"}
+               : {message:"No Username or Password were provided",status:"failure"};
+    else
+        return data;
 }
 
 
@@ -354,13 +424,21 @@ if(creds)
     
     collector.use(morgan('dev'));
 
-
     var auth = basicAuth(
     {
-        authorizer: appAuthorizer,
+        authorizer: OPAuth,
         authorizeAsync: true,
         unauthorizedResponse: unauthorized
     });
+
+    var sup = basicAuth(
+    {
+        authorizer: SUAuth,
+        authorizeAsync: true,
+        unauthorizedResponse: unauthorized
+    });
+
+    var signup = basicAuth();
     
     app = express();
         
@@ -402,30 +480,33 @@ if(creds)
 
     app.get("/login", auth, async (req,res) =>
     {
-        let u = {username:req.auth.user};
- 
-        let id = null, secret = null, token = null;
+        let id = null, secret = null, usertype = null, token = null;
 
-        let Q = SQL.SEL("*",null,"USERS",u,null);
-
-        if(!Q.status && Q[0])
+        try
         {
-            if(Q[0].pswrd && Q[0].id)
+            if(!req.data.status)
             {
-                id = Q[0].id;
+                id = req.data.id; secret = req.data.secret; usertype = req.data.usertype;
 
-                secret = Q[0].pswrd;
+                if(id && secret && usertype)
+                {
+                    token = jwt.sign({user,id},secret,{expiresIn:60*60}) + id.toString();
 
-                token = jwt.sign({user,id},secret,{expiresIn:60*60}) + id.toString();
+                    if(token)
+                        res.status(200).send({token,usertype,status:"success",code:1});
+                    else
+                        res.status(500).send({message:"Unknown Error",status:"failure",code:3});
+                }              
+                else
+                    res.status(500).send({message:"Database Integrity Issue; Null Values",status:"failure",code:3});       
             }
+            else
+                req.status(500).send(req.data);   
         }
-
-        if(token)
-            res.status(200).send({token,status:"success"});
-        else if(Q.status)
-            res.status(500).send(Q);
-        else
-            res.status(500).send({message:"Unknown Error",status:"failure"});
+        catch(error)
+        {
+            res.status(500).send({message:error,status:"failure",code:3});
+        }
 
     });
 
@@ -602,24 +683,24 @@ if(creds)
 
     app.get("files/:reg/:file",handle.downloads);
 
-    app.post("/singup", async () => 
+    app.post("/singup", sup, async () => 
     {
-            let params = req.body;
+        let params = req.body;
 
-            let  TZOfsset = (new Date()).getTimezoneOffset() * 60000; 
+        let  TZOfsset = (new Date()).getTimezoneOffset() * 60000; 
 
-            let dt = (new Date(Date.now() - TZOfsset)).toISOString().replace(/T|Z/g,' ');
+        let dt = (new Date(Date.now() - TZOfsset)).toISOString().replace(/T|Z/g,' ');
 
-            params.usertype = 4; params.latt = 0; params.st = 0; params.blocked = 0; params.dt = dt;
+        params.usertype = 4; params.latt = 0; params.st = 0; params.blocked = 0; params.dt = dt;
 
-            let Q = filter("USERS",params,"INS"); 
+        let Q = filter("USERS",params,"INS"); 
 
-            if(!Q.status)
-            {
-                res.status(200).send({status:"success",code:1});
-            }     
-            else
-                res.status(500).send({Q});
+        if(!Q.status)
+        {
+            res.status(200).send({status:"success",code:1});
+        }     
+        else
+            res.status(500).send(Q);
 
     });
 
