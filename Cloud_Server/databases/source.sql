@@ -8,11 +8,11 @@ USE BOAT_MONITOR;
 CREATE TABLE BOATS
 (
     id INTEGER NOT NULL AUTO_INCREMENT,
-    mac TEXT UNIQUE,
+    mac VARCHAR(34) UNIQUE,
     boat_name TEXT,
     max_st FLOAT,
     resp TEXT,
-    st BIT NOT NULL, -- 0 Disabled, 1 Enabled
+    st BIT NOT NULL, #-- 0 Disabled, 1 Enabled
     obs TEXT,
 
     PRIMARY KEY(id)
@@ -21,15 +21,15 @@ CREATE TABLE BOATS
 CREATE TABLE USERS
 (
     id INTEGER NOT NULL AUTO_INCREMENT,
-    username TEXT UNIQUE, --@username
+    username VARCHAR(320), 
     pswrd TEXT NOT NULL,
     names TEXT NOT NULL,
-    mail TEXT UNIQUE,
-    usertype INTEGER NOT NULL, -- 1 Viewer, 2 Supervisor, 3 Admin, 4 Super Admin
-    latt INTEGER NOT NULL, -- number of longin attempts withinv X mins
-    ldt DATETIME, -- date of last login Attepmt
+    mail VARCHAR(320),
+    usertype INTEGER NOT NULL, #--1 Viewer, 2 Supervisor, 3 Admin, 4 Super Admin
+    latt INTEGER NOT NULL, #--number of longin attempts withinv X mins
+    ldt DATETIME, #--date of last login Attepmt
     blocked BIT NOT NULL,
-    st BIT NOT NULL, --0 DISABLED, 1 ENABLED
+    st BIT NOT NULL, #--0 DISABLED, 1 ENABLED
     dt DATETIME NOT NULL,
 
     PRIMARY KEY(id)
@@ -70,19 +70,19 @@ CREATE TABLE JOURNEYS
 CREATE TABLE HISTORICS
 (
     id INTEGER NOT NULL AUTO_INCREMENT,
-    boat_id TEXT NOT NULL, --unique identifier for pi in the boat
+    boat_id INT NOT NULL, #--unique identifier for pi in the boat
     journey_id INT NOT NULL,
-    cont_status TEXT NOT NULL, --'OPEN' OR 'CLOSED'
+    cont_status TEXT NOT NULL, #--'OPEN' OR 'CLOSED'
     open_time FLOAT,
-    cont_weight FLOAT NOT NULL, --KG
-    bat FLOAT.
+    cont_weight FLOAT NOT NULL, #--KG
+    bat FLOAT,
     dsk FLOAT,
     temp FLOAT,
-    b_location TEXT NOT NULL, --LAT, LONG? gOOGLE COMPATIBLE
+    b_location TEXT NOT NULL, #--LAT, LONG? gOOGLE COMPATIBLE
     TiP FLOAT,
-    fl_name TEXT NOT NULL, --filename
-    dt DATETIME NOT NULL, --date of event
-    reg DATETIME NOT NULL, --date of data reception
+    fl_name TEXT NOT NULL, #--filename
+    dt DATETIME NOT NULL, #--date of event
+    reg DATETIME NOT NULL, #--date of data reception
     
 
     PRIMARY KEY(id),
@@ -110,8 +110,6 @@ CREATE TABLE FILES
     rl INT,
     dt DATETIME NOT NULL,
     reg DATETIME NOT NULL,
-
-    PRIMARY KEY(id),
 
     PRIMARY KEY(id),
 
@@ -155,10 +153,9 @@ CREATE TABLE ALERTS
         FOREIGN KEY (journey_id) 
         REFERENCES JOURNEYS (id)
             ON DELETE CASCADE
-)
+);
 
-INSERT INTO USERS (username,pswrd,names,mail,usertype,latt,blocked,st,dt) 
-    VALUES 
+INSERT INTO USERS (username,pswrd,names,mail,usertype,latt,blocked,st,dt) VALUES 
     (
         'orbittas@orbittas.com',
         '$2b$10$wLj4ndTj2fr5tSjcU4tUYu728JpxjlngTBFrFI5UeZDFeccUk6BPy',

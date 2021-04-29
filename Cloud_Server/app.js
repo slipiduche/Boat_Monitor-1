@@ -56,6 +56,7 @@ var creds  = false;
 7: Unauthorized
 8: Blocked
 9: Access Denied
+10: Missing Data
 */
 /*********************************FUNCTIONS***********************************/
 async function filter(tab,params,command)
@@ -381,8 +382,8 @@ function unauthorized(req,data)
 {
     if(!data)
         return req.auth
-               ? {message:"Invalid Username or Password",status:"failure"}
-               : {message:"No Username or Password were provided",status:"failure"};
+               ? {message:"Invalid Username or Password",status:"unauthorized",code:7}
+               : {message:"Authentication parameter not prvided",status:"failure",code:4};
     else
         return data;
 }
@@ -493,17 +494,17 @@ if(creds)
                     if(token)
                         res.status(200).send({token,usertype,status:"success",code:1});
                     else
-                        res.status(500).send({message:"Unknown Error",status:"failure",code:3});
+                        res.status(500).send({message:"Unknown Error",status:"failure",code:4});
                 }              
                 else
-                    res.status(500).send({message:"Database Integrity Issue; Null Values",status:"failure",code:3});       
+                    res.status(500).send({message:"Database Integrity Issue; Null Values",status:"failure",code:4});       
             }
             else
                 req.status(500).send(req.data);   
         }
         catch(error)
         {
-            res.status(500).send({message:error,status:"failure",code:3});
+            res.status(500).send({message:error,status:"failure",code:4});
         }
 
     });
@@ -519,7 +520,7 @@ if(creds)
             if(req.body.mail)
                 res.status(200).send({status:"success"});
             else
-                res.status(400).send({message:"No mail specfied",status:"failure"});
+                res.status(400).send({message:"No mail specfied",status:"failure",code:10});
         }
         else if(error)
         {
@@ -575,9 +576,9 @@ if(creds)
             if(!Q.status)
             {
                 if(Q[0])
-                    res.status(200).send({USERS:Q,status:"success"});
+                    res.status(200).send({USERS:Q,status:"success",code:1});
                 else
-                    res.status(200).send({USERS:Q,status:"empty"});
+                    res.status(200).send({USERS:Q,status:"empty",code:2});
             }     
             else
                 res.status(500).send({Q});
@@ -685,20 +686,47 @@ if(creds)
     {
         let params = req.body;
 
-        let  TZOfsset = (new Date()).getTimezoneOffset() * 60000; 
+        let W = SQL.SEL("*",null,"USERS",{id},null);
 
-        let dt = (new Date(Date.now() - TZOfsset)).toISOString().replace(/T|Z/g,' ');
+        let exists = false,error = false;
 
-        params.usertype = 4; params.latt = 0; params.st = 0; params.blocked = 0; params.dt = dt;
-
-        let Q = filter("USERS",params,"INS"); 
-
-        if(!Q.status)
+        if(!W.status)
         {
-            res.status(200).send({status:"success",code:1});
-        }     
-        else
-            res.status(500).send(Q);
+            if(W[0])
+            {
+                if(W[0].username)
+                    exists = basicAuth.safeCompare(params.username,W[0].username)
+                else
+                    error = true;
+
+                if(!error)
+                {
+                    if(!exists)
+                    {
+                        let  TZOfsset = (new Date()).getTimezoneOffset() * 60000; 
+
+                        let dt = (new Date(Date.now() - TZOfsset)).toISOString().replace(/T|Z/g,' ');
+                
+                        params.usertype = 4; params.latt = 0; params.st = 0; params.blocked = 0; params.dt = dt;
+                
+                        let Q = filter("USERS",params,"INS"); 
+                
+                        if(!Q.status)
+                        {
+                            res.status(200).send({status:"success",code:1});
+                        }     
+                        else
+                            res.status(500).send(Q);
+                    }
+                    else
+                        res.status(403).send({message:"User Already Exists",status:"unchanged",code:3});
+                    
+                }
+                else
+                    res.status(500).send({message:"Database Integrity Issue",status:"failure",code:4});
+            }
+        }
+      
 
     });
 
@@ -710,25 +738,61 @@ if(creds)
 
         if(authorized)
         {
-            let params = req.body;
+            let params = req.body, proceed = true;
 
-            if(params.dt)
+            if(params.tab == "USERS")
             {
-                let  TZOfsset = (new Date()).getTimezoneOffset() * 60000; 
+                let W = SQL.SEL("*",null,"USERS",{id},null);
 
-                let dt = (new Date(Date.now() - TZOfsset)).toISOString().replace(/T|Z/g,' ');
+                let exists = false,error = false;
 
-                params.dt = dt;
+                if(!W.status)
+                {
+                    if(W[0])
+                    {
+                        if(W[0].username)
+                            exists = basicAuth.safeCompare(params.username,W[0].username)
+                        else
+                        {
+                            error = true;
+
+                            proceed = false;
+                        }
+                        
+                        if(exists)
+                            proceed = false;
+                    }
+                }
+                else
+                {
+                    proceed = false;
+                }
             }
-            
-            let Q = filter(params.tab,params,"INS"); 
 
-            if(!Q.status)
+            if(proceed)
             {
-                res.status(200).send({status:"success",code:1});
-            }     
+                if(params.dt)
+                {
+                    let  TZOfsset = (new Date()).getTimezoneOffset() * 60000; 
+    
+                    let dt = (new Date(Date.now() - TZOfsset)).toISOString().replace(/T|Z/g,' ');
+    
+                    params.dt = dt;
+                }
+                
+                let Q = filter(params.tab,params,"INS"); 
+    
+                if(!Q.status)
+                {
+                    res.status(200).send({status:"success",code:1});
+                }     
+                else
+                    res.status(500).send({Q});
+            }
+            else if(error)
+                res.status(500).send({message:"Database Integrity Issue",status:"failure",code:4});
             else
-                res.status(500).send({Q});
+                res.status(403).send({message:"User Already Exists",status:"unchanged",code:3});
         }
         else
             res.status(http_code).send({status,code,message});
