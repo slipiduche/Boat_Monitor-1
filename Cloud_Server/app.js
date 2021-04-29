@@ -238,14 +238,54 @@ async function verify(req)
 
 async function appAuthorizer(username,password,cb)
 {   
-    let u = {username}, p = null, exists = false;
+    let u = {username}, p = null, exists = false, sus = false, window = 0, attempts = 0;
 
-    let Q = SQL.SEL("*",null,"USERS",u,null);
+    let Q = await SQL.SEL("*",null,"USERS",u,null);
 
     if(!Q.status && Q[0])
     {
-        if(Q[0].pswrd)
+        if(Q[0].pswrd && Q[0].latt)
         {
+            if(Q[0].ldt)
+            {
+                let str = Q[0].ldt;
+                
+                attempts = Q[0].latt;
+
+                let ldt = Date.parse(str), now = Date.now();
+
+                window = (now - ldt)/60000;
+
+                if(window <= 15 & attempts >= 10)
+                {
+                    sus = true;
+
+                    attempts++;
+
+                    let dt = (new Date(now)).toISOString().replace(/T|Z/g,' ');
+
+                    await SQL.INS("USERS",{blocked:1,latt:attempts,ltd:dt})
+                }
+                else if(window > 15 & attempts)
+                {
+                    let dt = (new Date(now)).toISOString().replace(/T|Z/g,' ');
+
+                    await SQL.INS("USERS",{blocked:0,latt:0,ltd:dt})
+                }
+                else
+                {
+                    let dt = (new Date(now)).toISOString().replace(/T|Z/g,' ');
+
+                    await SQL.INS("USERS",{ltd:dt})
+                }              
+            }
+            else
+            {
+                let dt = (new Date(now)).toISOString().replace(/T|Z/g,' ');
+
+                await SQL.INS("USERS",{ltd:dt}) 
+            }
+
             p = Q[0].pswrd;
 
             exists = true;
@@ -254,10 +294,20 @@ async function appAuthorizer(username,password,cb)
 
     let passwordMatches = await bcrypt.compare(password, p);
 
-    if(exists & passwordMatches)
+    if(exists & passwordMatches & !sus)
         return cb(null,true);
     else
+    {
+        if(window <= 15 & attempts < 10)
+        {
+            attempts++;
+
+            await SQL.INS("USERS",{latt:attempts}) 
+        }
+
         return cb(null,false);
+    }
+       
 }
 
 function unauthorized(req)
