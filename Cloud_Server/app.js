@@ -725,7 +725,9 @@ if(creds)
     {
         let params = req.body;
 
-        let W = SQL.SEL("*",null,"USERS",{id},null);
+        let username = params.username;
+
+        let W = SQL.SEL("*",null,"USERS",{username},null);
 
         let exists = false,error = false;
 
