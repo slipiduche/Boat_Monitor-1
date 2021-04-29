@@ -267,7 +267,7 @@ module.exports.UPD = async function UPD(TABLE,COLS,WHERE)
     if(i > 0)
       q2 += ",";
 
-    q2 =  keys[i] + " = ?";
+    q2 +=  keys[i] + " = ?";
     
     params.push(value);
   }
