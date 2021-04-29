@@ -518,9 +518,15 @@ if(creds)
             {
                 id = req.data.id; secret = req.data.secret; usertype = req.data.usertype;
 
+                console.log();
+                
+                console.log({id,secret,usertype});
+
                 if(id && secret && usertype)
                 {
                     token = jwt.sign({user,id},secret,{expiresIn:60*60}) + id.toString();
+
+                    console.log("\n\rToken: " + token + "\n\r");
 
                     if(token)
                         res.status(200).send({token,usertype,status:"success",code:1});
@@ -535,6 +541,9 @@ if(creds)
         }
         catch(error)
         {
+            console.log("An error has ocurred.");
+            console.log(error);
+
             res.status(500).send({message:error,status:"failure",code:4});
         }
 
