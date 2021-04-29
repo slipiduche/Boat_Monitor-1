@@ -271,10 +271,17 @@ async function appAuthorizer(username,password,signup)
                     
     if(!Q.status && Q[0] && !SUD)
     {
+        console.log("1. User Exists\n\r");
+
         if(Q[0].st)
         {
+
+            console.log("2. User Enabled\n\r");
+
             if(Q[0].pswrd && Q[0].latt && Q[0].id) 
             {
+                console.log("3. Database Integrity OK\n\r");
+
                 if(Q[0].ldt)
                 {
                     let str = Q[0].ldt;
@@ -321,6 +328,9 @@ async function appAuthorizer(username,password,signup)
 
                 p = Q[0].pswrd;
 
+                console.log("Hash: " + p);
+                console.log("Input: " + password);
+                
                 exists = true;
             }           
         }
@@ -342,7 +352,14 @@ async function appAuthorizer(username,password,signup)
     let passwordMatches = false;
 
     if(exists)
+    {
         passwordMatches = await bcrypt.compare(password, p);
+
+        process.stdout.write("5. Validation Complete. Result: ");
+
+        console.log(passwordMatches);
+    }
+       
 
     if((exists | error) & passwordMatches & !sus)
     { 
