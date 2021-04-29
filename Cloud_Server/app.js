@@ -343,15 +343,14 @@ async function appAuthorizer(username,password,signup)
             data = {message:"User is not enabled",status:"unavailable",code:6}
         }      
     }
+    else if (!Q[0])
+        data = {message:"User not registered",status:"unregistered",code:11}
     else if(!SUD)
     {
         error = true;
 
         data = Q;
     }
-    else if (!Q[0])
-        data = {message:"User not registered",status:"unregistered",code:11}
-
 
     let passwordMatches = false;
 
