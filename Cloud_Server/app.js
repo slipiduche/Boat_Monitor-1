@@ -437,8 +437,6 @@ if(creds)
         authorizeAsync: true,
         unauthorizedResponse: unauthorized
     });
-
-    var signup = basicAuth();
     
     app = express();
         
