@@ -275,10 +275,9 @@ async function appAuthorizer(username,password,signup)
 
         if(Q[0].st)
         {
-
             console.log("2. User Enabled\n\r");
 
-            if(Q[0].pswrd && Q[0].latt && Q[0].id) 
+            if(Q[0].pswrd && Q[0].id) 
             {
                 console.log("3. Database Integrity OK\n\r");
 
