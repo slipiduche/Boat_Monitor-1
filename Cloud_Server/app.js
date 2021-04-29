@@ -306,19 +306,19 @@ async function appAuthorizer(username,password,signup)
 
                         let dt = (new Date(now)).toISOString().replace(/T|Z/g,' ');
 
-                        await SQL.UPD("USERS",{blocked:1,latt:attempts,ltd:dt},id)
+                        await SQL.UPD("USERS",{blocked:1,latt:attempts,ldt:dt},id)
                     }
                     else if(window > 15 & attempts)
                     {
                         let dt = (new Date(now)).toISOString().replace(/T|Z/g,' ');
 
-                        await SQL.UPD("USERS",{blocked:0,latt:0,ltd:dt},id)
+                        await SQL.UPD("USERS",{blocked:0,latt:0,ldt:dt},id)
                     }
                     else
                     {
                         let dt = (new Date(now)).toISOString().replace(/T|Z/g,' ');
 
-                        await SQL.UPD("USERS",{ltd:dt},id)
+                        await SQL.UPD("USERS",{ldt:dt},id)
                     }              
                 }
                 else
@@ -327,7 +327,7 @@ async function appAuthorizer(username,password,signup)
 
                     let dt = (new Date(now)).toISOString().replace(/T|Z/g,' ');
 
-                    await SQL.UPD("USERS",{ltd:dt},id) 
+                    await SQL.UPD("USERS",{ldt:dt},id) 
                 }
 
                 p = Q[0].pswrd;
