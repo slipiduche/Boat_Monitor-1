@@ -510,8 +510,8 @@ if(creds)
 
     app.get("/login", auth, async (req,res) =>
     {
-        let id = null, secret = null, usertype = null, token = null;
-
+        let user = req.auth.user, id = null, secret = null, usertype = null, token = null;
+    
         try
         {
             if(!req.data.status)
@@ -544,7 +544,7 @@ if(creds)
             console.log("An error has ocurred.");
             console.log(error);
 
-            res.status(500).send({message:error,status:"failure",code:4});
+            res.status(500).send({message:error.toString(),status:"failure",code:4});
         }
 
     });
