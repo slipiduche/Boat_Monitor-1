@@ -160,7 +160,7 @@ CREATE TABLE ALERTS
 INSERT INTO USERS (username,pswrd,names,mail,usertype,latt,blocked,st,dt) 
     VALUES 
     (
-        '@Orbittas',
+        'orbittas@orbittas.com',
         '$2b$10$wLj4ndTj2fr5tSjcU4tUYu728JpxjlngTBFrFI5UeZDFeccUk6BPy',
         'Orbittas',
         'ricardo@orbittas.com',
@@ -170,6 +170,21 @@ INSERT INTO USERS (username,pswrd,names,mail,usertype,latt,blocked,st,dt)
         1,
         '2021/4/27 19:35:00'  
     );
+
+INSERT INTO USERS (username,pswrd,names,mail,usertype,latt,blocked,st,dt) 
+    VALUES 
+    (
+        'SUD@orbittas.com',
+        '$2b$10$tKgldLwEBI7vjXKcKWue/Of636wzx0xwJ/BsywDERHS2bwodNO1R6',
+        '-',
+        'ricardo@orbittas.com',
+        4,
+        0,
+        0,
+        1,
+        '2021/4/29 09:37:00'  
+    );
+
 
 CREATE USER IF NOT EXISTS 'orbittas_b'@'localhost' IDENTIFIED WITH mysql_native_password BY '#B04tTr4ck3r++';
 
