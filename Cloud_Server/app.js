@@ -357,7 +357,7 @@ async function appAuthorizer(username,password,signup)
     }     
     else
     {
-        if(window <= 15 & attempts < 10)
+        if((window <= 15) & (attempts < 10) & !passwordMatches & exists)
         {
             attempts++;
 
