@@ -721,7 +721,7 @@ if(creds)
 
     app.get("files/:reg/:file",handle.downloads);
 
-    app.post("/singup", sup, async () => 
+    app.post("/signup", sup, async () => 
     {
         let params = req.body;
 
