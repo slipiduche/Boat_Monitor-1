@@ -258,7 +258,7 @@ module.exports.UPD = async function UPD(TABLE,COLS,WHERE)
 
   console.log("UPDATE");
  
-  let iter = key.length;
+  let iter = keys.length;
 
   for(let i = 0; i < iter; i++)
   {      
