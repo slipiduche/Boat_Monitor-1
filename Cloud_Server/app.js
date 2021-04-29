@@ -26,14 +26,14 @@ const morgan = require('morgan');
 
 const _ = require('lodash');
 
-const basicAuth = require('.modules/basic.js');
+const basicAuth = require('./modules/basic.js');
 
 const log = require('./modules/logging.js');
 
 const handle = require('./modules/requests.js');
 
 const SQL = require('./modules/sql.js');
-const { sign } = require('crypto');
+
 
 /*************************VARIABLES AND INSTANCES*****************************/
 
