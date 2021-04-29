@@ -81,7 +81,7 @@ module.exports.SEL = async function SEL(S,EX,TABLE,WHERE,RANGE)
       if(i > 0)
         q3 += " AND ";
 
-      q3 =  keys[i] + " = ?";
+      q3 +=  keys[i] + " = ?";
       
     }
   }
@@ -109,7 +109,7 @@ module.exports.SEL = async function SEL(S,EX,TABLE,WHERE,RANGE)
     }
   }
 
-  Q = q1 + S + q2 + TABLE;
+  Q = q1 + S + q2;
 
   if(WHERE)
     Q += q3;
