@@ -70,7 +70,7 @@ module.exports.SEL = async function SEL(S,EX,TABLE,WHERE,RANGE)
   {
     keys = Object.keys(WHERE);
 
-    let iter = key.length;
+    let iter = keys.length;
 
     for(let i = 0; i < iter; i++)
     {      
