@@ -320,8 +320,8 @@ async function appAuthorizer(username,password,signup)
                 }
                 else
                 {
-                    let now = now = Date.now();
-                    
+                    let now = Date.now();
+
                     let dt = (new Date(now)).toISOString().replace(/T|Z/g,' ');
 
                     await SQL.UPD("USERS",{ltd:dt},id) 
