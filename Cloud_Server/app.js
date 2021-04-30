@@ -759,7 +759,7 @@ if(creds)
         
                 params.usertype = 4; params.latt = 0; params.st = 0; params.blocked = 0; params.dt = dt;
         
-                let Q = filter("USERS",params,"INS"); 
+                let Q = await filter("USERS",params,"INS"); 
         
                 if(!Q.status)
                 {
