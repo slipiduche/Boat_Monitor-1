@@ -31,13 +31,31 @@ const log = require('./modules/logging.js');
 const handle = require('./modules/requests.js');
 
 const SQL = require('./modules/sql.js');
+const { SSL_OP_SSLEAY_080_CLIENT_DH_BUG } = require('constants');
+const e = require('express');
 
 
 /*************************VARIABLES AND INSTANCES*****************************/
 
 const port = [8443,9443,8883];
 
-var privateKey, certificate, credentials;
+const BOATS = ["id","boat_name","max_st","resp","st","obs"];
+
+const USERS = ["id","username","names","mail","usertype","latt","ldt","blocked","st","dt"];
+
+const bex = ["mac","max_st"];
+
+const uex_self = ["username","names","mail","usertype","latt","ldt","blocked","st","dt"];
+
+const uex = ["latt","ldt","blocked","st"];
+
+const jex_ini = ["ed","end_user","i_weight","f_weight","s_img","total_img","synced"];
+
+const jex_ed = ["ini","start_user","i_weight","f_weight","s_img","total_img","synced"];
+
+const C = ["USERS","JOURNEYS"];
+
+const M = ["BOATS","USERS","JOURNEYS"];
 
 var collector, app, httpsServer = [];
 
@@ -58,9 +76,9 @@ var creds  = false;
 11: Untregistered
 */
 /*********************************FUNCTIONS***********************************/
-async function filter(tab,params,command)
+async function filter(tab,retrieve,params,command)
 {
-    let range = null, id = null;
+    let range = null, id = null, uid = params.token[params.token.length - 1];
     
     delete params.token;
 
@@ -101,16 +119,24 @@ async function filter(tab,params,command)
         {
             let where = null;
 
+            let selection = "*";
+
+            if(retrieve)
+                selection = retrieve.join();
+            
+
             if(Object.keys(params).length > 0)
                 where = params;
 
-            Q = await SQL.SEL("*",tab,where,range);
+            Q = await SQL.SEL(selection,tab,where,range);
 
             break;
         }
 
         case "INS":
         {
+            params = exclude(tab,commands,params,id,uid);
+
             Q = await SQL.INS(tab,params);
             
             break;
@@ -118,6 +144,8 @@ async function filter(tab,params,command)
 
         case "UPD":
         {
+            params = exclude(tab,commands,params,id,uid);
+
             Q = await SQL.UPD(tab,params,id)
             
             break;
@@ -426,6 +454,69 @@ function unauthorized(req,data)
         return data;
 }
 
+function removal(params,exclusions)
+{
+    let iter = exclusions.length;
+
+    for(let i = 0 ; i < iter; i++)
+    {
+        if(params[exclusions[i]])
+            delete params[exclusions[i]];
+    }
+
+    return params;
+}
+
+function exclude(tab,command,params,exclusions,id,uid)
+{
+    switch(tab)
+    {
+        case "BOATS":
+        {
+            params = removal(params,bex);
+
+            break;
+        }
+
+        case "USERS":
+        {
+            if(command == "UPD")
+            {
+                if(id == uid)
+                    params = removal(params,uex_self);
+                else
+                    params = removal(params,uex);
+            }
+
+            break;
+        }
+
+        case "JOURNEYS":
+        {
+            if(command == "INS")
+                params = removal(params,jex_ini);
+            else
+                params = removal(params,jex_ed);
+
+            break;
+        }
+    }
+
+    return params;
+}
+
+function data_access(tab,access)
+{
+    let iter = access.length;
+
+    for(let i = 0; i < iter; i++)
+    {
+        if(tab == access[i])
+            return true;
+    }
+
+    return false;
+}
 
 /*******************************INITIALIZATION********************************/
 
@@ -522,7 +613,11 @@ if(creds)
     app.get("/login", auth, async (req,res) =>
     {
         let user = req.auth.user, id = null, secret = null, usertype = null, token = null;
-    
+        
+        console.log(); console.log(req.url); console.log();
+
+        process.stdout.write("Request: "); console.log(req.body); console.log();
+
         try
         {
             if(!req.data.status)
@@ -736,10 +831,9 @@ if(creds)
     {
         let params = req.body;
 
-        console.log();
+        console.log(); console.log(req.url); console.log();
 
-        process.stdout.write("Request Parameters: ");
-        console.log(params);
+        process.stdout.write("Request: "); console.log(req.body); console.log();
 
         let username = params.username;
 
@@ -784,7 +878,7 @@ if(creds)
 
     app.post("/create", async (req,res) => 
     {
-        let authorized, http_code, status, code, message, min = 1;
+        let authorized = false, access, http_code, status, code, message, min = 1;
         
         console.log(); console.log(req.url); console.log();
 
@@ -795,9 +889,18 @@ if(creds)
         if(usertype)
             min = usertype + 1;
 
-        [authorized,http_code,status,code,message] =  await verify(req,min);
+        access = data_access(req.body.tab,C);
 
-        console.log({authorized,http_code,status,code,message}); console.log();
+        if(access)
+        {
+            [authorized,http_code,status,code,message] =  await verify(req,min);
+
+            console.log({authorized,http_code,status,code,message}); console.log();
+        }
+        else
+        {
+            [http_code,status,code,message] = [400,"unchanged",3,"unavailable resource"];
+        }
 
         if(authorized)
         {
@@ -839,8 +942,15 @@ if(creds)
     
                     params.dt = dt;
                 }
+
+                if(params.pswrd)
+                {
+                    params.pswrd = await bcrypt.hash(params.pswrd,10);
+
+                    console.log("hashing complete");    
+                }
                 
-                let Q = await filter(params.tab,params,"INS"); 
+                let Q = await filter(params.tab,null,params,"INS"); 
     
                 if(!Q.status)
                 {
@@ -852,9 +962,78 @@ if(creds)
   
         }
         else
-            sendResponse(res,http_code,{message,status,code});
+            sendResponse(res,http_code,{message,status,code});       
+    });
 
+    app.post("/modify", async (req,res) => 
+    {
+        let authorized = false, access, http_code, status, code, message, min = 1;
         
+        console.log(); console.log(req.url); console.log();
+
+        process.stdout.write("Request: "); console.log(req.body); console.log();
+
+        let usertype = req.body.usertype;
+        
+        let id = req.body.token[req.body.token.length - 1];
+        
+        if(usertype && req.body.id != id)
+            min = usertype + 1;
+        
+        access = data_access(req.body.tab,M);
+
+        if(access)
+        {
+            [authorized,http_code,status,code,message] =  await verify(req,min);
+
+            console.log({authorized,http_code,status,code,message}); console.log();
+        }
+        else
+        {
+            [http_code,status,code,message] = [400,"unchanged",3,"unavailable resource"];
+        }
+
+        if(authorized)
+        {
+            let params = req.body;
+
+            if(params.dt || params.ed)
+            {
+                let  TZOfsset = (new Date()).getTimezoneOffset() * 60000; 
+
+                let dt = (new Date(Date.now() - TZOfsset)).toISOString().replace(/T|Z/g,' ');
+                
+                if(params.dt)
+                    params.dt = dt;
+                
+                if(params.ed)
+                    params.ed = dt
+            }
+            
+            if(params.end_user)
+            {
+                params.end_user = id;
+            }
+
+            let Q = await filter(params.tab,params,"UPD"); 
+
+            if(!Q.status)
+            {
+                sendResponse(res,200,{message:"New entry successfully created",status:"success",code:1});
+            }     
+            else
+            {
+                if(Q.code == 3)
+                    sendResponse(res,400,Q);
+                else 
+                    sendResponse(res,500,Q);
+            }
+               
+            
+  
+        }
+        else
+            sendResponse(res,http_code,{message,status,code});       
     });
 }
 
