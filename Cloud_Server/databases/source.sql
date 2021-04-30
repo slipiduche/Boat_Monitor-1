@@ -48,6 +48,7 @@ CREATE TABLE JOURNEYS
     s_img INTEGER,
     total_img INTEGER,
     synced TINYINT NOT NULL,
+    alert TINYINT NOT NULL,
     eta FLOAT,
     obs TEXT,
 
@@ -106,7 +107,7 @@ CREATE TABLE FILES
     fl_url TEXT NOT NULL,
     journey_id INTEGER NOT NULL,
     boat_id INTEGER NOT NULL,
-    cam INTEGER NOT NULL,
+    cam INTEGER,
     rl INT,
     dt DATETIME NOT NULL,
     reg DATETIME NOT NULL,
@@ -132,6 +133,7 @@ CREATE TABLE ALERTS
     journey_id INTEGER NOT NULL,
     ta TINYINT NOT NULL,
     wa TINYINT NOT NULL,
+    ua TINYINT NOT NULL,
     sus TINYINT NOT NULL,
     dt DATETIME NOT NULL,
     obs TEXT,
@@ -182,6 +184,85 @@ INSERT INTO USERS (username,pswrd,names,mail,usertype,latt,blocked,st,dt)
         '2021/4/29 09:37:00'  
     );
 
+
+
+
+
+INSERT INTO BOATS(mac,boat_name,max_st,resp,st,obs)
+    VALUES
+    (
+        'b8:27:eb:4f:15:95',
+        'CAT',
+        '491.7',
+        1,
+        0,
+        'TEST DATA'
+   );
+
+INSERT INTO JOURNEYS(ini,ed,start_user,end_user,boat_id,i_weight,f_weight,s_img,total_img,synced,alert,eta,obs)
+    VALUES
+    (
+        '2021/4/27 19:35:00',
+        '2021/4/27 19:35:00',
+        1,
+        1,
+        1,
+        30.7,
+        417.15,
+        0,
+        0,
+        1,
+        1,
+        NULL,
+        'TEST DATA'
+    );
+
+INSERT INTO HISTORICS(boat_id,journey_id,cont_status,open_time,cont_weight,bat,dsk,temp,b_location,TiP,fl_name,dt,reg)
+    VALUES
+    (
+        1,
+        1,
+        1,
+        900,
+        417.15,
+        85.5,
+        27.1,
+        10.1,
+        '41°24''12.2"N 2°10''26.5"E',
+        50,
+        'B1_042220211937415959.txt',
+        '2021/4/27 19:35:00',
+        '2021/4/27 19:35:00'
+    );
+
+INSERT INTO FILES(fl_name,fl_type,fl_path,fl_url,journey_id,boat_id,cam,rl,dt,reg)
+    VALUES
+    (
+        'B1_042220211937415959.txt',
+        '.txt',
+        './files/historics/journey1/B1_042220211937415959.txt',
+        'files/1/1',
+        1,
+        1,
+        null,
+        1,
+        '2021/4/27 19:35:00',
+        '2021/4/27 19:35:00'
+    );
+
+INSERT INTO ALERTS(hist_id,boat_id,journey_id,ta,wa,ua,sus,dt,obs)
+    VALUES
+    (
+        1,
+        1,
+        1,
+        0,
+        0,
+        0,
+        1,
+        '2021/4/27 19:35:00',
+        'Sucpicious activity'
+    );
 
 CREATE USER IF NOT EXISTS 'orbittas_b'@'localhost' IDENTIFIED WITH mysql_native_password BY '#B04tTr4ck3r++';
 

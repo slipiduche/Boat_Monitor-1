@@ -884,6 +884,8 @@ if(creds)
 
         process.stdout.write("Request: "); console.log(req.body); console.log();
 
+        let id = req.body.token[req.body.token.length - 1];
+
         let usertype = req.body.usertype;
 
         if(usertype)
@@ -934,14 +936,20 @@ if(creds)
 
             if(proceed)
             {
-                if(params.dt)
+                if(params.dt || params.ini)
                 {
                     let  TZOfsset = (new Date()).getTimezoneOffset() * 60000; 
     
                     let dt = (new Date(Date.now() - TZOfsset)).toISOString().replace(/T|Z/g,' ');
-    
-                    params.dt = dt;
+                    
+                    if(params.dt)
+                        params.dt = dt;
+                    else
+                        params.ini = dt;
                 }
+
+                if(params.start_user)
+                    params.start_user = id;
 
                 if(params.pswrd)
                 {
@@ -1005,14 +1013,20 @@ if(creds)
                 
                 if(params.dt)
                     params.dt = dt;
-                
-                if(params.ed)
+                else
                     params.ed = dt
             }
             
             if(params.end_user)
             {
                 params.end_user = id;
+            }
+
+            if(params.pswrd)
+            {
+                params.pswrd = await bcrypt.hash(params.pswrd,10);
+
+                console.log("hashing complete");    
             }
 
             let Q = await filter(params.tab,params,"UPD"); 
@@ -1027,10 +1041,7 @@ if(creds)
                     sendResponse(res,400,Q);
                 else 
                     sendResponse(res,500,Q);
-            }
-               
-            
-  
+            }           
         }
         else
             sendResponse(res,http_code,{message,status,code});       
