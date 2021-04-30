@@ -871,7 +871,7 @@ if(creds)
 
                 console.log("hashing complete");
                 
-                let Q = await filter("USERS",params,"INS"); 
+                let Q = await filter("USERS",null,params,"INS"); 
         
                 if(!Q.status)
                 {
@@ -1038,7 +1038,7 @@ if(creds)
                 console.log("hashing complete");    
             }
 
-            let Q = await filter(params.tab,params,"UPD"); 
+            let Q = await filter(params.tab,null,params,"UPD"); 
 
             if(!Q.status)
             {
