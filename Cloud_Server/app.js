@@ -763,7 +763,7 @@ if(creds)
         
                 if(!Q.status)
                 {
-                    res.status(200).send({status:"success",code:1});
+                    res.status(200).send({message:"User Created",status:"success",code:1});
                 }     
                 else
                     res.status(500).send(Q);             
