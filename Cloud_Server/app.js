@@ -744,7 +744,7 @@ if(creds)
                 {
                     console.log();
 
-                    console.log("Usernmae already exists");
+                    console.log("Username already exists");
 
                     res.status(403).send({message:"User Already Exists",status:"unchanged",code:3});
                 }
