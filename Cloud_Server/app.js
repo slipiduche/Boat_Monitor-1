@@ -78,7 +78,7 @@ var creds  = false;
 /*********************************FUNCTIONS***********************************/
 async function filter(tab,retrieve,params,command)
 {
-    let range = null, id = null, uid = params.token[params.token.length - 1];
+    let range = null, id = null,  rest = null, uid = params.token[params.token.length - 1];
     
     delete params.token;
 
@@ -96,6 +96,13 @@ async function filter(tab,retrieve,params,command)
         id = params.id;
 
         delete params.id;
+    }
+
+    if(params.rest)
+    {
+        rest = params.rest;
+        
+        delete params.rest;
     }
 
     if(params.ini && params.end)
@@ -127,8 +134,8 @@ async function filter(tab,retrieve,params,command)
 
             if(Object.keys(params).length > 0)
                 where = params;
-
-            Q = await SQL.SEL(selection,tab,where,range);
+           
+            Q = await SQL.SEL(selection,rest,tab,where,range);
 
             break;
         }
@@ -164,7 +171,7 @@ async function filter(tab,retrieve,params,command)
 
 async function verify(req, min)
 {
-    let authorized = false, http_code = 500, status = null, code = null, message = null;
+    let authorized = false, http_code = 500, status = null, code = null, message = null, usertype = null;
 
     if (req.body.token)
     {
@@ -230,6 +237,8 @@ async function verify(req, min)
                     {
                         code = 0;
 
+                        usertype = Q[0].usertype;
+
                         authorized = true; 
                     }
                     
@@ -280,7 +289,7 @@ async function verify(req, min)
         }        
     }
 
-    return [authorized,http_code,status,code,message];
+    return [authorized,http_code,status,code,message,usertype];
 }
 
 async function appAuthorizer(username,password,signup)
@@ -681,148 +690,148 @@ if(creds)
 
     app.get("/boats", async (req,res) => 
     {
-        let authorized, http_code, status, code, message;
+        let authorized, http_code, status, code, message, usertype;
 
-        [authorized,http_code,status,code,message] =  verify(req);
+        [authorized,http_code,status,code,message,usertype] =  verify(req,1);
 
         if(authorized)
         {
-            let Q; 
+            let Q = filter("BOATS",BOATS,req.body,"SEL");
             
-            Q[0] = {id:1,mac:"b8:27:eb:4f:15:95",boat_name:"CAT",max_st:498.7,resp:1,st:1,ta:0,wa:0,ua:0,obs:null};
-
             if(!Q.status)
             {
                 if(Q[0])
-                    res.status(200).send({BOATS:Q,status:"success"});
+                    res.status(200).send({BOATS:Q[0],status:"success",code:1});
                 else
-                    res.status(200).send({BOATS:Q,status:"empty"});
+                    res.status(200).send({BOATS:[],status:"empty",code:2});
             }     
             else
-                res.status(500).send({Q});
+                res.status(500).send(Q);
         }
         else
-            res.status(http_code).send({status,code,message});
-        
+            res.status(http_code).send({status,code,message});      
     });
 
     app.get("/users", async (req,res) => 
     {
-        let authorized, http_code, status, code, message;
+        let authorized, http_code, status, code, message,usertype;
 
-        [authorized,http_code,status,code,message] =  verify(req);
+        [authorized,http_code,status,code,message,usertype] =  verify(req,1);
 
         if(authorized)
-        {
-            let Q; 
-            
-            Q[0] = {id:1,username:"@SlipiDuche",names:"Alejandro Camacaro",mail:"ale@gmail.com",usertype:3,blocked:0,st:1,reg:"2021/04/22 19:32:00"};
+        {   
+            req.body.rest = usertype;
 
+            let Q = filter("USERS",USERS,req.body,"SEL");
+            
             if(!Q.status)
             {
                 if(Q[0])
-                    res.status(200).send({USERS:Q,status:"success",code:1});
+                    res.status(200).send({BOATS:Q[0],status:"success",code:1});
                 else
-                    res.status(200).send({USERS:Q,status:"empty",code:2});
+                    res.status(200).send({BOATS:[],status:"empty",code:2});
             }     
             else
-                res.status(500).send({Q});
+                res.status(500).send(Q);
         }
         else
-            res.status(http_code).send({status,code,message});
+            res.status(http_code).send({status,code,message});      
     });
 
     app.get("/journeys", async (req,res) => 
     {
-        let authorized, http_code, status, code, message;
+        let authorized, http_code, status, code, message,usertype;
 
-        [authorized,http_code,status,code,message] =  verify(req);
+        [authorized,http_code,status,code,message,usertype] =  verify(req,1);
 
         if(authorized)
         {
-            let Q; 
+            let Q = filter("JOURNEYS",null,req.body,"SEL");
             
-            Q[0] = {id:1,ini:"2021/04/22 19:32:00", ed:"2021/04/22 19:45:00",start_user:1,end_user:1,boat_id:1,i_weight:30.1,f_weight:371.2,s_img:0,total_img:0,synced:1,eta:null,obs:null};
-
             if(!Q.status)
             {
                 if(Q[0])
-                    res.status(200).send({JOURNEYS:Q,status:"success"});
+                    res.status(200).send({BOATS:Q[0],status:"success",code:1});
                 else
-                    res.status(200).send({JOURNEYS:Q,status:"empty"});
+                    res.status(200).send({BOATS:[],status:"empty",code:2});
             }     
             else
-                res.status(500).send({Q});
+                res.status(500).send(Q);
         }
         else
-            res.status(http_code).send({status,code,message});
+            res.status(http_code).send({status,code,message});      
     });
 
     app.get("/files", async (res,req) => 
     {
-        let authorized, http_code, status, code, message;
+        let authorized, http_code, status, code, message,usertype;
 
-        [authorized,http_code,status,code,message] =  verify(req);
+        [authorized,http_code,status,code,message,usertype] =  verify(req,1);
 
         if(authorized)
         {
-            let Q; 
+            let Q = filter("FILES",null,req.body,"SEL");
             
-            Q[0] = {id:1,fl_name:"B1_042220211937415959.txt",fl_url:"/files/1/",journey_id:1,boat_id:1,cam:null,rl:1,dt:"2021/04/22 19:37:41",reg:"2021/04/22 19:45:00"};
-
             if(!Q.status)
             {
                 if(Q[0])
-                    res.status(200).send({FILES:Q,status:"success"});
+                    res.status(200).send({BOATS:Q[0],status:"success",code:1});
                 else
-                    res.status(200).send({FILES:Q,status:"empty"});
+                    res.status(200).send({BOATS:[],status:"empty",code:2});
             }     
             else
-                res.status(500).send({Q});
+                res.status(500).send(Q);
         }
         else
-            res.status(http_code).send({status,code,message});
+            res.status(http_code).send({status,code,message});      
     });
 
     app.get("/historics", async (req,res) =>
     {
-        /*
-        
-        let initDate = req.ini, endDate = req.end, code = 500;
+        let authorized, http_code, status, code, message,usertype;
 
-        let Q = [];
-        Q.push(SQL.SEL({"*":"*"},"HISTORICS",{"dt":[initDate,endDate],"ops":"&","cond":">=,<="}));
-        Q.push(SQL.SEL({"*":"*"},"FILES",{"dt":[initDate,endDate],"ops":"&","cond":">=,<="}));
-        
-        if(!Q.status)
-            code = 200;
-
-        res.status(code).json(Q);
-        
-        */
-
-        let authorized, http_code, status, code, message;
-
-        [authorized,http_code,status,code,message] =  verify(req);
+        [authorized,http_code,status,code,message,usertype] =  verify(req,1);
 
         if(authorized)
         {
-            let Q; 
+            let Q = filter("HISTORICS",null,req.body,"SEL");
             
-            Q[0] = {id:1,boat_id:1,journey_id,cont_status:0,open_time:0,cont_weight:371.2,bat:90.7,dsk:5.7,temp:10.7,b_location:"lat:9,long:9",TiP:0.25,fl_name:"B1_042220211937415959.txt",dt:"2021/04/22 19:37:41",reg:"2021/04/22 19:45:00"};
-
             if(!Q.status)
             {
                 if(Q[0])
-                    res.status(200).send({HISTORICS:Q,status:"success"});
+                    res.status(200).send({BOATS:Q[0],status:"success",code:1});
                 else
-                    res.status(200).send({HISTORICS:Q,status:"empty"});
+                    res.status(200).send({BOATS:[],status:"empty",code:2});
             }     
             else
-                res.status(500).send({Q});
+                res.status(500).send(Q);
         }
         else
-            res.status(http_code).send({status,code,message});
+            res.status(http_code).send({status,code,message});  
+    }); 
+
+    app.get("/alerts", async (req,res) =>
+    {
+        let authorized, http_code, status, code, message,usertype;
+
+        [authorized,http_code,status,code,message,usertype] =  verify(req,1);
+
+        if(authorized)
+        {
+            let Q = filter("ALERTS",null,req.body,"SEL");
+            
+            if(!Q.status)
+            {
+                if(Q[0])
+                    res.status(200).send({BOATS:Q[0],status:"success",code:1});
+                else
+                    res.status(200).send({BOATS:[],status:"empty",code:2});
+            }     
+            else
+                res.status(500).send(Q);
+        }
+        else
+            res.status(http_code).send({status,code,message});  
     }); 
 
     app.get("files/:reg/:file",handle.downloads);

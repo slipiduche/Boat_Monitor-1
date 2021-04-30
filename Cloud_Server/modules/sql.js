@@ -36,7 +36,7 @@ function DBconnection()
 
 /*SELECT QUERY*/
 
-module.exports.SEL = async function SEL(S,EX,TABLE,WHERE,RANGE)
+module.exports.SEL = async function SEL(S,REST,TABLE,WHERE,RANGE)
 {  
   let DB = DBconnection(), r = "";
 
@@ -86,9 +86,20 @@ module.exports.SEL = async function SEL(S,EX,TABLE,WHERE,RANGE)
     }
   }
 
-  if(RANGE)
+  if(REST)
   {
     if(WHERE)
+      q3 +=  " AND ";
+
+    q3 += "usertype <= ?";
+
+    params.push(REST);
+
+  }
+
+  if(RANGE)
+  {
+    if(WHERE || REST)
       q3 +=  " AND ";
 
     if(TABLE == "JOURNEYS")
@@ -111,7 +122,7 @@ module.exports.SEL = async function SEL(S,EX,TABLE,WHERE,RANGE)
 
   Q = q1 + S + q2;
 
-  if(WHERE)
+  if(WHERE || RANGE || REST)
     Q += q3;
     
   Q += ";";
