@@ -78,10 +78,8 @@ var creds  = false;
 /*********************************FUNCTIONS***********************************/
 async function filter(tab,retrieve,params,command)
 {
-    let range = null, id = null,  rest = null, uid = params.token[params.token.length - 1];
+    let range = null, id = null,  rest = null, uid = null;
     
-    delete params.token;
-
     if(params.auth)
         delete params.auth;
 
@@ -105,6 +103,13 @@ async function filter(tab,retrieve,params,command)
         delete params.rest;
     }
 
+    if(params.token)
+    {
+        uid = params.token[params.token.length - 1];
+    
+        delete params.token;
+    }
+    
     if(params.ini && params.end)
     {
         range = [params.ini,params.end];
