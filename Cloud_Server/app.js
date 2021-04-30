@@ -727,50 +727,50 @@ if(creds)
     {
         let params = req.body;
 
+        console.log();
+
+        process.stdout.write("Request Parameters: ");
+        console.log(params);
+
         let username = params.username;
 
         let W = SQL.SEL("*",null,"USERS",{username},null);
-
-        let exists = false,error = false;
 
         if(!W.status)
         {
             if(W[0])
             {
                 if(W[0].username)
-                    exists = basicAuth.safeCompare(params.username,W[0].username)
-                else
-                    error = true;
-
-                if(!error)
                 {
-                    if(!exists)
-                    {
-                        let  TZOfsset = (new Date()).getTimezoneOffset() * 60000; 
+                    console.log();
 
-                        let dt = (new Date(Date.now() - TZOfsset)).toISOString().replace(/T|Z/g,' ');
-                
-                        params.usertype = 4; params.latt = 0; params.st = 0; params.blocked = 0; params.dt = dt;
-                
-                        let Q = filter("USERS",params,"INS"); 
-                
-                        if(!Q.status)
-                        {
-                            res.status(200).send({status:"success",code:1});
-                        }     
-                        else
-                            res.status(500).send(Q);
-                    }
-                    else
-                        res.status(403).send({message:"User Already Exists",status:"unchanged",code:3});
-                    
+                    console.log("Usernmae already exists");
+
+                    res.status(403).send({message:"User Already Exists",status:"unchanged",code:3});
                 }
                 else
                     res.status(500).send({message:"Database Integrity Issue",status:"failure",code:4});
             }
-        }
-      
+            else
+            {
+                let  TZOfsset = (new Date()).getTimezoneOffset() * 60000; 
 
+                let dt = (new Date(Date.now() - TZOfsset)).toISOString().replace(/T|Z/g,' ');
+        
+                params.usertype = 4; params.latt = 0; params.st = 0; params.blocked = 0; params.dt = dt;
+        
+                let Q = filter("USERS",params,"INS"); 
+        
+                if(!Q.status)
+                {
+                    res.status(200).send({status:"success",code:1});
+                }     
+                else
+                    res.status(500).send(Q);             
+            }
+        }
+        else
+            res.status(500).send(W);   
     });
 
     app.post("/create", async () => 
