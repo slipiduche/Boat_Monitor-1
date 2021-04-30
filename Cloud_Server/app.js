@@ -109,7 +109,7 @@ async function filter(tab,retrieve,params,command)
     
         delete params.token;
     }
-    
+
     if(params.ini && params.end)
     {
         range = [params.ini,params.end];
@@ -147,7 +147,7 @@ async function filter(tab,retrieve,params,command)
 
         case "INS":
         {
-            params = exclude(tab,commands,params,id,uid);
+            params = exclude(tab,command,params,id,uid);
 
             Q = await SQL.INS(tab,params);
             
@@ -156,7 +156,7 @@ async function filter(tab,retrieve,params,command)
 
         case "UPD":
         {
-            params = exclude(tab,commands,params,id,uid);
+            params = exclude(tab,command,params,id,uid);
 
             Q = await SQL.UPD(tab,params,id)
             
