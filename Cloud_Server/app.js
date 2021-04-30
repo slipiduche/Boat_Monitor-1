@@ -31,7 +31,7 @@ const log = require('./modules/logging.js');
 const handle = require('./modules/requests.js');
 
 const SQL = require('./modules/sql.js');
-const { SSL_OP_SSLEAY_080_CLIENT_DH_BUG } = require('constants');
+
 const e = require('express');
 
 
@@ -74,6 +74,7 @@ var creds  = false;
 9: Access Denied
 10: Missing Data
 11: Untregistered
+12: expired
 */
 /*********************************FUNCTIONS***********************************/
 async function filter(tab,retrieve,params,command)
@@ -261,7 +262,7 @@ async function verify(req, min)
 
                             status = "unauthorized";
                            
-                            code = 7;
+                            code = 12;
                            
                             message = "Token expired"
                             
@@ -668,27 +669,53 @@ if(creds)
 
     });
 
-    app.get("/recovery", async (req,res) => 
+    app.get("/recovery", sup, async (req,res) => 
     {
-        let authorized, message;
+        let params = req.body;
 
-        [st,error,authorized,message] =  verify(req);
+        console.log(); console.log(req.url); console.log();
 
-        if(authorized)
+        process.stdout.write("Request: "); console.log(req.body); console.log();
+
+        let mail = params.mail;
+
+        let W = await SQL.SEL("*",null,"USERS",{mail},null);
+
+        if(!W.status)
         {
-            if(req.body.mail)
-                res.status(200).send({status:"success"});
+            if(W[0])
+            {
+                if(W[0].username)
+                {
+                    sendResponse(res,403,{message:"User Already Exists",status:"unchanged",code:3});
+                }
+                else
+                    sendResponse(res,500,{message:"Database Integrity Issue",status:"failure",code:4});
+            }
             else
-                res.status(400).send({message:"No mail specfied",status:"failure",code:10});
-        }
-        else if(error)
-        {
-            res.status(500).send({message,status:"failure"});
+            {
+                let  TZOfsset = (new Date()).getTimezoneOffset() * 60000; 
+
+                let dt = (new Date(Date.now() - TZOfsset)).toISOString().replace(/T|Z/g,' ');
+        
+                params.usertype = 4; params.latt = 0; params.st = 0; params.blocked = 0; params.dt = dt;
+                
+                params.pswrd = await bcrypt.hash(params.pswrd,10);
+
+                console.log("hashing complete");
+                
+                let Q = await filter("USERS",null,params,"INS"); 
+        
+                if(!Q.status)
+                {
+                    sendResponse(res,200,{message:"User Created",status:"success",code:1});
+                }     
+                else
+                    sendResponse(res,500,Q);           
+            }
         }
         else
-        {
-            res.status(401).send({message,status:"unauthorized"});
-        }
+            sendResponse(res,500,W);
     });
 
     /*Data Visualization*/
