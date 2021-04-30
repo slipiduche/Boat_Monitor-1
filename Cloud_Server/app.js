@@ -758,7 +758,11 @@ if(creds)
                 let dt = (new Date(Date.now() - TZOfsset)).toISOString().replace(/T|Z/g,' ');
         
                 params.usertype = 4; params.latt = 0; params.st = 0; params.blocked = 0; params.dt = dt;
-        
+                
+                params.pswrd = await bcrypt.hash(params.pswrd,10);
+
+                console.log("hashing complete");
+                
                 let Q = await filter("USERS",params,"INS"); 
         
                 if(!Q.status)
