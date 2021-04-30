@@ -20,8 +20,6 @@ const fileUpload = require('express-fileupload');
 
 const cors = require('cors');
 
-const bodyParser = require('body-parser');
-
 const morgan = require('morgan');
 
 const _ = require('lodash');
@@ -449,9 +447,9 @@ if(creds)
         
     collector.use(cors());
     
-    collector.use(bodyParser.json());
+    collector.use(express.json());
     
-    collector.use(bodyParser.urlencoded({extended: true}));
+    collector.use(express.urlencoded());
     
     collector.use(morgan('dev'));
 
@@ -470,6 +468,10 @@ if(creds)
     });
     
     app = express();
+
+    app.use(express.json());
+    
+    app.use(express.urlencoded());
         
     httpsServer[0] = https.createServer(credentials, collector);
 
@@ -723,9 +725,6 @@ if(creds)
 
     app.post("/signup", sup, async (req,res) => 
     {
-        console.log("BODY");
-        console.log(req.body);
-
         let params = req.body;
 
         let username = params.username;

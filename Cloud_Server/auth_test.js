@@ -109,9 +109,9 @@ if(creds)
         
     collector.use(cors());
     
-    collector.use(bodyParser.json());
+    collector.use(express.json());
     
-    collector.use(bodyParser.urlencoded({extended: true}));
+    collector.use(express.urlencoded({extended: true}));
     
     collector.use(morgan('dev'));
 
@@ -124,7 +124,11 @@ if(creds)
     });
     
     app = express();
-        
+    
+    app.use(express.json());
+
+    app.use(express.urlencoded());
+
     httpsServer[0] = https.createServer(credentials, collector);
 
     httpsServer[1] = https.createServer(credentials, app);
@@ -164,7 +168,10 @@ if(creds)
     app.get("/login", auth, async (req,res) =>
     {
         req.data.cat = "CAT";
-      res.send(req.data);
+
+        console.log(req.body);
+        
+        res.send(req.data);
     });
 
 }
