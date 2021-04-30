@@ -734,7 +734,7 @@ if(creds)
 
         let username = params.username;
 
-        let W = SQL.SEL("*",null,"USERS",{username},null);
+        let W = await SQL.SEL("*",null,"USERS",{username},null);
 
         if(!W.status)
         {
