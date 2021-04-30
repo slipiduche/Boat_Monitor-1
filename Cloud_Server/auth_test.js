@@ -163,6 +163,14 @@ if(creds)
 
     /**********************************************************************/
 
+    function sendResponse(res,status,payload)
+    {
+        process.stdout.write("\n\rServer Resonse: "); console.log(payload);
+        process.stdout.write("Status Code: "); console.log(status); console.log();
+
+        res.status(status).send(payload);
+    }
+
     /*Authentication and Recovery*/
 
     app.get("/login", auth, async (req,res) =>
@@ -171,7 +179,7 @@ if(creds)
 
         console.log(req.body);
         
-        res.send(req.data);
+        sendResponse(res,200,req.data);
     });
 
 }

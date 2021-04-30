@@ -146,7 +146,7 @@ async function verify(req, min)
         {
             let id =  token[token.length - 1];
 
-            let Q = SQL.SEL("*",null,"USERS",{id},null);
+            let Q = await SQL.SEL("*",null,"USERS",{id},null);
 
             if(!Q.status && Q[0])
             {
@@ -296,6 +296,8 @@ async function appAuthorizer(username,password,signup)
 
                     if(window <= 15 & attempts >= 10)
                     {
+                        console.log("5. User Blocked\n\r");
+
                         sus = true;
 
                         data = {message:"Blocked User",status:"blocked", code:8};
@@ -352,7 +354,7 @@ async function appAuthorizer(username,password,signup)
 
     let passwordMatches = false;
 
-    if(exists)
+    if(exists & !sus)
     {
         passwordMatches = await bcrypt.compare(password, p);
 
@@ -404,6 +406,14 @@ async function SUAuth(username,password,cb)
     [r,data] = await appAuthorizer(username,password,true);
 
     return cb(null,r,data);
+}
+
+function sendResponse(res,status,payload)
+{
+    process.stdout.write("\n\rServer Resonse: "); console.log(payload);
+    process.stdout.write("Status Code: "); console.log(status); console.log();
+
+    res.status(status).send(payload);
 }
 
 function unauthorized(req,data)
@@ -530,22 +540,21 @@ if(creds)
                     console.log("\n\rToken: " + token + "\n\r");
 
                     if(token)
-                        res.status(200).send({token,usertype,status:"success",code:1});
+                        sendResponse(res,200,{token,usertype,status:"success",code:1});
                     else
-                        res.status(500).send({message:"Unknown Error",status:"failure",code:4});
+                        sendResponse(res,500,{message:"Unknown Error",status:"failure",code:4});
                 }              
                 else
-                    res.status(500).send({message:"Database Integrity Issue; Null Values",status:"failure",code:4});       
+                    sendResponse(res,500,{message:"Database Integrity Issue; Null Values",status:"failure",code:4});
+
             }
             else
-                req.status(500).send(req.data);   
+                sendResponse(res,500,req.data);
+ 
         }
         catch(error)
         {
-            console.log("An error has ocurred.");
-            console.log(error);
-
-            res.status(500).send({message:error.toString(),status:"failure",code:4});
+            sendResponse(res,500,{message:error.toString(),status:"failure",code:4});
         }
 
     });
@@ -742,14 +751,10 @@ if(creds)
             {
                 if(W[0].username)
                 {
-                    console.log();
-
-                    console.log("Username already exists");
-
-                    res.status(403).send({message:"User Already Exists",status:"unchanged",code:3});
+                    sendResponse(res,403,{message:"User Already Exists",status:"unchanged",code:3});
                 }
                 else
-                    res.status(500).send({message:"Database Integrity Issue",status:"failure",code:4});
+                    sendResponse(res,500,{message:"Database Integrity Issue",status:"failure",code:4});
             }
             else
             {
@@ -767,21 +772,32 @@ if(creds)
         
                 if(!Q.status)
                 {
-                    res.status(200).send({message:"User Created",status:"success",code:1});
+                    sendResponse(res,200,{message:"User Created",status:"success",code:1});
                 }     
                 else
-                    res.status(500).send(Q);             
+                    sendResponse(res,500,Q);           
             }
         }
         else
-            res.status(500).send(W);   
+            sendResponse(res,500,W);
     });
 
-    app.post("/create", async () => 
+    app.post("/create", async (req,res) => 
     {
-        let authorized, http_code, status, code, message;
+        let authorized, http_code, status, code, message, min = 1;
+        
+        console.log(); console.log(req.url); console.log();
 
-        [authorized,http_code,status,code,message] =  verify(req);
+        process.stdout.write("Request: "); console.log(req.body); console.log();
+
+        let usertype = req.body.usertype;
+
+        if(usertype)
+            min = usertype + 1;
+
+        [authorized,http_code,status,code,message] =  await verify(req,min);
+
+        console.log({authorized,http_code,status,code,message}); console.log();
 
         if(authorized)
         {
@@ -789,29 +805,26 @@ if(creds)
 
             if(params.tab == "USERS")
             {
-                let W = SQL.SEL("*",null,"USERS",{id},null);
-
-                let exists = false,error = false;
+                let W = await SQL.SEL("*",null,"USERS",{id},null);
 
                 if(!W.status)
                 {
                     if(W[0])
                     {
-                        if(W[0].username)
-                            exists = basicAuth.safeCompare(params.username,W[0].username)
-                        else
-                        {
-                            error = true;
+                        proceed = false; 
 
-                            proceed = false;
+                        if(W[0].username)
+                        {   
+                            sendResponse(res,403,{message:"User Already Exists",status:"unchanged",code:3});
                         }
-                        
-                        if(exists)
-                            proceed = false;
+                        else
+                            sendResponse(res,500,{message:"Database Integrity Issue",status:"failure",code:4});
                     }
                 }
                 else
                 {
+                    sendResponse(res,500,W);
+
                     proceed = false;
                 }
             }
@@ -827,22 +840,21 @@ if(creds)
                     params.dt = dt;
                 }
                 
-                let Q = filter(params.tab,params,"INS"); 
+                let Q = await filter(params.tab,params,"INS"); 
     
                 if(!Q.status)
                 {
-                    res.status(200).send({status:"success",code:1});
+                    sendResponse(res,200,{message:"New entry successfully created",status:"success",code:1});
                 }     
                 else
-                    res.status(500).send({Q});
+                    sendResponse(res,500,Q);
             }
-            else if(error)
-                res.status(500).send({message:"Database Integrity Issue",status:"failure",code:4});
-            else
-                res.status(403).send({message:"User Already Exists",status:"unchanged",code:3});
+  
         }
         else
-            res.status(http_code).send({status,code,message});
+            sendResponse(res,http_code,{message,status,code});
+
+        
     });
 }
 
