@@ -723,148 +723,191 @@ if(creds)
 
     app.get("/boats", async (req,res) => 
     {
-        let authorized, http_code, status, code, message, usertype;
+        let authorized, http_code, status, code, message, usertype, body = Object.keys(req.body).length;
 
-        [authorized,http_code,status,code,message,usertype] =  verify(req,1);
-
-        if(authorized)
+        if(body)
         {
-            let Q = filter("BOATS",BOATS,req.body,"SEL");
-            
-            if(!Q.status)
+            [authorized,http_code,status,code,message,usertype] =  verify(req,1);
+
+            if(authorized)
             {
-                if(Q[0])
-                    res.status(200).send({BOATS:Q[0],status:"success",code:1});
+                let Q = filter("BOATS",BOATS,req.body,"SEL");
+                
+                if(!Q.status)
+                {
+                    if(Q[0])
+                        res.status(200).send({BOATS:Q[0],status:"success",code:1});
+                    else
+                        res.status(200).send({BOATS:[],status:"empty",code:2});
+                }     
                 else
-                    res.status(200).send({BOATS:[],status:"empty",code:2});
-            }     
+                    res.status(500).send(Q);
+            }
             else
-                res.status(500).send(Q);
+                res.status(http_code).send({status,code,message});  
         }
         else
-            res.status(http_code).send({status,code,message});      
+            sendResponse(res,400,{message:"No Body",status:"failure",code:4});       
     });
 
     app.get("/users", async (req,res) => 
     {
-        let authorized, http_code, status, code, message,usertype;
+        let authorized, http_code, status, code, message,usertype, body = Object.keys(req.body).length;
 
-        [authorized,http_code,status,code,message,usertype] =  verify(req,1);
+        if(body)
+        {
+            [authorized,http_code,status,code,message,usertype] =  verify(req,1);
 
-        if(authorized)
-        {   
-            req.body.rest = usertype;
+            if(authorized)
+            {   
+                req.body.rest = usertype;
 
-            let Q = filter("USERS",USERS,req.body,"SEL");
-            
-            if(!Q.status)
-            {
-                if(Q[0])
-                    res.status(200).send({BOATS:Q[0],status:"success",code:1});
+                let Q = filter("USERS",USERS,req.body,"SEL");
+                
+                if(!Q.status)
+                {
+                    if(Q[0])
+                        res.status(200).send({BOATS:Q[0],status:"success",code:1});
+                    else
+                        res.status(200).send({BOATS:[],status:"empty",code:2});
+                }     
                 else
-                    res.status(200).send({BOATS:[],status:"empty",code:2});
-            }     
+                    res.status(500).send(Q);
+            }
             else
-                res.status(500).send(Q);
+                res.status(http_code).send({status,code,message});      
         }
         else
-            res.status(http_code).send({status,code,message});      
+            sendResponse(res,400,{message:"No Body",status:"failure",code:4});
+
+        
     });
 
     app.get("/journeys", async (req,res) => 
     {
-        let authorized, http_code, status, code, message,usertype;
+        let authorized, http_code, status, code, message,usertype,body = Object.keys(req.body).length;
 
-        [authorized,http_code,status,code,message,usertype] =  verify(req,1);
+        
 
-        if(authorized)
+        if(body)
         {
-            let Q = filter("JOURNEYS",null,req.body,"SEL");
-            
-            if(!Q.status)
+            [authorized,http_code,status,code,message,usertype] =  verify(req,1);
+      
+            if(authorized)
             {
-                if(Q[0])
-                    res.status(200).send({BOATS:Q[0],status:"success",code:1});
+                let Q = filter("JOURNEYS",null,req.body,"SEL");
+                
+                if(!Q.status)
+                {
+                    if(Q[0])
+                        res.status(200).send({BOATS:Q[0],status:"success",code:1});
+                    else
+                        res.status(200).send({BOATS:[],status:"empty",code:2});
+                }     
                 else
-                    res.status(200).send({BOATS:[],status:"empty",code:2});
-            }     
+                    res.status(500).send(Q);
+            }
             else
-                res.status(500).send(Q);
+                res.status(http_code).send({status,code,message});    
         }
         else
-            res.status(http_code).send({status,code,message});      
+            sendResponse(res,400,{message:"No Body",status:"failure",code:4});
+  
     });
 
     app.get("/files", async (res,req) => 
     {
-        let authorized, http_code, status, code, message,usertype;
+        let authorized, http_code, status, code, message,usertype,body = Object.keys(req.body).length;
 
-        [authorized,http_code,status,code,message,usertype] =  verify(req,1);
 
-        if(authorized)
+
+        if(body)
         {
-            let Q = filter("FILES",null,req.body,"SEL");
-            
-            if(!Q.status)
+            [authorized,http_code,status,code,message,usertype] =  verify(req,1);
+
+            if(authorized)
             {
-                if(Q[0])
-                    res.status(200).send({BOATS:Q[0],status:"success",code:1});
+                let Q = filter("FILES",null,req.body,"SEL");
+                
+                if(!Q.status)
+                {
+                    if(Q[0])
+                        res.status(200).send({BOATS:Q[0],status:"success",code:1});
+                    else
+                        res.status(200).send({BOATS:[],status:"empty",code:2});
+                }     
                 else
-                    res.status(200).send({BOATS:[],status:"empty",code:2});
-            }     
+                    res.status(500).send(Q);
+            }
             else
-                res.status(500).send(Q);
+                res.status(http_code).send({status,code,message});    
         }
         else
-            res.status(http_code).send({status,code,message});      
+            sendResponse(res,400,{message:"No Body",status:"failure",code:4});
     });
 
     app.get("/historics", async (req,res) =>
     {
-        let authorized, http_code, status, code, message,usertype;
+        let authorized, http_code, status, code, message,usertype,body = Object.keys(req.body).length;
 
-        [authorized,http_code,status,code,message,usertype] =  verify(req,1);
 
-        if(authorized)
+
+        if(body)
         {
-            let Q = filter("HISTORICS",null,req.body,"SEL");
+            [authorized,http_code,status,code,message,usertype] =  verify(req,1);
             
-            if(!Q.status)
+            if(authorized)
             {
-                if(Q[0])
-                    res.status(200).send({BOATS:Q[0],status:"success",code:1});
+                let Q = filter("HISTORICS",null,req.body,"SEL");
+                
+                if(!Q.status)
+                {
+                    if(Q[0])
+                        res.status(200).send({BOATS:Q[0],status:"success",code:1});
+                    else
+                        res.status(200).send({BOATS:[],status:"empty",code:2});
+                }     
                 else
-                    res.status(200).send({BOATS:[],status:"empty",code:2});
-            }     
+                    res.status(500).send(Q);
+            }
             else
-                res.status(500).send(Q);
+                res.status(http_code).send({status,code,message});  
         }
         else
-            res.status(http_code).send({status,code,message});  
+            sendResponse(res,400,{message:"No Body",status:"failure",code:4});
     }); 
 
     app.get("/alerts", async (req,res) =>
     {
-        let authorized, http_code, status, code, message,usertype;
+        let authorized, http_code, status, code, message,usertype,body = Object.keys(req.body).length;
 
-        [authorized,http_code,status,code,message,usertype] =  verify(req,1);
+        
 
-        if(authorized)
+        if(body)
         {
-            let Q = filter("ALERTS",null,req.body,"SEL");
-            
-            if(!Q.status)
+            [authorized,http_code,status,code,message,usertype] =  verify(req,1);
+
+            if(authorized)
             {
-                if(Q[0])
-                    res.status(200).send({BOATS:Q[0],status:"success",code:1});
+                let Q = filter("ALERTS",null,req.body,"SEL");
+                
+                if(!Q.status)
+                {
+                    if(Q[0])
+                        res.status(200).send({BOATS:Q[0],status:"success",code:1});
+                    else
+                        res.status(200).send({BOATS:[],status:"empty",code:2});
+                }     
                 else
-                    res.status(200).send({BOATS:[],status:"empty",code:2});
-            }     
+                    res.status(500).send(Q);
+            }
             else
-                res.status(500).send(Q);
+                res.status(http_code).send({status,code,message});  
         }
         else
-            res.status(http_code).send({status,code,message});  
+            sendResponse(res,400,{message:"No Body",status:"failure",code:4});
+
+    
     }); 
 
     app.get("files/:reg/:file",handle.downloads);
