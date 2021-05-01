@@ -33,6 +33,7 @@ const handle = require('./modules/requests.js');
 const SQL = require('./modules/sql.js');
 
 const e = require('express');
+const { ifError } = require('assert');
 
 
 /*************************VARIABLES AND INSTANCES*****************************/
@@ -74,7 +75,7 @@ var creds  = false;
 9: Access Denied
 10: Missing Data
 11: Untregistered
-12: expired
+12: Expired
 */
 /*********************************FUNCTIONS***********************************/
 async function filter(tab,retrieve,params,command)
@@ -453,7 +454,7 @@ async function SUAuth(username,password,cb)
 
 function sendResponse(res,status,payload)
 {
-    process.stdout.write("\n\rServer Resonse: "); console.log(payload);
+    process.stdout.write("\n\rServer Response: "); console.log(payload);
     process.stdout.write("Status Code: "); console.log(status); console.log();
 
     res.status(status).send(payload);
@@ -872,79 +873,95 @@ if(creds)
     {
         let params = req.body;
 
+        let body = Object.keys(req.body).length;
+
         console.log(); console.log(req.url); console.log();
 
         process.stdout.write("Request: "); console.log(req.body); console.log();
 
-        let username = params.username;
-
-        let W = await SQL.SEL("*",null,"USERS",{username},null);
-
-        if(!W.status)
+        if(body)
         {
-            if(W[0])
+            let username = params.username;
+
+            let W = await SQL.SEL("*",null,"USERS",{username},null);
+
+            if(!W.status)
             {
-                if(W[0].username)
+                if(W[0])
                 {
-                    sendResponse(res,403,{message:"User Already Exists",status:"unchanged",code:3});
+                    if(W[0].username)
+                    {
+                        sendResponse(res,403,{message:"User Already Exists",status:"unchanged",code:3});
+                    }
+                    else
+                        sendResponse(res,500,{message:"Database Integrity Issue",status:"failure",code:4});
                 }
                 else
-                    sendResponse(res,500,{message:"Database Integrity Issue",status:"failure",code:4});
+                {
+                    let  TZOfsset = (new Date()).getTimezoneOffset() * 60000; 
+    
+                    let dt = (new Date(Date.now() - TZOfsset)).toISOString().replace(/T|Z/g,' ');
+            
+                    params.usertype = 4; params.latt = 0; params.st = 0; params.blocked = 0; params.dt = dt;
+                    
+                    params.pswrd = await bcrypt.hash(params.pswrd,10);
+    
+                    console.log("hashing complete");
+                    
+                    let Q = await filter("USERS",null,params,"INS"); 
+            
+                    if(!Q.status)
+                    {
+                        sendResponse(res,200,{message:"User Created",status:"success",code:1});
+                    }     
+                    else
+                        sendResponse(res,500,Q);           
+                }
             }
             else
-            {
-                let  TZOfsset = (new Date()).getTimezoneOffset() * 60000; 
-
-                let dt = (new Date(Date.now() - TZOfsset)).toISOString().replace(/T|Z/g,' ');
-        
-                params.usertype = 4; params.latt = 0; params.st = 0; params.blocked = 0; params.dt = dt;
-                
-                params.pswrd = await bcrypt.hash(params.pswrd,10);
-
-                console.log("hashing complete");
-                
-                let Q = await filter("USERS",null,params,"INS"); 
-        
-                if(!Q.status)
-                {
-                    sendResponse(res,200,{message:"User Created",status:"success",code:1});
-                }     
-                else
-                    sendResponse(res,500,Q);           
-            }
+                sendResponse(res,500,W);
         }
         else
-            sendResponse(res,500,W);
+            sendResponse(res,400,{message:"No Body",status:"failure",code:4});
     });
 
     app.post("/create", async (req,res) => 
     {
         let authorized = false, access, http_code, status, code, message, min = 1;
         
+        let id, usertype, body = Object.keys(req.body).length;
+        
         console.log(); console.log(req.url); console.log();
 
         process.stdout.write("Request: "); console.log(req.body); console.log();
 
-        let id = req.body.token[req.body.token.length - 1];
-
-        let usertype = req.body.usertype;
-
-        if(usertype)
-            min = usertype + 1;
-
-        access = data_access(req.body.tab,C);
-
-        if(access)
+        if(body)
         {
-            [authorized,http_code,status,code,message] =  await verify(req,min);
+            if(req.body.token)
+                id = req.body.token[req.body.token.length - 1];
 
-            console.log({authorized,http_code,status,code,message}); console.log();
+            usertype = req.body.usertype;
+    
+            if(usertype)
+                min = usertype + 1;
+    
+            access = data_access(req.body.tab,C);
+
+            if(access)
+            {
+                [authorized,http_code,status,code,message] =  await verify(req,min);
+
+                console.log({authorized,http_code,status,code,message}); console.log();
+            }
+            else
+            {
+                [http_code,status,code,message] = [400,"unchanged",3,"unavailable resource"];
+            }
         }
         else
-        {
-            [http_code,status,code,message] = [400,"unchanged",3,"unavailable resource"];
-        }
-
+            [http_code,status,code,message] = [400,"failure",4,"No Body"];
+        
+       
         if(authorized)
         {
             let params = req.body, proceed = true;
@@ -1016,36 +1033,47 @@ if(creds)
 
     app.post("/modify", async (req,res) => 
     {
-        let authorized = false, access, http_code, status, code, message, min = 1;
+        let authorized = false, access = false, http_code, status, code, message, min = 1;
+
+        let usertype, id, body = Object.keys(req.body).length, params;
         
         console.log(); console.log(req.url); console.log();
 
         process.stdout.write("Request: "); console.log(req.body); console.log();
 
-        let usertype = req.body.usertype;
-        
-        let id = req.body.token[req.body.token.length - 1];
-        
-        if(usertype && req.body.id != id)
-            min = usertype + 1;
-        
-        access = data_access(req.body.tab,M);
-
-        if(access)
+        if(body)
         {
-            [authorized,http_code,status,code,message] =  await verify(req,min);
+            usertype = req.body.usertype;
+            
+            if(req.body.token)
+                id = req.body.token[req.body.token.length - 1];
 
-            console.log({authorized,http_code,status,code,message}); console.log();
+            if(usertype && req.body.id != id)
+                min = usertype + 1;
+        
+            access = data_access(req.body.tab,M);
+
+            if(access)
+            {
+                params = req.body;
+
+                if(params.id)
+                    [authorized,http_code,status,code,message] =  await verify(req,min);
+                else
+                    [http_code,status,code,message] = [400,"unchanged",10,"Missing parameters"];
+
+                console.log({authorized,http_code,status,code,message}); console.log();
+            }
+            else
+            {
+                [http_code,status,code,message] = [400,"unchanged",3,"unavailable resource"];
+            }
         }
         else
-        {
-            [http_code,status,code,message] = [400,"unchanged",3,"unavailable resource"];
-        }
+            [http_code,status,code,message] = [400,"failure",4,"No Body"];
 
         if(authorized)
         {
-            let params = req.body;
-
             if(params.dt || params.ed)
             {
                 let  TZOfsset = (new Date()).getTimezoneOffset() * 60000; 
