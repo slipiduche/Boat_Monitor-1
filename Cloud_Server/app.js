@@ -617,7 +617,7 @@ catch(error)
 try
 {
     if(test)
-        testAccount = await nodemailer.createTestAccount();
+        testAccount = nodemailer.createTestAccount();
 
 }
 catch(error)
