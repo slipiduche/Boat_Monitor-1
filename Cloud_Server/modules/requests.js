@@ -11,6 +11,7 @@ const path = require('path');
 
 const util = require('util');
 
+const mail = require('nodemailer');
 
 const log = require('./logging.js');
 
@@ -18,6 +19,18 @@ const sql = require('./sql.js');
 
 const dir  = ["./files/historics/","./files/media/recordings/","./files/media/snapshots/"];
 
+/*********************************PARAMETERS**********************************/
+var transporter = nodemailer.createTransport(
+{
+    host: "smtp.ethereal.email",
+    port: 465,
+    secure: true, // true for 465, false for other ports
+    auth: 
+    {
+      user: "", // generated ethereal user
+      pass: "", // generated ethereal password
+    },
+});
 
 /*********************************FUNCTIONS***********************************/
 
@@ -442,3 +455,36 @@ module.exports.journey = async (req,res) =>
     else
         res.status(500).json(result);
 };
+
+module.exports.mailing = async (data,test) =>
+{   
+    if(test)
+    {
+        transporter.auth.user = test.user;
+
+        transporter.auth.pass = test.pass;
+    }
+    
+    // send mail with defined transport object
+    let info = await transporter.sendMail(
+    {
+        from: '"Server" <info@BoatMonitor.com>', // sender address
+        to: data.mail, // list of receivers
+        subject: "Your Credentials ✔", // Subject line
+        text: `You have requested your credentials for Boat Monitoring:\n\r
+               \n\rUsername:${data.username}
+               \n\rYour New Password:${data.password}`, // plain text body
+        html: `<p>You have requested your credentials for Boat Monitoring App:</p>
+               <ul>
+                    <li style="line-height: 2;"><strong>Username</strong>:${data.username}</li>
+                    <li><strong>Your New Password</strong>:${data.password}</li>
+               </ul>`, // html body
+  });
+
+  console.log("Message sent: %s", info.messageId);
+  // Message sent: <b658f8ca-6296-ccf4-8306-87d57a0b4321@example.com>
+
+  // Preview only available when sending through an Ethereal account
+  console.log("Preview URL: %s", nodemailer.getTestMessageUrl(info));
+  // Preview URL: https://ethereal.email/message/WaQKMgKddxQDoou...
+}

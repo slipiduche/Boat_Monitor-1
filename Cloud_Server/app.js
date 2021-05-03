@@ -16,6 +16,8 @@ const jwt = require('jsonwebtoken');
 
 const bcrypt = require('bcrypt');
 
+const nodemailer = require('nodemailer');
+
 const fileUpload = require('express-fileupload');
 
 const cors = require('cors');
@@ -24,6 +26,8 @@ const morgan = require('morgan');
 
 const _ = require('lodash');
 
+const pg = require('generate-password');
+
 const basicAuth = require('./modules/basic.js');
 
 const log = require('./modules/logging.js');
@@ -31,10 +35,6 @@ const log = require('./modules/logging.js');
 const handle = require('./modules/requests.js');
 
 const SQL = require('./modules/sql.js');
-
-const e = require('express');
-const { ifError } = require('assert');
-
 
 /*************************VARIABLES AND INSTANCES*****************************/
 
@@ -61,6 +61,10 @@ const M = ["BOATS","USERS","JOURNEYS"];
 var collector, app, httpsServer = [];
 
 var creds  = false;
+
+var test = true;
+
+var testAccount = null;
 
 //Status Codes:
 /*
@@ -184,10 +188,12 @@ async function verify(req, min)
     {
         let token = req.body.token;
         
-        if(token.length > 1)
+        if(token && token.length > 3)
         {
-            let id =  token[token.length - 1];
+            let id;
 
+            [token,id] = NaNFinder(token);
+            
             let Q = await SQL.SEL("*",null,"USERS",{id},null);
 
             if(!Q.status && Q[0])
@@ -534,6 +540,63 @@ function data_access(tab,access)
     return false;
 }
 
+function gen(length)
+{
+    return pswrd = pg.generate(
+    {
+        length,
+        numbers:true,
+        symbols:true,
+        uppercase:true,
+        lowercase:true,
+        strict:true
+    });
+}
+
+function randomSymbol()
+{
+    let symbols = "!@#$%^&*()_-=+/*{}[]\"';,<>.?";
+
+    return symbols[Math.floor(Math.random()*28)]
+}
+
+function isDigit(char)
+{
+    if(char >= '0' && char <= '9')
+        return true;
+    else
+        return false;
+}
+
+function NaNFinder(str)
+{
+    if(str)
+    {
+        let pos = str.length - 2;
+
+        let r = null;
+    
+        for(let i = pos; i > 0; i--)
+        {
+            if(!isDigit(str[i]))
+            {
+                r = i;
+    
+                break;
+            }
+        }
+        if(r != null && r <= str.length - 3)
+        {
+            let id = str.slice(r + 1, str.length - 1);
+   
+            let token = str.slice(0,r);
+
+            return [token,parseInt(id)];
+        }
+        else
+            return [null,null];
+    }
+}
 /*******************************INITIALIZATION********************************/
 
 try
@@ -548,9 +611,18 @@ try
 }
 catch(error)
 {
-    console.log("Unable to get Key and Ceritficate.");
-
     log.errorLog("creds","Unable to get Key and Ceritficate.\n\r\n\r" + error.toString(),1);
+}
+
+try
+{
+    if(test)
+        testAccount = await nodemailer.createTestAccount();
+
+}
+catch(error)
+{
+    log.errorLog("creds","Unable to create mail test account.\n\r\n\r" + error.toString(),1);
 }
 
 if(creds)
@@ -646,7 +718,9 @@ if(creds)
 
                 if(id && secret && usertype)
                 {
-                    token = jwt.sign({user,id},secret,{expiresIn:60*60}) + id.toString();
+                    let s1 = randomSymbol(), s2 = randomSymbol();
+
+                    token = jwt.sign({user,id},secret,{expiresIn:60*60}) + s1 + id.toString() +  s2;
 
                     console.log("\n\rToken: " + token + "\n\r");
 
@@ -686,33 +760,41 @@ if(creds)
         {
             if(W[0])
             {
-                if(W[0].username)
+                if(W[0].mail && W[0].username && W[0].st)
                 {
-                    sendResponse(res,403,{message:"User Already Exists",status:"unchanged",code:3});
+                    let username = W[0].username, mail = W[0].mail, password = gen(16);
+
+                    let pswrd = await bcrypt.hash(password,10);
+                    
+                    let Q = await SQL.UPD("USERS",{pswrd},W[0].id);        
+
+                    if(!Q.status)
+                    {
+                        try
+                        {   
+                            handle.mailing({username,mail,password},testAccount);
+
+                            sendResponse(res,200,{message:"An email containing new credentials was sent",status:"success",code:1});
+                        }
+                        catch(error)
+                        {
+                            log.errorLog(mail,error.tostring(),1);
+
+                            sendResponse(res,500,{message:"Unable to send email",status:"failure",code:4});
+                        }
+                    }
+                    else
+                        sendResponse(res,500,Q);
+
                 }
+                else if(W[0].st == false)
+                    sendResponse(res,403,{message:"User is not enabled",status:"unavailable",code:6});
                 else
                     sendResponse(res,500,{message:"Database Integrity Issue",status:"failure",code:4});
             }
             else
             {
-                let  TZOfsset = (new Date()).getTimezoneOffset() * 60000; 
-
-                let dt = (new Date(Date.now() - TZOfsset)).toISOString().replace(/T|Z/g,' ');
-        
-                params.usertype = 4; params.latt = 0; params.st = 0; params.blocked = 0; params.dt = dt;
-                
-                params.pswrd = await bcrypt.hash(params.pswrd,10);
-
-                console.log("hashing complete");
-                
-                let Q = await filter("USERS",null,params,"INS"); 
-        
-                if(!Q.status)
-                {
-                    sendResponse(res,200,{message:"User Created",status:"success",code:1});
-                }     
-                else
-                    sendResponse(res,500,Q);           
+                sendResponse(res,403,{message:"No user is registered with this email address",status:"failure",code:4});
             }
         }
         else
@@ -727,7 +809,7 @@ if(creds)
 
         if(body)
         {
-            [authorized,http_code,status,code,message,usertype] =  verify(req,1);
+            [authorized,http_code,status,code,message,usertype] = await verify(req,1);
 
             if(authorized)
             {
@@ -756,7 +838,7 @@ if(creds)
 
         if(body)
         {
-            [authorized,http_code,status,code,message,usertype] =  verify(req,1);
+            [authorized,http_code,status,code,message,usertype] =  await verify(req,1);
 
             if(authorized)
             {   
@@ -791,7 +873,7 @@ if(creds)
 
         if(body)
         {
-            [authorized,http_code,status,code,message,usertype] =  verify(req,1);
+            [authorized,http_code,status,code,message,usertype] =  await verify(req,1);
       
             if(authorized)
             {
@@ -823,7 +905,7 @@ if(creds)
 
         if(body)
         {
-            [authorized,http_code,status,code,message,usertype] =  verify(req,1);
+            [authorized,http_code,status,code,message,usertype] =  await verify(req,1);
 
             if(authorized)
             {
@@ -854,7 +936,7 @@ if(creds)
 
         if(body)
         {
-            [authorized,http_code,status,code,message,usertype] =  verify(req,1);
+            [authorized,http_code,status,code,message,usertype] = await verify(req,1);
             
             if(authorized)
             {
@@ -885,7 +967,7 @@ if(creds)
 
         if(body)
         {
-            [authorized,http_code,status,code,message,usertype] =  verify(req,1);
+            [authorized,http_code,status,code,message,usertype] = await verify(req,1);
 
             if(authorized)
             {
