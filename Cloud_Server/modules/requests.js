@@ -11,7 +11,7 @@ const path = require('path');
 
 const util = require('util');
 
-const mail = require('nodemailer');
+const nodemailer = require('nodemailer');
 
 const log = require('./logging.js');
 
