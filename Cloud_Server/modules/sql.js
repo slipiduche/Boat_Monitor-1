@@ -14,6 +14,7 @@ const util = require('util');
 
 const log = require('./logging.js');
 const { toNamespacedPath } = require('path');
+const { group } = require('console');
 
 /*********************************FUNCTIONS***********************************/
 
@@ -36,7 +37,7 @@ function DBconnection()
 
 /*SELECT QUERY*/
 
-module.exports.SEL = async function SEL(S,REST,TABLE,WHERE,RANGE)
+module.exports.SEL = async function SEL(S,REST,TABLE,WHERE,RANGE,LAST)
 {  
   let DB = DBconnection(), r = "";
 
@@ -75,14 +76,25 @@ module.exports.SEL = async function SEL(S,REST,TABLE,WHERE,RANGE)
     for(let i = 0; i < iter; i++)
     {      
       let value = WHERE[keys[i]];
-
-      params.push(value);
+      
+      let len = value.length;
 
       if(i > 0)
         q3 += " AND ";
 
-      q3 +=  keys[i] + " = ?";
+      q3 +=  keys[i] + " IN ( ";
+
+      for(let j = 0; j < len; len++)
+      {
+        params.push(value[j]);
+
+        if(j > 0)
+          q3 += ",";
+
+        q3 += "?"; 
+      }
       
+      q3 += ")";     
     }
   }
 
@@ -94,7 +106,6 @@ module.exports.SEL = async function SEL(S,REST,TABLE,WHERE,RANGE)
     q3 += "usertype <= ?";
 
     params.push(REST);
-
   }
 
   if(RANGE)
@@ -119,12 +130,32 @@ module.exports.SEL = async function SEL(S,REST,TABLE,WHERE,RANGE)
       params.push(RANGE[0]);  params.push(RANGE[1]);
     }
   }
-
+  
   Q = q1 + S + q2;
 
-  if(WHERE || RANGE || REST)
+  if(LAST && WHERE)
+  {
+    let q4 = " WHERE id IN (SELECT MAX(id) FROM " + TABLE;
+
+    let grp = " GROUP BY ";
+
+    let iter = keys.length;
+
+    for(let i = 0; i < iter; i++)
+    {
+      if(i > 0)
+        grp += ",";
+
+      grp += keys[i];
+    }
+
+    q4 +=  q3 + grp + ")";
+
+    Q += q4;
+  }
+  else if(WHERE || RANGE || REST)
     Q += q3;
-    
+
   Q += ";";
 
   console.log(Q);

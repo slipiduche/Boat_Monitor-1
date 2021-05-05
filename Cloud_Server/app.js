@@ -84,7 +84,7 @@ var testAccount = null;
 /*********************************FUNCTIONS***********************************/
 async function filter(tab,retrieve,params,command)
 {
-    let range = null, id = null,  rest = null, uid = null;
+    let range = null, id = null,  rest = null, uid = null, last = false;
     
     if(params.auth)
         delete params.auth;
@@ -107,6 +107,13 @@ async function filter(tab,retrieve,params,command)
         rest = params.rest;
         
         delete params.rest;
+    }
+
+    if(params.last)
+    {
+        last = params.last;
+
+        delete params.last;
     }
 
     if(params.token)
@@ -146,7 +153,7 @@ async function filter(tab,retrieve,params,command)
             if(Object.keys(params).length > 0)
                 where = params;
            
-            Q = await SQL.SEL(selection,rest,tab,where,range);
+            Q = await SQL.SEL(selection,rest,tab,where,range,last);
 
             break;
         }
