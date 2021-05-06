@@ -465,14 +465,6 @@ async function SUAuth(username,password,cb)
     return cb(null,r,data);
 }
 
-function sendResponse(res,status,payload)
-{
-    process.stdout.write("\n\rServer Response: "); console.log(payload);
-    process.stdout.write("Status Code: "); console.log(status); console.log();
-
-    res.status(status).send(payload);
-}
-
 function unauthorized(req,data)
 {
     if(!data)
@@ -709,7 +701,7 @@ if(creds)
     {
         let user = req.auth.user, id = null, secret = null, usertype = null, token = null;
         
-        console.log(); console.log(req.url); console.log();
+        console.log(); process.stdout.write(req.hostname); console.log(req.url); console.log();
 
         process.stdout.write("Request: "); console.log(req.body); console.log();
 
@@ -755,7 +747,7 @@ if(creds)
     {
         let params = req.body;
 
-        console.log(); console.log(req.url); console.log();
+        console.log(); process.stdout.write(req.hostname); console.log(req.url); console.log();
 
         process.stdout.write("Request: "); console.log(req.body); console.log();
 
@@ -814,6 +806,10 @@ if(creds)
     {
         let authorized, http_code, status, code, message, usertype, body = Object.keys(req.body).length;
 
+        console.log(); process.stdout.write(req.hostname); console.log(req.url); console.log();
+
+        process.stdout.write("Request: "); console.log(req.body); console.log();
+
         if(body)
         {
             [authorized,http_code,status,code,message,usertype] = await verify(req,1);
@@ -825,15 +821,15 @@ if(creds)
                 if(!Q.status)
                 {
                     if(Q[0])
-                        res.status(200).send({BOATS:Q[0],status:"success",code:1});
+                        sendResponse(res,200,{BOATS:Q[0],status:"success",code:1});
                     else
-                        res.status(200).send({BOATS:[],status:"empty",code:2});
+                        sendResponse(res,200,{BOATS:[],status:"empty",code:2});
                 }     
                 else
-                    res.status(500).send(Q);
+                    sendResponse(res,500,Q); 
             }
             else
-                res.status(http_code).send({status,code,message});  
+                sendResponse(res,http_code,{message,status,code}); 
         }
         else
             sendResponse(res,400,{message:"No Body",status:"failure",code:4});       
@@ -842,6 +838,10 @@ if(creds)
     app.get("/users", async (req,res) => 
     {
         let authorized, http_code, status, code, message,usertype, body = Object.keys(req.body).length;
+
+        console.log(); process.stdout.write(req.hostname); console.log(req.url); console.log();
+
+        process.stdout.write("Request: "); console.log(req.body); console.log();
 
         if(body)
         {
@@ -856,15 +856,15 @@ if(creds)
                 if(!Q.status)
                 {
                     if(Q[0])
-                        res.status(200).send({BOATS:Q[0],status:"success",code:1});
+                        sendResponse(res,200,{USERS:Q[0],status:"success",code:1});
                     else
-                        res.status(200).send({BOATS:[],status:"empty",code:2});
+                        sendResponse(res,200,{USERS:[],status:"empty",code:2});
                 }     
                 else
-                    res.status(500).send(Q);
+                    sendResponse(res,500,Q); 
             }
             else
-                res.status(http_code).send({status,code,message});      
+                sendResponse(res,http_code,{message,status,code}); 
         }
         else
             sendResponse(res,400,{message:"No Body",status:"failure",code:4});
@@ -876,7 +876,9 @@ if(creds)
     {
         let authorized, http_code, status, code, message,usertype,body = Object.keys(req.body).length;
 
-        
+        console.log(); process.stdout.write(req.hostname); console.log(req.url); console.log();
+
+        process.stdout.write("Request: "); console.log(req.body); console.log();
 
         if(body)
         {
@@ -889,15 +891,15 @@ if(creds)
                 if(!Q.status)
                 {
                     if(Q[0])
-                        res.status(200).send({BOATS:Q[0],status:"success",code:1});
+                        sendResponse(res,200,{JOURNEYS:Q[0],status:"success",code:1});
                     else
-                        res.status(200).send({BOATS:[],status:"empty",code:2});
+                        sendResponse(res,200,{JOURNEYS:[],status:"empty",code:2});
                 }     
                 else
-                    res.status(500).send(Q);
+                    sendResponse(res,500,Q); 
             }
             else
-                res.status(http_code).send({status,code,message});    
+                sendResponse(res,http_code,{message,status,code}); 
         }
         else
             sendResponse(res,400,{message:"No Body",status:"failure",code:4});
@@ -908,7 +910,9 @@ if(creds)
     {
         let authorized, http_code, status, code, message,usertype,body = Object.keys(req.body).length;
 
+        console.log(); process.stdout.write(req.hostname); console.log(req.url); console.log();
 
+        process.stdout.write("Request: "); console.log(req.body); console.log();
 
         if(body)
         {
@@ -921,15 +925,15 @@ if(creds)
                 if(!Q.status)
                 {
                     if(Q[0])
-                        res.status(200).send({BOATS:Q[0],status:"success",code:1});
+                        sendResponse(res,200,{FILES:Q[0],status:"success",code:1});
                     else
-                        res.status(200).send({BOATS:[],status:"empty",code:2});
+                        sendResponse(res,200,{FILES:[],status:"empty",code:2});
                 }     
                 else
-                    res.status(500).send(Q);
+                    sendResponse(res,500,Q); 
             }
             else
-                res.status(http_code).send({status,code,message});    
+                sendResponse(res,http_code,{message,status,code});   
         }
         else
             sendResponse(res,400,{message:"No Body",status:"failure",code:4});
@@ -939,7 +943,9 @@ if(creds)
     {
         let authorized, http_code, status, code, message,usertype,body = Object.keys(req.body).length;
 
+        console.log(); process.stdout.write(req.hostname); console.log(req.url); console.log();
 
+        process.stdout.write("Request: "); console.log(req.body); console.log();
 
         if(body)
         {
@@ -952,15 +958,15 @@ if(creds)
                 if(!Q.status)
                 {
                     if(Q[0])
-                        res.status(200).send({BOATS:Q[0],status:"success",code:1});
+                        sendResponse(res,200,{HISTORICS:Q[0],status:"success",code:1});
                     else
-                        res.status(200).send({BOATS:[],status:"empty",code:2});
+                        sendResponse(res,200,{HISTORICS:[],status:"empty",code:2});
                 }     
                 else
-                    res.status(500).send(Q);
+                    sendResponse(res,500,Q);
             }
             else
-                res.status(http_code).send({status,code,message});  
+                sendResponse(res,http_code,{message,status,code}); 
         }
         else
             sendResponse(res,400,{message:"No Body",status:"failure",code:4});
@@ -970,7 +976,9 @@ if(creds)
     {
         let authorized, http_code, status, code, message,usertype,body = Object.keys(req.body).length;
 
-        
+        console.log(); process.stdout.write(req.hostname); console.log(req.url); console.log();
+
+        process.stdout.write("Request: "); console.log(req.body); console.log();
 
         if(body)
         {
@@ -983,31 +991,58 @@ if(creds)
                 if(!Q.status)
                 {
                     if(Q[0])
-                        res.status(200).send({BOATS:Q[0],status:"success",code:1});
+                        sendResponse(res,200,{ALERTS:Q[0],status:"success",code:1});
                     else
-                        res.status(200).send({BOATS:[],status:"empty",code:2});
+                        sendResponse(res,200,{ALERTS:[],status:"empty",code:2});
                 }     
                 else
-                    res.status(500).send(Q);
+                    sendResponse(res,500,Q);
             }
             else
-                res.status(http_code).send({status,code,message});  
+                sendResponse(res,http_code,{message,status,code});
         }
         else
-            sendResponse(res,400,{message:"No Body",status:"failure",code:4});
-
-    
+            sendResponse(res,400,{message:"No Body",status:"failure",code:4});    
     }); 
 
-    app.get("files/:reg/:file",handle.downloads);
+    app.get("files/:reg/:file", async (req,res) => 
+    {
+        let authorized, http_code, status, code, message, usertype, body = Object.keys(req.body).length;
 
-    app.post("/signup", sup, async (req,res) => 
+        console.log(); process.stdout.write(req.hostname); console.log(req.url); console.log();
+
+        process.stdout.write("Request: "); console.log(req.body); console.log();
+
+        if(body)
+        {
+            [authorized,http_code,status,code,message,usertype] = await verify(req,1);
+
+            if(authorized)
+                handle.downloads(req,res);
+            else
+                sendResponse(res,http_code,{message,status,code});
+        }
+        else
+            sendResponse(res,400,{message:"No Body",status:"failure",code:4});    
+    });
+
+    app.get("download/:token", async (req,res) =>
+    {
+        console.log(); process.stdout.write(req.hostname); console.log(req.url); console.log();
+
+        process.stdout.write("Request: "); console.log(req.body); console.log();
+
+        handle.downloads(req,res);
+
+    });
+
+    app.post("/signup", sup, async (req,res) => //add approval
     {
         let params = req.body;
 
         let body = Object.keys(req.body).length;
 
-        console.log(); console.log(req.url); console.log();
+        console.log(); process.stdout.write(req.hostname); console.log(req.url); console.log();
 
         process.stdout.write("Request: "); console.log(req.body); console.log();
 
@@ -1063,7 +1098,7 @@ if(creds)
         
         let id, usertype, body = Object.keys(req.body).length;
         
-        console.log(); console.log(req.url); console.log();
+        console.log(); process.stdout.write(req.hostname); console.log(req.url); console.log();
 
         process.stdout.write("Request: "); console.log(req.body); console.log();
 
@@ -1169,7 +1204,7 @@ if(creds)
 
         let usertype, id, body = Object.keys(req.body).length, params;
         
-        console.log(); console.log(req.url); console.log();
+        console.log(); process.stdout.write(req.hostname); console.log(req.url); console.log();
 
         process.stdout.write("Request: "); console.log(req.body); console.log();
 

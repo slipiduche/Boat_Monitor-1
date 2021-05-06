@@ -114,11 +114,11 @@ async function data2CSV(host,base,data)
 
             let pass = gen(8,false);
 
-            let token = jwt.sign({filename},pass,{ expiresIn: 60 * 60 * 24 });
-            /*host + "/" + */
+            let token =  "https://" + host + "/" +  jwt.sign({filename},pass,{ expiresIn: 60 * 60 * 24 });
+           
             let url = token.slice(0,4) + pass + token.slice(4,token.length);
  
-            /*
+            
             let Q = await SQL.INS("FILES",
             {
                 fl_name:filename,
@@ -137,20 +137,15 @@ async function data2CSV(host,base,data)
 
                 return [true,Q[0]]
             }          
-            */
-
-            return [true,url];
         }
         catch(error)
         {
             return [false,{message:error.toString() + error.stack.toString(),status:"failure",code:4}]
         }  
-        
-        //return [true,url]
     }
     else
-        return 'poop';
-        //return [false,null]
+        return [false,{message:"No data supplied",status:"failure",code:4}];
+
 }
 
 setImmediate(async () =>

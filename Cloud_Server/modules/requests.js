@@ -5,7 +5,7 @@
 *******************************************************************************/
 
 /**********************************MODULES*************************************/
-const fs   = require('fs');
+const fs = require('fs');
 
 const path = require('path');
 
@@ -13,11 +13,15 @@ const util = require('util');
 
 const nodemailer = require('nodemailer');
 
+const jwt = require('jsonwebtoken');
+
+const pg = require('generate-password');
+
 const log = require('./logging.js');
 
 const sql = require('./sql.js');
 
-const dir  = ["./files/historics/","./files/media/recordings/","./files/media/snapshots/"];
+const dir  = ["./files/historics/","./files/media/snapshots/","./files/media/recordings/","./files/csv","./files/zips"];
 
 /*********************************PARAMETERS**********************************/
 var transporter = nodemailer.createTransport(
@@ -55,76 +59,337 @@ function charRemove(str,symbol,n)
 
     return str;
 }
-/**********************************EXPORTS************************************/
 
-module.exports.downloads = async (res,req) =>
+function quote(str)
 {
+    return "\"" + str + "\"";
+}
+
+function gen(length,symbols)
+{
+    return pswrd = pg.generate(
+    {
+        length,
+        numbers:true,
+        symbols,
+        uppercase:true,
+        lowercase:true,
+        strict:true
+    });
+}
+
+function dateNaming()
+{
+    let now = Date.now();
+
+    let date = new Date(now);
+
+    let y = date.getFullYear();
+
+    let m = date.getMonth();
+
+    let d = date.getDate();
+
+    let h = date.getHours();
+
+    let min = date.getMinutes();
+
+    let s = date.getSeconds();
+
+    let z = date.getMinutes();
+
+    let regEX = /T|Z/g;
+
+    return [`${y}${m+1}${d}${h}${min}${s}${z}`,date.toISOString().replace(regEX," ")];    
+}
+
+/**********************************EXPORTS************************************/
+module.exports.response = (res,status,payload) =>
+{
+    process.stdout.write("\n\rServer Response: "); console.log(payload);
+    process.stdout.write("Status Code: "); console.log(status); console.log();
+
+    res.status(status).send(payload);
+}
+
+module.exports.data2CSV = (host,base,data) =>
+{
+    let len = data.length;
+
+    if(len)
+    {
+        let save = util.promisify(fs.writeFile);
+
+        let str1 = null, str2 = null;
+
+        let keys = Object.keys(data[0]);
+        
+        let klen = keys.length;
+
+        for(let i = 0; i < klen; i++)
+        {
+            if(str1)
+                str1 += quote(keys[i]);
+            else
+                str1 = quote(keys[i]);
+
+            if(i < (klen - 1))
+                str1 += ";"
+            else
+                str1 += "\n";
+
+            for(let j = 0; j < len; j++)
+            {
+                let values = data[i];
+
+                if(str2)
+                    str2 += quote(values[keys[j]]);
+                else
+                    str2 = quote(values[keys[j]]);
+    
+                if(j < (len - 1))
+                    str2 += ";"
+                else
+                    str2 += "\n";
+            }
+        }
+
+        let sufix, date;
+     
+        [sufix,date] = dateNaming();
+
+        let filename = `${base}_${sufix}`, type = 4;
+
+        try
+        {
+            let filepath = `./files/csv/${filename}.csv`;
+
+            let content = str1+str2;
+
+            await save(filepath,content);
+            
+            let  fpath = path.resolve(filepath);
+
+            console.log(`${fpath} successfully saved`);
+
+            let pass = gen(8,false);
+
+            let token =  "https://" + host + "/" +  jwt.sign({filename,type},pass,{ expiresIn: 60 * 60 * 24 });
+           
+            let url = token.slice(0,4) + pass + token.slice(4,token.length);
+          
+            let Q = await SQL.INS("FILES",
+            {
+                fl_name:filename,
+                fl_type:".csv",
+                fl_path:fpath,
+                fl_url:"files/",
+                dt:date,
+                reg:date
+            });
+
+            if(!Q[0].status)
+                return [true,{url}];
+            else
+            {
+                Q[0].url = url;
+
+                return [true,Q[0]]
+            }          
+        }
+        catch(error)
+        {
+            return [false,{message:error.toString() + error.stack.toString(),status:"failure",code:4}]
+        }  
+    }
+    else
+        return [false,{message:"No data supplied",status:"failure",code:4}];
+
+}
+
+module.exports.downloads = async (req,res) =>
+{
+    let sendResponse = module.exports.response;
+
     let file = req.params.file;
 
-	let reg = parseInt(req.params.reg);
+    let token = req.params.token;
 
-	//Si el nombre no es nulo.
-	if (file!='' && (reg == 0 || reg == 1))
-	{
-		//Agrego el path local al file.
-		file = dir[reg]+file;
+	if (file)
+	{   
+        let Q = SQL.SEL("fl_path,fl_type",null,"FILES",{id:file},)
 
-		//Variable para el filesize.
-		let statFile;
+        if(!Q.status)
+        {
+            if(Q[0])
+            {
+                let filepath = Q[0].fl_path, ext = Q[0].fl_type, ct;
 
-		//Intengo obtener el archivo.
-		try
-		{
-			//Traigo atributos del archivo.
-			statFile = fs.statSync(file);
+                try
+                {
+                    let statFile = await fs.stat(filepath);
 
-            let ext = path.extname(file);
+                    if(ext == ".txt" || ext == ".csv")
+                        ct = "text/plain";
+                    else if(ext == "mp4")
+                        ct = "video/mpeg";
+                    else
+                        ct = "image/png";
+        
+                    res.writeHead(200, {'Content-Type': ct,'Content-Length': statFile.size});
+        
+                    console.log("Attempting  " + filepath + " pipe.");
+                    
+                    try
+                    {
+                        let stream = fs.createReadStream(filepath).pipe(res);
+              
+                        let hrstart = process.hrtime();
+                
+                        stream.on('finish', () =>
+                        {
+                            let hrend = process.hrtime(hrstart);
+                    
+                            console.log("Done Streaming " + req.params.file + " on host " + req.get('host'));
+                            
+                            console.log("%ds %dms",hrend[0],hrend[1]/1000000); 
+                        });
+                    }
+                    catch(error)
+                    {
+                        let e = error.toString();
 
-            let ct;
+                        if(error.stack)
+                            e += error.stack;       
 
-            if(ext == "txt")
-                ct = "text/plain";
-            else if(ext == "mp4")
-                ct = "video/mpeg";
+                        log.errorLog("download","Piping error of file " + filepath + ".\n\r\n\r" + e,1);
+                    }        
+                }
+                catch(error)
+                {
+                    let e = error.toString();
+
+                    if(error.stack)
+                        e += error.stack;       
+
+                    log.errorLog("download","File " + filepath + " can't be found.\n\r\n\r" + e,2);
+                    
+                    sendResponse(res,404,{message:"File " + filepath + "can't be found.",status:"failure",code:4});
+                }
+            }
             else
-                ct = "image/png";
-
-			//Armo headers.
-			res.writeHead(200, {'Content-Type': ct,'Content-Length': statFile.size});
-
-			console.log("Piping " + file + ".");
-
-			//Devuelvo streams del archivo atravez de un pipe.
-      let stream = fs.createReadStream(file).pipe(res);
-      
-      let hrstart = process.hrtime();
-
-      stream.on('finish', () =>
-      {
-        let hrend = process.hrtime(hrstart);
-
-        console.log("Done Streaming " + req.params.file + " on host " + req.get('host'));
-        console.log("%ds %dms",hrend[0],hrend[1]/1000000);
-
-      });
-      
-		}
-		catch(error)
-		{
-			console.log("File " + file + " can't be found.");
-
-			log.errorLog("download","File " + file + " can't be found.\n\r\n\r" + error.toString(),1);
-
-			res.status(404).send({STATUS:"NOT FOUND",MESSAGE:"FILE " + file + " CAN'T BE FOUND."});
-		}
+                sendResponse(res,404,{message:"Requsted element not in database",status:"failure",code:4});
+            
+    
+        }
+        else
+        sendResponse(res,500,Q);
+	
 	}
+    else if(token)
+    {
+        if(token.length >= 12)
+        {
+            let pass = token.slice(4,12);
+
+            let jtoken =  token.slice(0,4) + token.slice(12,token.length);
+            
+            try
+            {
+                let j = jwt.verify(token,pass);
+
+                let filename = j.filename, type = j.type;
+
+                if(filename && type)
+                {
+                    let filepath = dir[type - 1] + filename, ct;
+
+                    try
+                    {
+                        let statFile = await fs.stat(filepath);
+    
+                        if(type == 1 || type == 4)
+                            ct = "text/plain";
+                        else if(type == 3)
+                            ct = "video/mpeg";
+                        else if(type == 2)
+                            ct = "image/png";
+                        else
+                            ct = "application/zip"
+            
+                        res.writeHead(200, {'Content-Type': ct,'Content-Length': statFile.size});
+            
+                        console.log("Attempting  " + filepath + " pipe.");
+                        
+                        try
+                        {
+                            let stream = fs.createReadStream(filepath).pipe(res);
+                  
+                            let hrstart = process.hrtime();
+                    
+                            stream.on('finish', () =>
+                            {
+                                let hrend = process.hrtime(hrstart);
+                        
+                                console.log("Done Streaming " + req.params.file + " on host " + req.get('host'));
+                                
+                                console.log("%ds %dms",hrend[0],hrend[1]/1000000); 
+                            });
+                        }
+                        catch(error)
+                        {
+                            let e = error.toString();
+    
+                            if(error.stack)
+                                e += error.stack;       
+    
+                            log.errorLog("download","Piping error of file " + filepath + ".\n\r\n\r" + e,1);
+                        }        
+                    }
+                    catch(error)
+                    {
+                        let e = error.toString();
+    
+                        if(error.stack)
+                            e += error.stack;       
+    
+                        log.errorLog("download","File " + filepath + " can't be found.\n\r\n\r" + e,2);
+                        
+                        sendResponse(res,404,{message:"File " + filepath + "can't be found.",status:"failure",code:4});
+                    }
+                }
+                else
+                    sendResponse(res,403,{message:"Bad token",status:"failure",code:4});
+                
+            }
+            catch(error)
+            {
+                switch(error.name)
+                {
+                    case "TokenExpiredError":
+                    {
+                        log.errorLog()
+                        sendResponse(res,401,{message:"Token expired.",status:"unauthroized",code:12});
+                        
+                        break;
+                    }
+                    
+                    default:
+                    {
+                        sendResponse(res,401,{message:error,status:"unauthroized",code:12});
+                        
+                        break;
+                    }
+                }
+            }
+            
+        }
+    }
 	else
 	{
-		console.log("Bad request; file not specified.");
+		log.errorLog("download","No file specified.",3);
 
-		log.errorLog("download","Bad request; file not specified.",2);
-
-		res.status(400).send({STATUS:"BAD REQUEST", MESSAGE:"FILE NOT SPECIFIED."});
+        sendResponse(res,400,{message:"No resource specified",status:"failure",code:4});
 	}
 };
 
