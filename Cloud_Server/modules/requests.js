@@ -302,13 +302,13 @@ module.exports.downloads = async (req,res) =>
 
                 if(filename && type)
                 {
-                    let filepath = dir[type - 1] + filename, ct;
+                    let filepath = dir[type - 1] + filename, ct; //neeed to recheck folder structure
 
                     try
                     {
                         let statFile = await fs.stat(filepath);
     
-                        if(type == 1 || type == 4)
+                        if(type == 1 || type == 4) 
                             ct = "text/plain";
                         else if(type == 3)
                             ct = "video/mpeg";
