@@ -112,7 +112,7 @@ module.exports.response = (res,status,payload) =>
     res.status(status).send(payload);
 }
 
-module.exports.data2CSV = (host,base,data) =>
+module.exports.data2CSV = async (host,base,data) =>
 {
     let len = data.length;
 
