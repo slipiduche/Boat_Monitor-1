@@ -33,6 +33,7 @@ const SQL = require('./modules/sql.js');
 const sharp = require('sharp');
 
 const { send } = require('process');
+const { error } = require('console');
 
 /*************************VARIABLES AND INSTANCES*****************************/
 
@@ -126,44 +127,34 @@ if(creds)
 
         let size = 0;
 
-        let compression = true;
+        let compression = false;
         try
-        {   
+        {         
             let stream =  fs.createReadStream(p);
 
             if(compression)
             {
+                res.writeHead(200, {'Content-Type': "image/jpeg"});
+
                 let compress = sharp().rotate().resize(530).jpeg({ mozjpeg: true, quality:60});
 
-                stream = stream.pipe(compress).on("data",(chunk) => 
-                {
-                    size+=chunk.length;
-
-                }).on("end",()=> 
-                {
-                    console.log(size);
-
-                    res.writeHead(200, {'Content-Type': "image/jpeg",'Content-Length':size});
-                    
-                    compress.pipe(res);
-
-                })
+                stream =stream.pipe(compress).on("data",(chunk) => size+=chunk.length).pipe(res)
+                    .on("error",(err) => console.log(err))
             }
             else
             {
-                size = (await stat(p)).size;
-
-                res.writeHead(200, {'Content-Type': "image/jpeg",'Content-Length':size});  
-
                 let stat = util.promisify(fs.stat);
 
-               
+                size = (await stat(p)).size;
+
+                res.writeHead(200, {'Content-Type': "image/jpeg",'Content-Length':size});       
+
+                stream = stream.pipe(res)
+                    .on("error",(err) => console.log(err))
+                    
             }
 
-                  
-            
-
-           
+            stream.on("finish",() => console.log("%d bytes of data sent",size));
         }
         catch(error)
         {

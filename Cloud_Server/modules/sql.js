@@ -13,8 +13,6 @@ const fs   = require('fs');
 const util = require('util');
 
 const log = require('./logging.js');
-const { toNamespacedPath } = require('path');
-const { group } = require('console');
 
 /*********************************FUNCTIONS***********************************/
 
@@ -253,6 +251,15 @@ module.exports.INS = async function INS(TABLE,COLS)
     let result = await DB.promise().query(Q,params);
 
     r = JSON.parse(JSON.stringify(result));
+
+    if(r[0].affectedRows)
+    {
+      let query = `SELECT id FROM ${TABLE} ORDER BY ASC LIMIT 1`;
+
+      let id = (await DB.promise().query(query))[0][0].id;
+
+      r[0].id = id;
+    }
   }
   catch(error) //sql-error6
   {

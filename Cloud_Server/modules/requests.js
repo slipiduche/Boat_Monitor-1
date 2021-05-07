@@ -112,7 +112,7 @@ module.exports.response = (res,status,payload) =>
     res.status(status).send(payload);
 }
 
-module.exports.data2CSV = async (host,base,data) =>
+module.exports.data2CSV = async (user,host,base,data) =>
 {
     let len = data.length;
 
@@ -164,42 +164,49 @@ module.exports.data2CSV = async (host,base,data) =>
         {
             let filepath = `./files/csv/${filename}.csv`;
 
-            let content = str1+str2;
-
-            await save(filepath,content);
-            
-            let  fpath = path.resolve(filepath);
-
-            console.log(`${fpath} successfully saved`);
+            let content = str1+str2;     
 
             let pass = gen(8,false);
-
-            let token =  "https://" + host + "/" +  jwt.sign({filename,type},pass,{ expiresIn: 60 * 60 * 24 });
-           
-            let url = token.slice(0,4) + pass + token.slice(4,token.length);
           
-            let Q = await SQL.INS("FILES",
+            let Q = await SQL.INS("REQUESTS",
             {
-                fl_name:filename,
                 fl_type:".csv",
                 fl_path:fpath,
-                fl_url:"files/",
+                user_id:user,
                 dt:date,
-                reg:date
             });
-
+            
             if(!Q[0].status)
-                return [true,{url}];
+            {
+                if(Q[0].id)
+                {
+                    let id = Q[0].id
+
+                    await save(filepath,content);
+
+                    let  fpath = path.resolve(filepath);
+
+                    console.log(`${fpath} successfully saved`);
+
+                    let token =  "https://" + host + "/" +  jwt.sign({id},pass,{ expiresIn: 60 * 60 * 24 });
+
+                    let url = token.slice(0,4) + pass + token.slice(4,token.length);
+                    
+                    return [true,{url}];
+                }
+                else
+                {
+                    return [false,{message:"Request id couldn't be retrieved",status:"failure",code:5}];
+                }
+            }                
             else
             {
-                Q[0].url = url;
-
-                return [true,Q[0]]
+                return [false,Q[0]];
             }          
         }
         catch(error)
         {
-            return [false,{message:error.toString() + error.stack.toString(),status:"failure",code:4}]
+            return [false,{message:error.toString() + error.stack.toString(),status:"failure",code:4}];
         }  
     }
     else
@@ -216,125 +223,75 @@ module.exports.downloads = async (req,res) =>
     let token = req.params.token;
 
 	if (file)
-	{   
-        let Q = SQL.SEL("fl_path,fl_type",null,"FILES",{id:file},)
+	{ 
+        let compression = req.body.compress;
+
+        let Q = SQL.SEL("fl_path,fl_type",null,"FILES",{id:file});
 
         if(!Q.status)
         {
             if(Q[0])
             {
-                let filepath = Q[0].fl_path, ext = Q[0].fl_type, ct;
+                let filepath = Q[0].fl_path, type = Q[0].fl_type, ct, size = 0;
 
-                try
+                if(filepath && type)
                 {
-                    let statFile = await fs.stat(filepath);
-
-                    if(ext == ".txt" || ext == ".csv")
-                        ct = "text/plain";
-                    else if(ext == "mp4")
-                        ct = "video/mpeg";
-                    else
-                        ct = "image/png";
-        
-                    res.writeHead(200, {'Content-Type': ct,'Content-Length': statFile.size});
-        
-                    console.log("Attempting  " + filepath + " pipe.");
-                    
                     try
                     {
-                        let stream = fs.createReadStream(filepath).pipe(res);
-              
-                        let hrstart = process.hrtime();
-                
-                        stream.on('finish', () =>
-                        {
-                            let hrend = process.hrtime(hrstart);
-                    
-                            console.log("Done Streaming " + req.params.file + " on host " + req.get('host'));
-                            
-                            console.log("%ds %dms",hrend[0],hrend[1]/1000000); 
-                        });
-                    }
-                    catch(error)
-                    {
-                        let e = error.toString();
-
-                        if(error.stack)
-                            e += error.stack;       
-
-                        log.errorLog("download","Piping error of file " + filepath + ".\n\r\n\r" + e,1);
-                    }        
-                }
-                catch(error)
-                {
-                    let e = error.toString();
-
-                    if(error.stack)
-                        e += error.stack;       
-
-                    log.errorLog("download","File " + filepath + " can't be found.\n\r\n\r" + e,2);
-                    
-                    sendResponse(res,404,{message:"File " + filepath + "can't be found.",status:"failure",code:4});
-                }
-            }
-            else
-                sendResponse(res,404,{message:"Requsted element not in database",status:"failure",code:4});
-            
+                        let stat = util.promisify(fs.stat);
     
-        }
-        else
-        sendResponse(res,500,Q);
-	
-	}
-    else if(token)
-    {
-        if(token.length >= 12)
-        {
-            let pass = token.slice(4,12);
-
-            let jtoken =  token.slice(0,4) + token.slice(12,token.length);
-            
-            try
-            {
-                let j = jwt.verify(token,pass);
-
-                let filename = j.filename, type = j.type;
-
-                if(filename && type)
-                {
-                    let filepath = dir[type - 1] + filename, ct; //neeed to recheck folder structure
-
-                    try
-                    {
-                        let statFile = await fs.stat(filepath);
+                        let stats = await stat(filepath);
     
-                        if(type == 1 || type == 4) 
+                        if(type == ".txt" || type == ".csv")
                             ct = "text/plain";
-                        else if(type == 3)
+                        else if(type == ".mp4")
                             ct = "video/mpeg";
-                        else if(type == 2)
-                            ct = "image/png";
                         else
-                            ct = "application/zip"
-            
-                        res.writeHead(200, {'Content-Type': ct,'Content-Length': statFile.size});
+                            ct = "image/jpeg";
             
                         console.log("Attempting  " + filepath + " pipe.");
                         
                         try
                         {
-                            let stream = fs.createReadStream(filepath).pipe(res);
-                  
-                            let hrstart = process.hrtime();
-                    
-                            stream.on('finish', () =>
+                            let print = (hrstart,size) =>
                             {
                                 let hrend = process.hrtime(hrstart);
                         
-                                console.log("Done Streaming " + req.params.file + " on host " + req.get('host'));
+                                console.log("\n\rDone Streaming " + req.params.file + " from " + req.hostname);
                                 
-                                console.log("%ds %dms",hrend[0],hrend[1]/1000000); 
+                                console.log("\n\r%d bytes of data sent in %ds %dms",size,hrend[0],hrend[1]/1000000);
+                            }
+    
+                            let stream = fs.createReadStream(filepath), hrstart = process.hrtime();                        
+    
+                            if(compression && ext == ".jpg")
+                            {
+                                res.writeHead(200, {'Content-Type': "image/jpeg"});
+                                
+                                let compress = sharp().rotate().resize(530).jpeg({ mozjpeg: true, quality:60});
+                                
+                                stream.pipe(compress).on("data",(chunk) => size+=chunk.length).pipe(res);
+                            }
+                            else
+                            {
+                                let size = stats.size;
+    
+                                res.writeHead(200, {'Content-Type': "image/jpeg",'Content-Length':size});       
+                
+                                stream.pipe(res);
+                                   
+                            }
+                            
+                            stream.on("error",(e) =>  
+                            {
+                                log.errorLog("download","Piping error of file " + filepath + ".\n\r\n\r" + e,1);
                             });
+
+                            stream.on("finish",() => 
+                            {
+                                print(hrstart,size)
+                            });
+
                         }
                         catch(error)
                         {
@@ -344,6 +301,13 @@ module.exports.downloads = async (req,res) =>
                                 e += error.stack;       
     
                             log.errorLog("download","Piping error of file " + filepath + ".\n\r\n\r" + e,1);
+    
+                            try
+                            {
+                                sendResponse(res,500,{message:"piping error",status:"failure",code:4});
+                            }
+                            catch
+                            {}
                         }        
                     }
                     catch(error)
@@ -359,7 +323,120 @@ module.exports.downloads = async (req,res) =>
                     }
                 }
                 else
-                    sendResponse(res,403,{message:"Bad token",status:"failure",code:4});
+                {
+                    semdResponse(res,500,{message:"Database Integrity or Query Error",status:"failure",code:4}); 
+                }        
+            }
+            else
+            {
+                sendResponse(res,404,{message:"Requsted element not in database",status:"failure",code:4});
+               
+            }
+        
+        }
+        else
+            sendResponse(res,500,Q);
+	
+	}
+    else if(token)
+    {
+        if(token.length >= 12)
+        {
+            let pass = token.slice(4,12);
+
+            let jtoken =  token.slice(0,4) + token.slice(12,token.length);
+            
+            try
+            {
+                let j = jwt.verify(jtoken,pass);
+
+                if(j.id)
+                {
+                    let Q = SQL.SEL("fl_path,fl_type",null,"FILES",{id:j.id});
+
+                    if(!Q.status)
+                    {
+                        if(Q[0])
+                        {
+                            let filepath = Q[0].fl_path, type = Q[0].fl_type;
+
+                            if(filepath && type)
+                            {
+                                try
+                                {
+                                    let stat = util.promisify(fs.stat);
+            
+                                    let stats = await stat(filepath);
+            
+                                    let size = stats.size;
+                
+                                    if(type == ".csv") 
+                                        ct = "text/plain";
+                                    else
+                                        ct = "application/zip"
+                        
+                                    res.writeHead(200, {'Content-Type': ct,'Content-Length': size});
+                        
+                                    console.log("Attempting  " + filepath + " pipe.");
+                                    
+                                    try
+                                    {
+                                        let stream = fs.createReadStream(filepath).pipe(res)
+
+                                        stream.on("error",(e) => 
+                                        {
+                                            log.errorLog("download","Piping error of file " + filepath + ".\n\r\n\r" + e,1);
+                                        }) 
+
+                                        stream.on("finish",() => 
+                                        {
+                                            print(hrstart,size)
+                                        });                                       
+                                    }
+                                    catch(error)
+                                    {
+                                        let e = error.toString();
+                
+                                        if(error.stack)
+                                            e += error.stack;       
+                
+                                        log.errorLog("download","Piping error of file " + filepath + ".\n\r\n\r" + e,1);
+                                    }        
+                                }
+                                catch(error)
+                                {
+                                    let e = error.toString();
+                
+                                    if(error.stack)
+                                        e += error.stack;       
+                
+                                    log.errorLog("download","File " + filepath + " can't be found.\n\r\n\r" + e,2);
+                                    
+                                    sendResponse(res,404,{message:"File " + filepath + "can't be found.",status:"failure",code:4});
+                                    try
+                                    {
+                                        sendResponse(res,500,{message:"piping error",status:"failure",code:4});
+                                    }
+                                    catch
+                                    {}
+                                }
+                            }
+                            else
+                                sendResponse(res,403,{message:"Bad token",status:"failure",code:4});
+                        }
+                        else
+                        {
+                            sendResponse(res,404,{message:"Requsted element not in database",status:"failure",code:4});
+                        }
+                    }
+                    else
+                    {
+                        sendResponse(res,500,Q);
+                    }
+                }
+                else
+                    sendResponse(res,404,{message:"Bad Token",status:"failure",code:4});
+               
                 
             }
             catch(error)
@@ -368,7 +445,6 @@ module.exports.downloads = async (req,res) =>
                 {
                     case "TokenExpiredError":
                     {
-                        log.errorLog()
                         sendResponse(res,401,{message:"Token expired.",status:"unauthroized",code:12});
                         
                         break;
@@ -387,8 +463,6 @@ module.exports.downloads = async (req,res) =>
     }
 	else
 	{
-		log.errorLog("download","No file specified.",3);
-
         sendResponse(res,400,{message:"No resource specified",status:"failure",code:4});
 	}
 };

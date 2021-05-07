@@ -1026,7 +1026,7 @@ if(creds)
             handle.response(res,400,{message:"No Body",status:"failure",code:4});    
     });
 
-    app.get("files/:reg/:file", async (req,res) => 
+    app.get("files/:type/:file", async (req,res) => 
     {
         let authorized, http_code, status, code, message, usertype, body = Object.keys(req.body).length;
 

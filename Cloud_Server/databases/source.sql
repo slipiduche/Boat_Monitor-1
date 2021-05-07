@@ -157,6 +157,21 @@ CREATE TABLE ALERTS
             ON DELETE CASCADE
 );
 
+CREATE TABLE REQUESTS
+(
+    id INTEGER AUTO_INCREMENT,
+    fl_type TEXT NOT NULL,
+    fl_path TEXT NOT NULL,
+    user_id INTEGER,
+    dt DATETIME,
+
+    PRIMARY KEY (id),
+
+    CONSTRAINT FK_USER_R
+        FOREIGN KEY (user_id)
+        REFERENCES USERS (id)
+);
+
 INSERT INTO USERS (username,pswrd,names,mail,usertype,latt,blocked,st,dt) VALUES 
     (
         'orbittas@orbittas.com',
