@@ -724,21 +724,21 @@ if(creds)
                     console.log("\n\rToken: " + token + "\n\r");
 
                     if(token)
-                        sendResponse(res,200,{token,usertype,status:"success",code:1});
+                        handle.response(res,200,{token,usertype,status:"success",code:1});
                     else
-                        sendResponse(res,500,{message:"Unknown Error",status:"failure",code:4});
+                        handle.response(res,500,{message:"Unknown Error",status:"failure",code:4});
                 }              
                 else
-                    sendResponse(res,500,{message:"Database Integrity Issue; Null Values",status:"failure",code:4});
+                    handle.response(res,500,{message:"Database Integrity Issue; Null Values",status:"failure",code:4});
 
             }
             else
-                sendResponse(res,500,req.data);
+                handle.response(res,500,req.data);
  
         }
         catch(error)
         {
-            sendResponse(res,500,{message:error.toString(),status:"failure",code:4});
+            handle.response(res,500,{message:error.toString(),status:"failure",code:4});
         }
 
     });
@@ -773,31 +773,31 @@ if(creds)
                         {   
                             handle.mailing({username,mail,password},testAccount);
 
-                            sendResponse(res,200,{message:"An email containing new credentials was sent",status:"success",code:1});
+                            handle.response(res,200,{message:"An email containing new credentials was sent",status:"success",code:1});
                         }
                         catch(error)
                         {
                             log.errorLog(mail,error.tostring(),1);
 
-                            sendResponse(res,500,{message:"Unable to send email",status:"failure",code:4});
+                            handle.response(res,500,{message:"Unable to send email",status:"failure",code:4});
                         }
                     }
                     else
-                        sendResponse(res,500,Q);
+                        handle.response(res,500,Q);
 
                 }
                 else if(W[0].st == false)
-                    sendResponse(res,403,{message:"User is not enabled",status:"unavailable",code:6});
+                    handle.response(res,403,{message:"User is not enabled",status:"unavailable",code:6});
                 else
-                    sendResponse(res,500,{message:"Database Integrity Issue",status:"failure",code:4});
+                    handle.response(res,500,{message:"Database Integrity Issue",status:"failure",code:4});
             }
             else
             {
-                sendResponse(res,403,{message:"No user is registered with this email address",status:"failure",code:4});
+                handle.response(res,403,{message:"No user is registered with this email address",status:"failure",code:4});
             }
         }
         else
-            sendResponse(res,500,W);
+            handle.response(res,500,W);
     });
 
     /*Data Visualization*/
@@ -821,18 +821,18 @@ if(creds)
                 if(!Q.status)
                 {
                     if(Q[0])
-                        sendResponse(res,200,{BOATS:Q[0],status:"success",code:1});
+                        handle.response(res,200,{BOATS:Q[0],status:"success",code:1});
                     else
-                        sendResponse(res,200,{BOATS:[],status:"empty",code:2});
+                        handle.response(res,200,{BOATS:[],status:"empty",code:2});
                 }     
                 else
-                    sendResponse(res,500,Q); 
+                    handle.response(res,500,Q); 
             }
             else
-                sendResponse(res,http_code,{message,status,code}); 
+                handle.response(res,http_code,{message,status,code}); 
         }
         else
-            sendResponse(res,400,{message:"No Body",status:"failure",code:4});       
+            handle.response(res,400,{message:"No Body",status:"failure",code:4});       
     });
 
     app.get("/users", async (req,res) => 
@@ -856,18 +856,18 @@ if(creds)
                 if(!Q.status)
                 {
                     if(Q[0])
-                        sendResponse(res,200,{USERS:Q[0],status:"success",code:1});
+                        handle.response(res,200,{USERS:Q[0],status:"success",code:1});
                     else
-                        sendResponse(res,200,{USERS:[],status:"empty",code:2});
+                        handle.response(res,200,{USERS:[],status:"empty",code:2});
                 }     
                 else
-                    sendResponse(res,500,Q); 
+                    handle.response(res,500,Q); 
             }
             else
-                sendResponse(res,http_code,{message,status,code}); 
+                handle.response(res,http_code,{message,status,code}); 
         }
         else
-            sendResponse(res,400,{message:"No Body",status:"failure",code:4});
+            handle.response(res,400,{message:"No Body",status:"failure",code:4});
 
         
     });
@@ -891,18 +891,18 @@ if(creds)
                 if(!Q.status)
                 {
                     if(Q[0])
-                        sendResponse(res,200,{JOURNEYS:Q[0],status:"success",code:1});
+                        handle.response(res,200,{JOURNEYS:Q[0],status:"success",code:1});
                     else
-                        sendResponse(res,200,{JOURNEYS:[],status:"empty",code:2});
+                        handle.response(res,200,{JOURNEYS:[],status:"empty",code:2});
                 }     
                 else
-                    sendResponse(res,500,Q); 
+                    handle.response(res,500,Q); 
             }
             else
-                sendResponse(res,http_code,{message,status,code}); 
+                handle.response(res,http_code,{message,status,code}); 
         }
         else
-            sendResponse(res,400,{message:"No Body",status:"failure",code:4});
+            handle.response(res,400,{message:"No Body",status:"failure",code:4});
   
     });
 
@@ -925,18 +925,18 @@ if(creds)
                 if(!Q.status)
                 {
                     if(Q[0])
-                        sendResponse(res,200,{FILES:Q[0],status:"success",code:1});
+                        handle.response(res,200,{FILES:Q[0],status:"success",code:1});
                     else
-                        sendResponse(res,200,{FILES:[],status:"empty",code:2});
+                        handle.response(res,200,{FILES:[],status:"empty",code:2});
                 }     
                 else
-                    sendResponse(res,500,Q); 
+                    handle.response(res,500,Q); 
             }
             else
-                sendResponse(res,http_code,{message,status,code});   
+                handle.response(res,http_code,{message,status,code});   
         }
         else
-            sendResponse(res,400,{message:"No Body",status:"failure",code:4});
+            handle.response(res,400,{message:"No Body",status:"failure",code:4});
     });
 
     app.get("/historics", async (req,res) =>
@@ -958,18 +958,18 @@ if(creds)
                 if(!Q.status)
                 {
                     if(Q[0])
-                        sendResponse(res,200,{HISTORICS:Q[0],status:"success",code:1});
+                        handle.response(res,200,{HISTORICS:Q[0],status:"success",code:1});
                     else
-                        sendResponse(res,200,{HISTORICS:[],status:"empty",code:2});
+                        handle.response(res,200,{HISTORICS:[],status:"empty",code:2});
                 }     
                 else
-                    sendResponse(res,500,Q);
+                    handle.response(res,500,Q);
             }
             else
-                sendResponse(res,http_code,{message,status,code}); 
+                handle.response(res,http_code,{message,status,code}); 
         }
         else
-            sendResponse(res,400,{message:"No Body",status:"failure",code:4});
+            handle.response(res,400,{message:"No Body",status:"failure",code:4});
     }); 
 
     app.get("/alerts", async (req,res) =>
@@ -991,18 +991,18 @@ if(creds)
                 if(!Q.status)
                 {
                     if(Q[0])
-                        sendResponse(res,200,{ALERTS:Q[0],status:"success",code:1});
+                        handle.response(res,200,{ALERTS:Q[0],status:"success",code:1});
                     else
-                        sendResponse(res,200,{ALERTS:[],status:"empty",code:2});
+                        handle.response(res,200,{ALERTS:[],status:"empty",code:2});
                 }     
                 else
-                    sendResponse(res,500,Q);
+                    handle.response(res,500,Q);
             }
             else
-                sendResponse(res,http_code,{message,status,code});
+                handle.response(res,http_code,{message,status,code});
         }
         else
-            sendResponse(res,400,{message:"No Body",status:"failure",code:4});    
+            handle.response(res,400,{message:"No Body",status:"failure",code:4});    
     }); 
 
     app.get("files/zip", async (req,res) => 
@@ -1020,10 +1020,10 @@ if(creds)
             if(authorized)
                 handle.downloads(req,res);
             else
-                sendResponse(res,http_code,{message,status,code});
+                handle.response(res,http_code,{message,status,code});
         }
         else
-            sendResponse(res,400,{message:"No Body",status:"failure",code:4});    
+            handle.response(res,400,{message:"No Body",status:"failure",code:4});    
     });
 
     app.get("files/:reg/:file", async (req,res) => 
@@ -1041,10 +1041,10 @@ if(creds)
             if(authorized)
                 handle.downloads(req,res);
             else
-                sendResponse(res,http_code,{message,status,code});
+                handle.response(res,http_code,{message,status,code});
         }
         else
-            sendResponse(res,400,{message:"No Body",status:"failure",code:4});    
+            handle.response(res,400,{message:"No Body",status:"failure",code:4});    
     });
 
     app.get("download/:token", async (req,res) =>
@@ -1079,10 +1079,10 @@ if(creds)
                 {
                     if(W[0].username)
                     {
-                        sendResponse(res,403,{message:"User Already Exists",status:"unchanged",code:3});
+                        handle.response(res,403,{message:"User Already Exists",status:"unchanged",code:3});
                     }
                     else
-                        sendResponse(res,500,{message:"Database Integrity Issue",status:"failure",code:4});
+                        handle.response(res,500,{message:"Database Integrity Issue",status:"failure",code:4});
                 }
                 else
                 {
@@ -1100,17 +1100,17 @@ if(creds)
             
                     if(!Q.status)
                     {
-                        sendResponse(res,200,{message:"User Created",status:"success",code:1});
+                        handle.response(res,200,{message:"User Created",status:"success",code:1});
                     }     
                     else
-                        sendResponse(res,500,Q);           
+                        handle.response(res,500,Q);           
                 }
             }
             else
-                sendResponse(res,500,W);
+                handle.response(res,500,W);
         }
         else
-            sendResponse(res,400,{message:"No Body",status:"failure",code:4});
+            handle.response(res,400,{message:"No Body",status:"failure",code:4});
     });
 
     app.post("/create", async (req,res) => 
@@ -1166,15 +1166,15 @@ if(creds)
 
                         if(W[0].username)
                         {   
-                            sendResponse(res,403,{message:"User Already Exists",status:"unchanged",code:3});
+                            handle.response(res,403,{message:"User Already Exists",status:"unchanged",code:3});
                         }
                         else
-                            sendResponse(res,500,{message:"Database Integrity Issue",status:"failure",code:4});
+                            handle.response(res,500,{message:"Database Integrity Issue",status:"failure",code:4});
                     }
                 }
                 else
                 {
-                    sendResponse(res,500,W);
+                    handle.response(res,500,W);
 
                     proceed = false;
                 }
@@ -1208,15 +1208,15 @@ if(creds)
     
                 if(!Q.status)
                 {
-                    sendResponse(res,200,{message:"New entry successfully created",status:"success",code:1});
+                    handle.response(res,200,{message:"New entry successfully created",status:"success",code:1});
                 }     
                 else
-                    sendResponse(res,500,Q);
+                    handle.response(res,500,Q);
             }
   
         }
         else
-            sendResponse(res,http_code,{message,status,code});       
+            handle.response(res,http_code,{message,status,code});       
     });
 
     app.post("/modify", async (req,res) => 
@@ -1290,18 +1290,18 @@ if(creds)
 
             if(!Q.status)
             {
-                sendResponse(res,200,{message:"New entry successfully created",status:"success",code:1});
+                handle.response(res,200,{message:"New entry successfully created",status:"success",code:1});
             }     
             else
             {
                 if(Q.code == 3)
-                    sendResponse(res,400,Q);
+                    handle.response(res,400,Q);
                 else 
-                    sendResponse(res,500,Q);
+                    handle.response(res,500,Q);
             }           
         }
         else
-            sendResponse(res,http_code,{message,status,code});       
+            handle.response(res,http_code,{message,status,code});       
     });
 }
 
