@@ -24,3 +24,16 @@ let sys = "crap"//(os.type());
 
 sys.toLowerCase().includes("windows");
 console.log();
+
+let ar = "eiubfiewb";
+
+if(!Array.isArray(ar))
+{
+  let aux = ar;
+
+  ar = [];
+
+  ar.push(aux);
+}
+
+console.log(ar);

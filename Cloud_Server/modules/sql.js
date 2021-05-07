@@ -75,9 +75,14 @@ module.exports.SEL = async function SEL(S,REST,TABLE,WHERE,RANGE,LAST)
 
     for(let i = 0; i < iter; i++)
     {      
-      let value = WHERE[keys[i]];
+      let values = [], value = WHERE[keys[i]];
       
-      let len = value.length;
+      if(Array.isArray(value))
+        values = value;
+      else
+        values.push(value);
+
+      let len = values.length;
 
       if(i > 0)
         q3 += " AND ";
@@ -86,7 +91,7 @@ module.exports.SEL = async function SEL(S,REST,TABLE,WHERE,RANGE,LAST)
 
       for(let j = 0; j < len; j++)
       {
-        params.push(value[j]);
+        params.push(values[j]);
 
         if(j > 0)
           q3 += ",";
