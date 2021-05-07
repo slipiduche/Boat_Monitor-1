@@ -3,9 +3,9 @@ const util = require('util');
 const jwt = require('jsonwebtoken');
 const pathm = require("path");
 const pg = require('generate-password');
+const express = require('express');
 
 const SQL = require('./modules/sql.js');
-const { slice } = require('lodash');
 
 var data = [{crap1:1,crap2:2,crap3:3},{crap1:4,crap2:7,crap3:9},{crap1:11,crap2:22,crap3:34}];
 
@@ -167,5 +167,5 @@ setImmediate(async () =>
 
 });
 
-
+const app =  express();
 

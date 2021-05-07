@@ -84,7 +84,7 @@ module.exports.SEL = async function SEL(S,REST,TABLE,WHERE,RANGE,LAST)
 
       q3 +=  keys[i] + " IN ( ";
 
-      for(let j = 0; j < len; len++)
+      for(let j = 0; j < len; j++)
       {
         params.push(value[j]);
 

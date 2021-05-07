@@ -29,6 +29,9 @@ const log = require('./modules/logging.js');
 const handle = require('./modules/requests.js');
 
 const SQL = require('./modules/sql.js');
+
+const sharp = require('sharp');
+
 const { send } = require('process');
 
 /*************************VARIABLES AND INSTANCES*****************************/
@@ -117,6 +120,67 @@ if(creds)
         res.status(200).json({OUT:"henlo!"});
     });
 
+    app.get('/get', async function  A (req,res)
+    {
+        let p = 'C:\\Users\\CLIM-DESKTOP\\Downloads\\IMG_20210506_140531547.jpg';
+
+        let size = 0;
+
+        let compression = true;
+        try
+        {   
+            let stream =  fs.createReadStream(p);
+
+            if(compression)
+            {
+                let compress = sharp().rotate().resize(530).jpeg({ mozjpeg: true, quality:60});
+
+                stream = stream.pipe(compress).on("data",(chunk) => 
+                {
+                    size+=chunk.length;
+
+                }).on("end",()=> 
+                {
+                    console.log(size);
+
+                    res.writeHead(200, {'Content-Type': "image/jpeg",'Content-Length':size});
+                    
+                    compress.pipe(res);
+
+                })
+            }
+            else
+            {
+                size = (await stat(p)).size;
+
+                res.writeHead(200, {'Content-Type': "image/jpeg",'Content-Length':size});  
+
+                let stat = util.promisify(fs.stat);
+
+               
+            }
+
+                  
+            
+
+           
+        }
+        catch(error)
+        {
+            console.log(error);
+
+            res.status(500).semd(error);
+        }
+
+             
+        
+    });
+
+   
+
+        
+        
+   
     app.post('/upload-audio', async (req, res) => 
     {
         try 

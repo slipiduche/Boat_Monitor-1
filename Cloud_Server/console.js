@@ -1,3 +1,5 @@
+const os = require('os');
+
 let mod = "cat";
 
 let str = `I am your ${mod}`;
@@ -18,4 +20,7 @@ function isDigit(char)
         return false;
 }
 
-console.log(isDigit('A'))
+let sys = "crap"//(os.type());
+
+sys.toLowerCase().includes("windows");
+console.log();

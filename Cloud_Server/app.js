@@ -1005,6 +1005,27 @@ if(creds)
             sendResponse(res,400,{message:"No Body",status:"failure",code:4});    
     }); 
 
+    app.get("files/zip", async (req,res) => 
+    {
+        let authorized, http_code, status, code, message, usertype, body = Object.keys(req.body).length;
+
+        console.log(); process.stdout.write(req.hostname); console.log(req.url); console.log();
+
+        process.stdout.write("Request: "); console.log(req.body); console.log();
+
+        if(body)
+        {
+            [authorized,http_code,status,code,message,usertype] = await verify(req,1);
+
+            if(authorized)
+                handle.downloads(req,res);
+            else
+                sendResponse(res,http_code,{message,status,code});
+        }
+        else
+            sendResponse(res,400,{message:"No Body",status:"failure",code:4});    
+    });
+
     app.get("files/:reg/:file", async (req,res) => 
     {
         let authorized, http_code, status, code, message, usertype, body = Object.keys(req.body).length;
