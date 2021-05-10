@@ -212,7 +212,7 @@ async function verify(req, min)
                 let password = Q[0].pswrd;
 
                 try
-                {
+                { 
                     let decoded =  jwt.verify(token,password);
 
                     if(!Q[0].st)
@@ -876,7 +876,7 @@ if(creds)
             {
                 console.log(req.body);
 
-                let Q = filter("BOATS",BOATS,req.body,"SEL");
+                let Q = await filter("BOATS",BOATS,req.body,"SEL");
                 
                 if(!Q.status)
                 {
@@ -946,7 +946,7 @@ if(creds)
             {   
                 req.body.rest = usertype;
 
-                let Q = filter("USERS",USERS,req.body,"SEL");
+                let Q = await filter("USERS",USERS,req.body,"SEL");
                 
                 if(!Q.status)
                 {
@@ -1016,7 +1016,7 @@ if(creds)
       
             if(authorized)
             {
-                let Q = filter("JOURNEYS",null,req.body,"SEL");
+                let Q = await filter("JOURNEYS",null,req.body,"SEL");
                 
                 if(!Q.status)
                 {
@@ -1085,7 +1085,7 @@ if(creds)
 
             if(authorized)
             {
-                let Q = filter("FILES",null,req.body,"SEL");
+                let Q = await filter("FILES",null,req.body,"SEL");
                 
                 if(!Q.status)
                 {
@@ -1153,7 +1153,7 @@ if(creds)
             
             if(authorized)
             {
-                let Q = filter("HISTORICS",null,req.body,"SEL");
+                let Q = await filter("HISTORICS",null,req.body,"SEL");
                 
                 if(!Q.status)
                 {
@@ -1221,7 +1221,7 @@ if(creds)
 
             if(authorized)
             {
-                let Q = filter("ALERTS",null,req.body,"SEL");
+                let Q = await filter("ALERTS",null,req.body,"SEL");
                 
                 if(!Q.status)
                 {
@@ -1289,7 +1289,7 @@ if(creds)
 
             if(authorized)
             {
-                let Q = filter("ALERTS",null,req.body,"SEL");
+                let Q = await filter("ALERTS",null,req.body,"SEL");
                 
                 if(!Q.status)
                 {
