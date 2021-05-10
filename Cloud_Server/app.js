@@ -42,13 +42,13 @@ const port = [8443,9443,8883];
 
 const BOATS = ["id","boat_name","max_st","resp","st","obs"];
 
-const USERS = ["id","username","names","mail","usertype","latt","ldt","blocked","st","dt"];
+const USERS = ["id","username","names","mail","usertype","latt","ldt","blocked","st","approval","lav","dt"];
 
 const bex = ["mac","max_st"];
 
-const uex_self = ["username","names","mail","usertype","latt","ldt","blocked","st","dt"];
+const uex_self = ["username","names","mail","usertype","latt","ldt","blocked","st","approval","dt"];
 
-const uex = ["latt","ldt","blocked","st"];
+const uex = ["latt","ldt","blocked","lav"];
 
 const jex_ini = ["ed","end_user","i_weight","f_weight","s_img","total_img","synced"];
 
@@ -189,7 +189,7 @@ async function filter(tab,retrieve,params,command)
 
 async function verify(req, min)
 {
-    let authorized = false, http_code = 500, status = null, code = null, message = null, usertype = null;
+    let authorized = false, http_code = 500, status = null, code = null, message = null, usertype = null, id = null;
 
     if (req.body.token)
     {
@@ -197,10 +197,10 @@ async function verify(req, min)
         
         if(token && token.length > 3)
         {
-            let id;
-
             [token,id] = NaNFinder(token);
             
+            console.log("token");
+
             let Q = await SQL.SEL("*",null,"USERS",{id},null);
 
             if(!Q.status && Q[0])
@@ -223,7 +223,7 @@ async function verify(req, min)
 
                         message = "User is not enabled";
                     } 
-                    if(Q[0].blocked)
+                    else if(Q[0].blocked)
                     {
                         http_code = 403;
                         
@@ -232,6 +232,26 @@ async function verify(req, min)
                         code = 8;
 
                         message = "Blocked User";
+                    } 
+                    else if(!Q[0].approval)
+                    {
+                        http_code = 403;
+                        
+                        status = "unavailable";
+
+                        code = 8;
+
+                        message = "User pending for approval";
+                    } 
+                    else if(Q[0].approval == 2)
+                    {
+                        http_code = 403;
+                        
+                        status = "unavailable";
+
+                        code = 8;
+
+                        message = "Access denied";
                     } 
                     else if(Q[0].usertype < min)
                     {
@@ -309,7 +329,7 @@ async function verify(req, min)
         }        
     }
 
-    return [authorized,http_code,status,code,message,usertype];
+    return [authorized,http_code,status,code,message,usertype,id];
 }
 
 async function appAuthorizer(username,password,signup)
@@ -328,7 +348,7 @@ async function appAuthorizer(username,password,signup)
     {
         console.log("1. User Exists\n\r");
 
-        if(Q[0].st)
+        if(Q[0].st && Q[0].approval == 1)
         {
             console.log("2. User Enabled\n\r");
 
@@ -395,13 +415,21 @@ async function appAuthorizer(username,password,signup)
                 exists = true;
             }           
         }
+        else if(Q[0].approval == 1)
+        {
+            data = {message:"User pending for approval",status:"unavailable",code:6};
+        }
+        else if(!Q[0].st)
+        {
+            data = {message:"User is not enabled",status:"unavailable",code:6};
+        }    
         else
         {
-            data = {message:"User is not enabled",status:"unavailable",code:6}
-        }      
+            data = {message:"User not registered",status:"unregistered",code:11};
+        }    
     }
     else if (!Q[0])
-        data = {message:"User not registered",status:"unregistered",code:11}
+        data = {message:"User not registered",status:"unregistered",code:11};
     else if(!SUD)
     {
         error = true;
@@ -488,7 +516,7 @@ function removal(params,exclusions)
     return params;
 }
 
-function exclude(tab,command,params,exclusions,id,uid)
+function exclude(tab,command,params,id,uid)
 {
     switch(tab)
     {
@@ -804,7 +832,7 @@ if(creds)
 
     app.get("/boats", async (req,res) => 
     {
-        let authorized, http_code, status, code, message, usertype, body = Object.keys(req.body).length;
+        let authorized, http_code, status, code, message, usertype, id, body = Object.keys(req.body).length;
 
         console.log(); process.stdout.write(req.hostname); console.log(req.url); console.log();
 
@@ -812,7 +840,7 @@ if(creds)
 
         if(body)
         {
-            [authorized,http_code,status,code,message,usertype] = await verify(req,1);
+            [authorized,http_code,status,code,message,usertype,id] = await verify(req,1);
 
             if(authorized)
             {
@@ -821,7 +849,42 @@ if(creds)
                 if(!Q.status)
                 {
                     if(Q[0])
-                        handle.response(res,200,{BOATS:Q[0],status:"success",code:1});
+                    {
+                        let csv = req.body.csv;
+
+                        if(!csv)
+                            handle.response(res,200,{BOATS:Q[0],status:"success",code:1});
+                        else
+                        {
+                            let ok, url;
+
+                            [ok,url] = handle.data2CSV(id,req.hostname,"BOATS",Q[0]);
+
+                            if(ok)
+                            {
+                                try
+                                {
+                                    await handle.mailing({url},true,testAccount);
+
+                                    let resp = {message:`URL: ${url} sent. Valid for 24 hours only`,status:"success",code:1};
+
+                                    handle.response(res,200,resp);
+                                }
+                                catch(error)
+                                {
+                                    console.log(error);
+
+                                    let resp = {message:`Unable to send mail. But here is the URL: ${url}. Valid for 24 hours only`,status:"failure",code:4};
+
+                                    handle.response(res,500,resp);
+                                }   
+                            }
+                            else
+                            {
+                                handle.response(res,500,url);
+                            }
+                        }
+                    }         
                     else
                         handle.response(res,200,{BOATS:[],status:"empty",code:2});
                 }     
@@ -837,7 +900,7 @@ if(creds)
 
     app.get("/users", async (req,res) => 
     {
-        let authorized, http_code, status, code, message,usertype, body = Object.keys(req.body).length;
+        let authorized, http_code, status, code, message, usertype, id, body = Object.keys(req.body).length;
 
         console.log(); process.stdout.write(req.hostname); console.log(req.url); console.log();
 
@@ -845,7 +908,7 @@ if(creds)
 
         if(body)
         {
-            [authorized,http_code,status,code,message,usertype] =  await verify(req,1);
+            [authorized,http_code,status,code,message,usertype, id] =  await verify(req,1);
 
             if(authorized)
             {   
@@ -856,7 +919,42 @@ if(creds)
                 if(!Q.status)
                 {
                     if(Q[0])
-                        handle.response(res,200,{USERS:Q[0],status:"success",code:1});
+                    {
+                        let csv = req.body.csv;
+
+                        if(!csv)
+                            handle.response(res,200,{USERS:Q[0],status:"success",code:1});
+                        else
+                        {
+                            let ok, url;
+
+                            [ok,url] = handle.data2CSV(id,req.hostname,"USERS",Q[0]);
+
+                            if(ok)
+                            {
+                                try
+                                {
+                                    await handle.mailing({url},true,testAccount);
+
+                                    let resp = {message:`URL: ${url} sent. Valid for 24 hours only`,status:"success",code:1};
+
+                                    handle.response(res,200,resp);
+                                }
+                                catch(error)
+                                {
+                                    console.log(error);
+
+                                    let resp = {message:`Unable to send mail. But here is the URL: ${url}. Valid for 24 hours only`,status:"failure",code:4};
+
+                                    handle.response(res,500,resp);
+                                }   
+                            }
+                            else
+                            {
+                                handle.response(res,500,url);
+                            }
+                        }
+                    }
                     else
                         handle.response(res,200,{USERS:[],status:"empty",code:2});
                 }     
@@ -874,7 +972,7 @@ if(creds)
 
     app.get("/journeys", async (req,res) => 
     {
-        let authorized, http_code, status, code, message,usertype,body = Object.keys(req.body).length;
+        let authorized, http_code, status, code, message, usertype, id, body = Object.keys(req.body).length;
 
         console.log(); process.stdout.write(req.hostname); console.log(req.url); console.log();
 
@@ -882,7 +980,7 @@ if(creds)
 
         if(body)
         {
-            [authorized,http_code,status,code,message,usertype] =  await verify(req,1);
+            [authorized,http_code,status,code,message,usertype,id] =  await verify(req,1);
       
             if(authorized)
             {
@@ -891,7 +989,42 @@ if(creds)
                 if(!Q.status)
                 {
                     if(Q[0])
-                        handle.response(res,200,{JOURNEYS:Q[0],status:"success",code:1});
+                    {
+                        let csv = req.body.csv;
+
+                        if(!csv)
+                            handle.response(res,200,{JOURNEYS:Q[0],status:"success",code:1});
+                        else
+                        {
+                            let ok, url;
+
+                            [ok,url] = handle.data2CSV(id,req.hostname,"TRAVELS",Q[0]);
+
+                            if(ok)
+                            {
+                                try
+                                {
+                                    await handle.mailing({url},true,testAccount);
+
+                                    let resp = {message:`URL: ${url} sent. Valid for 24 hours only`,status:"success",code:1};
+
+                                    handle.response(res,200,resp);
+                                }
+                                catch(error)
+                                {
+                                    console.log(error);
+
+                                    let resp = {message:`Unable to send mail. But here is the URL: ${url}. Valid for 24 hours only`,status:"failure",code:4};
+
+                                    handle.response(res,500,resp);
+                                }   
+                            }
+                            else
+                            {
+                                handle.response(res,500,url);
+                            }
+                        }
+                    }
                     else
                         handle.response(res,200,{JOURNEYS:[],status:"empty",code:2});
                 }     
@@ -908,7 +1041,7 @@ if(creds)
 
     app.get("/files", async (res,req) => 
     {
-        let authorized, http_code, status, code, message,usertype,body = Object.keys(req.body).length;
+        let authorized, http_code, status, code, message, usertype, id, body = Object.keys(req.body).length;
 
         console.log(); process.stdout.write(req.hostname); console.log(req.url); console.log();
 
@@ -916,7 +1049,7 @@ if(creds)
 
         if(body)
         {
-            [authorized,http_code,status,code,message,usertype] =  await verify(req,1);
+            [authorized,http_code,status,code,message,usertype,id] =  await verify(req,1);
 
             if(authorized)
             {
@@ -925,7 +1058,42 @@ if(creds)
                 if(!Q.status)
                 {
                     if(Q[0])
-                        handle.response(res,200,{FILES:Q[0],status:"success",code:1});
+                    {
+                        let csv = req.body.csv;
+
+                        if(!csv)
+                            handle.response(res,200,{FILES:Q[0],status:"success",code:1});
+                        else
+                        {
+                            let ok, url;
+
+                            [ok,url] = handle.data2CSV(id,req.hostname,"FILES",Q[0]);
+
+                            if(ok)
+                            {
+                                try
+                                {
+                                    await handle.mailing({url},true,testAccount);
+
+                                    let resp = {message:`URL: ${url} sent. Valid for 24 hours only`,status:"success",code:1};
+
+                                    handle.response(res,200,resp);
+                                }
+                                catch(error)
+                                {
+                                    console.log(error);
+
+                                    let resp = {message:`Unable to send mail. But here is the URL: ${url}. Valid for 24 hours only`,status:"failure",code:4};
+
+                                    handle.response(res,500,resp);
+                                }   
+                            }
+                            else
+                            {
+                                handle.response(res,500,url);
+                            }
+                        }
+                    }
                     else
                         handle.response(res,200,{FILES:[],status:"empty",code:2});
                 }     
@@ -941,7 +1109,7 @@ if(creds)
 
     app.get("/historics", async (req,res) =>
     {
-        let authorized, http_code, status, code, message,usertype,body = Object.keys(req.body).length;
+        let authorized, http_code, status, code, message, usertype, id, body = Object.keys(req.body).length;
 
         console.log(); process.stdout.write(req.hostname); console.log(req.url); console.log();
 
@@ -949,7 +1117,7 @@ if(creds)
 
         if(body)
         {
-            [authorized,http_code,status,code,message,usertype] = await verify(req,1);
+            [authorized,http_code,status,code,message,usertype,id] = await verify(req,1);
             
             if(authorized)
             {
@@ -958,7 +1126,42 @@ if(creds)
                 if(!Q.status)
                 {
                     if(Q[0])
-                        handle.response(res,200,{HISTORICS:Q[0],status:"success",code:1});
+                    {
+                        let csv = req.body.csv;
+
+                        if(!csv)
+                            handle.response(res,200,{HISTORICS:Q[0],status:"success",code:1});
+                        else
+                        {
+                            let ok, url;
+
+                            [ok,url] = handle.data2CSV(id,req.hostname,"HISTORICS",Q[0]);
+
+                            if(ok)
+                            {
+                                try
+                                {
+                                    await handle.mailing({url},true,testAccount);
+
+                                    let resp = {message:`URL: ${url} sent. Valid for 24 hours only`,status:"success",code:1};
+
+                                    handle.response(res,200,resp);
+                                }
+                                catch(error)
+                                {
+                                    console.log(error);
+
+                                    let resp = {message:`Unable to send mail. But here is the URL: ${url}. Valid for 24 hours only`,status:"failure",code:4};
+
+                                    handle.response(res,500,resp);
+                                }   
+                            }
+                            else
+                            {
+                                handle.response(res,500,url);
+                            }
+                        }
+                    }
                     else
                         handle.response(res,200,{HISTORICS:[],status:"empty",code:2});
                 }     
@@ -974,7 +1177,7 @@ if(creds)
 
     app.get("/alerts", async (req,res) =>
     {
-        let authorized, http_code, status, code, message,usertype,body = Object.keys(req.body).length;
+        let authorized, http_code, status, code, message, usertype, id, body = Object.keys(req.body).length;
 
         console.log(); process.stdout.write(req.hostname); console.log(req.url); console.log();
 
@@ -982,7 +1185,7 @@ if(creds)
 
         if(body)
         {
-            [authorized,http_code,status,code,message,usertype] = await verify(req,1);
+            [authorized,http_code,status,code,message,usertype,id] = await verify(req,1);
 
             if(authorized)
             {
@@ -991,7 +1194,110 @@ if(creds)
                 if(!Q.status)
                 {
                     if(Q[0])
-                        handle.response(res,200,{ALERTS:Q[0],status:"success",code:1});
+                    {
+                        let csv = req.body.csv;
+
+                        if(!csv)
+                            handle.response(res,200,{ALERTS:Q[0],status:"success",code:1});
+                        else
+                        {
+                            let ok, url;
+
+                            [ok,url] = handle.data2CSV(id,req.hostname,"ALERTS",Q[0]);
+
+                            if(ok)
+                            {
+                                try
+                                {
+                                    await handle.mailing({url},true,testAccount);
+
+                                    let resp = {message:`URL: ${url} sent. Valid for 24 hours only`,status:"success",code:1};
+
+                                    handle.response(res,200,resp);
+                                }
+                                catch(error)
+                                {
+                                    console.log(error);
+
+                                    let resp = {message:`Unable to send mail. But here is the URL: ${url}. Valid for 24 hours only`,status:"failure",code:4};
+
+                                    handle.response(res,500,resp);
+                                }   
+                            }
+                            else
+                            {
+                                handle.response(res,500,url);
+                            }
+                        }
+                    }
+                    else
+                        handle.response(res,200,{ALERTS:[],status:"empty",code:2});
+                }     
+                else
+                    handle.response(res,500,Q);
+            }
+            else
+                handle.response(res,http_code,{message,status,code});
+        }
+        else
+            handle.response(res,400,{message:"No Body",status:"failure",code:4});    
+    }); 
+
+    app.get("/requests", async (req,res) =>
+    {
+        let authorized, http_code, status, code, message, usertype, id, body = Object.keys(req.body).length;
+
+        console.log(); process.stdout.write(req.hostname); console.log(req.url); console.log();
+
+        process.stdout.write("Request: "); console.log(req.body); console.log();
+
+        if(body)
+        {
+            [authorized,http_code,status,code,message,usertype,id] = await verify(req,2);
+
+            if(authorized)
+            {
+                let Q = filter("ALERTS",null,req.body,"SEL");
+                
+                if(!Q.status)
+                {
+                    if(Q[0])
+                    {
+                        let csv = req.body.csv;
+
+                        if(!csv)
+                            handle.response(res,200,{REQUESTS:Q[0],status:"success",code:1});
+                        else
+                        {
+                            let ok, url;
+
+                            [ok,url] = handle.data2CSV(id,req.hostname,"REQUESTS",Q[0]);
+
+                            if(ok)
+                            {
+                                try
+                                {
+                                    await handle.mailing({url},true,testAccount);
+
+                                    let resp = {message:`URL: ${url} sent. Valid for 24 hours only`,status:"success",code:1};
+
+                                    handle.response(res,200,resp);
+                                }
+                                catch(error)
+                                {
+                                    console.log(error);
+
+                                    let resp = {message:`Unable to send mail. But here is the URL: ${url}. Valid for 24 hours only`,status:"failure",code:4};
+
+                                    handle.response(res,500,resp);
+                                }   
+                            }
+                            else
+                            {
+                                handle.response(res,500,url);
+                            }
+                        }
+                    }
                     else
                         handle.response(res,200,{ALERTS:[],status:"empty",code:2});
                 }     
@@ -1007,7 +1313,7 @@ if(creds)
 
     app.get("files/zip", async (req,res) => 
     {
-        let authorized, http_code, status, code, message, usertype, body = Object.keys(req.body).length;
+        let authorized, http_code, status, code, message, usertype, id,  body = Object.keys(req.body).length;
 
         console.log(); process.stdout.write(req.hostname); console.log(req.url); console.log();
 
@@ -1015,7 +1321,7 @@ if(creds)
 
         if(body)
         {
-            [authorized,http_code,status,code,message,usertype] = await verify(req,1);
+            [authorized,http_code,status,code,message,usertype,id] = await verify(req,1);
 
             if(authorized)
                 handle.downloads(req,res);
@@ -1028,7 +1334,7 @@ if(creds)
 
     app.get("files/:type/:file", async (req,res) => 
     {
-        let authorized, http_code, status, code, message, usertype, body = Object.keys(req.body).length;
+        let authorized, http_code, status, code, message, usertype, id, body = Object.keys(req.body).length;
 
         console.log(); process.stdout.write(req.hostname); console.log(req.url); console.log();
 
@@ -1036,7 +1342,7 @@ if(creds)
 
         if(body)
         {
-            [authorized,http_code,status,code,message,usertype] = await verify(req,1);
+            [authorized,http_code,status,code,message,usertype,id] = await verify(req,1);
 
             if(authorized)
                 handle.downloads(req,res);
@@ -1079,7 +1385,25 @@ if(creds)
                 {
                     if(W[0].username)
                     {
-                        handle.response(res,403,{message:"User Already Exists",status:"unchanged",code:3});
+                        if(W[0].approval == 2 && !W[0].blocked)
+                        {
+                            params.usertype = 4;    params.approval = 0; params.id = W[0].id;
+        
+                            params.pswrd = await bcrypt.hash(params.pswrd,10);
+            
+                            console.log("hashing complete");
+                            
+                            let Q = await filter("USERS",null,params,"UPD"); 
+                    
+                            if(!Q.status)
+                            {
+                                handle.response(res,200,{message:"User Created",status:"success",code:1});
+                            }     
+                            else
+                                handle.response(res,500,Q);       
+                        }
+                        else
+                            handle.response(res,403,{message:"User Already Exists",status:"unchanged",code:3});
                     }
                     else
                         handle.response(res,500,{message:"Database Integrity Issue",status:"failure",code:4});
@@ -1092,6 +1416,8 @@ if(creds)
             
                     params.usertype = 4; params.latt = 0; params.st = 0; params.blocked = 0; params.dt = dt;
                     
+                    params.approval = 0;
+
                     params.pswrd = await bcrypt.hash(params.pswrd,10);
     
                     console.log("hashing complete");
@@ -1125,9 +1451,6 @@ if(creds)
 
         if(body)
         {
-            if(req.body.token)
-                id = req.body.token[req.body.token.length - 1];
-
             usertype = req.body.usertype;
     
             if(usertype)
@@ -1137,7 +1460,9 @@ if(creds)
 
             if(access)
             {
-                [authorized,http_code,status,code,message] =  await verify(req,min);
+                let aux; 
+
+                [authorized,http_code,status,code,message,aux,id] =  await verify(req,min);
 
                 console.log({authorized,http_code,status,code,message}); console.log();
             }
@@ -1156,7 +1481,7 @@ if(creds)
 
             if(params.tab == "USERS")
             {
-                let W = await SQL.SEL("*",null,"USERS",{id},null);
+                let W = await SQL.SEL("*",null,"USERS",{id:params.id},null);
 
                 if(!W.status)
                 {
@@ -1234,7 +1559,12 @@ if(creds)
             usertype = req.body.usertype;
             
             if(req.body.token)
-                id = req.body.token[req.body.token.length - 1];
+            {
+                let aux;
+
+                [aux,id] = NaNFinder(req.body.token)
+            }
+               
 
             if(usertype && req.body.id != id)
                 min = usertype + 1;
@@ -1245,8 +1575,10 @@ if(creds)
             {
                 params = req.body;
 
+                let aux, aux1;
+
                 if(params.id)
-                    [authorized,http_code,status,code,message] =  await verify(req,min);
+                    [authorized,http_code,status,code,message,aux,aux1] =  await verify(req,min);
                 else
                     [http_code,status,code,message] = [400,"unchanged",10,"Missing parameters"];
 

@@ -103,6 +103,14 @@ function dateNaming()
     return [`${y}${m+1}${d}${h}${min}${s}${z}`,date.toISOString().replace(regEX," ")];    
 }
 
+async function getTravel()
+{
+    let J = SQL.SEL()
+}
+async function CSVgen()
+{
+
+}
 /**********************************EXPORTS************************************/
 module.exports.response = (res,status,payload) =>
 {
@@ -770,33 +778,10 @@ module.exports.data = async (res,req,filenames) =>
     return [result,code];
 };
 
-module.exports.journey = async (req,res) =>
-{
-    //{"id":"","journey_start":"","journey_end":"",}
-
-    let result;
-
-    if(req.body.id)
-    {
-        let end = req.body.journey_end;
-
-        result = sql.UPDT("JOURNEYS",{journey_end:end},{id:req.body.id,ops:""});      
-    }
-    else
-    {
-        let start = req.body.journey_start;
-
-        result = sql.INS("JOURNEYS",{journey_start:start},"");
-    }
-
-    if(!result.status)
-        res.status(200).json(result);
-    else
-        res.status(500).json(result);
-};
-
-module.exports.mailing = async (data,test) =>
+module.exports.mailing = async (data,download,test) =>
 {   
+    let subject, text, html;
+
     if(test)
     {
         transporter.auth.user = test.user;
@@ -804,20 +789,41 @@ module.exports.mailing = async (data,test) =>
         transporter.auth.pass = test.pass;
     }
     
+    if(download)
+    {
+        subject = "Your Download ✔";
+
+        text = `You have requested to download files stored in the server:\n\r
+                \n\rURL: ${data.url}`;
+            
+        html = `<p>You have requested to download files stored in the server:</p>
+                <ul>
+                    <li style="line-height: 2;"><strong>URL</strong>: ${data.url}</li>
+               
+                </ul>`;
+    }
+    else
+    {
+        subject = "Your Credentials ✔";
+
+        text = `You have requested your credentials for Boat Monitoring:\n\r
+                \n\rUsername: ${data.username}
+                \n\rYour New Password: ${data.password}`;
+
+        html = `<p>You have requested your credentials for Boat Monitoring App:</p>
+                <ul>
+                    <li style="line-height: 2;"><strong>Username</strong>: ${data.username}</li>
+                    <li><strong>Your New Password</strong>: ${data.password}</li>
+                </ul>`;
+    }
     // send mail with defined transport object
     let info = await transporter.sendMail(
     {
         from: '"Server" <info@BoatMonitor.com>', // sender address
         to: data.mail, // list of receivers
-        subject: "Your Credentials ✔", // Subject line
-        text: `You have requested your credentials for Boat Monitoring:\n\r
-               \n\rUsername:${data.username}
-               \n\rYour New Password:${data.password}`, // plain text body
-        html: `<p>You have requested your credentials for Boat Monitoring App:</p>
-               <ul>
-                    <li style="line-height: 2;"><strong>Username</strong>:${data.username}</li>
-                    <li><strong>Your New Password</strong>:${data.password}</li>
-               </ul>`, // html body
+        subject, // Subject line
+        text, // plain text body
+        html, // html body
   });
 
   console.log("Message sent: %s", info.messageId);
@@ -826,4 +832,105 @@ module.exports.mailing = async (data,test) =>
   // Preview only available when sending through an Ethereal account
   console.log("Preview URL: %s", nodemailer.getTestMessageUrl(info));
   // Preview URL: https://ethereal.email/message/WaQKMgKddxQDoou...
+}
+
+module.exports.zipping = async (user,name,targets) =>
+{
+  let destination = 'C:\\My_Workspace\\Boat_Monitor\\Cloud_Server\\files\\zips\\';
+  
+  let  getOS = (o) => os.type().toLowerCase().includes(o), params = ["-",destination + name], zip = null;
+
+  params = params.concat(targets);
+  
+  if(getOS("windows"))
+  {
+    params[0] = "-cvf";
+
+    console.log(params);
+
+    zip = spawn('tar',params) ;
+  }  
+  else if(getOS("linux"))
+  {
+    params[0] = "-r";
+    
+    console.log(params);
+
+    zip = spawn('zip', params);
+  }
+    
+
+  if(zip)
+  {
+    zip.stdout.on('data', (data) => 
+    {
+      console.log(`stdout: ${data}`);
+    });
+  
+    zip.stderr.on('data', (data) => 
+    {
+      console.error(`stderr: ${data}`);
+    });
+    
+    zip.on('close', (code) => 
+    {
+      console.log(`child process exited with code ${code}\n\r`);
+      
+      if(!code)
+      {
+        console.log("Operation was successful.");
+        
+        try
+        {
+            let filepath = `./files/zips/${name}.zip`;
+
+            let content = str1+str2;     
+
+            let pass = gen(8,false);
+          
+            let Q = await SQL.INS("REQUESTS",
+            {
+                fl_type:".zip",
+                fl_path:fpath,
+                user_id:user,
+                dt:date,
+            });
+            
+            if(!Q[0].status)
+            {
+                if(Q[0].id)
+                {
+                    let id = Q[0].id
+
+                    await save(filepath,content);
+
+                    let  fpath = path.resolve(filepath);
+
+                    console.log(`${fpath} successfully saved`);
+
+                    let token =  "https://" + host + "/" +  jwt.sign({id},pass,{ expiresIn: 60 * 60 * 24 });
+
+                    let url = token.slice(0,4) + pass + token.slice(4,token.length);
+                    
+                    return [true,{url}];
+                }
+                else
+                {
+                    return [false,{message:"Request id couldn't be retrieved",status:"failure",code:5}];
+                }
+            }                
+            else
+            {
+                return [false,Q[0]];
+            }          
+        }
+        catch(error)
+        {
+            return [false,{message:error.toString() + error.stack.toString(),status:"failure",code:4}];
+        } 
+      }
+      else
+        console.log("Operation did not succeed");
+    });
+  }
 }

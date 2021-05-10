@@ -56,7 +56,6 @@ async function zipping(name,targets)
         console.log("Operation did not succeed");
     });
   }
-
 }
 
 zipping(name,targets);

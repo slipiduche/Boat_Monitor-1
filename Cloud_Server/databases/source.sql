@@ -30,6 +30,8 @@ CREATE TABLE USERS
     ldt DATETIME, #--date of last login Attepmt
     blocked TINYINT NOT NULL,
     st TINYINT NOT NULL, #--0 DISABLED, 1 ENABLED
+    approval INTEGER NOT NULL, #-- 0 Pending for approvale, 1 approved, 2 declined
+    lva INTEGER, #-- Last viewd alerd id
     dt DATETIME NOT NULL,
 
     PRIMARY KEY(id)
@@ -182,6 +184,7 @@ INSERT INTO USERS (username,pswrd,names,mail,usertype,latt,blocked,st,dt) VALUES
         0,
         0,
         1,
+        1,
         '2021/4/27 19:35:00'  
     );
 
@@ -195,6 +198,7 @@ INSERT INTO USERS (username,pswrd,names,mail,usertype,latt,blocked,st,dt)
         4,
         0,
         0,
+        1,
         1,
         '2021/4/29 09:37:00'  
     );
