@@ -42,7 +42,7 @@ const port = [8443,9443,8883];
 
 const BOATS = ["id","boat_name","max_st","resp","st","obs"];
 
-const USERS = ["id","username","names","mail","usertype","latt","ldt","blocked","st","approval","lav","dt"];
+const USERS = ["id","username","names","mail","usertype","latt","ldt","blocked","st","approval","lva","dt"];
 
 const bex = ["mac","max_st"];
 
