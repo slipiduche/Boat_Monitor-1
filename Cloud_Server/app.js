@@ -86,6 +86,10 @@ async function filter(tab,retrieve,params,command)
 {
     let range = null, id = null,  rest = null, uid = null, last = false;
     
+    process.stdout.write("check: ");
+    
+    console.log(params);
+
     if(params.auth)
         delete params.auth;
 
@@ -860,6 +864,8 @@ if(creds)
 
             if(authorized)
             {
+                console.log(req.body);
+
                 let Q = filter("BOATS",BOATS,req.body,"SEL");
                 
                 if(!Q.status)
