@@ -415,7 +415,7 @@ async function appAuthorizer(username,password,signup)
                 exists = true;
             }           
         }
-        else if(Q[0].approval == 1)
+        else if(Q[0].approval == 0)
         {
             data = {message:"User pending for approval",status:"unavailable",code:6};
         }
@@ -495,12 +495,28 @@ async function SUAuth(username,password,cb)
 
 function unauthorized(req,data)
 {
+    process.stdout.write("Server Response: ");
+
     if(!data)
-        return req.auth
-               ? {message:"Invalid Username or Password",status:"unauthorized",code:7}
-               : {message:"Authentication parameters not prvided",status:"failure",code:4};
+    {
+        let resp;
+
+        if(req.auth)
+            resp = {message:"Invalid Username or Password",status:"unauthorized",code:7};
+        else
+            resp = {message:"Authentication parameters not prvided",status:"failure",code:4};
+        
+        console.log(resp);
+
+        return resp;
+    }
     else
+    {
+        console.log(data);
+         
         return data;
+    }
+        
 }
 
 function removal(params,exclusions)
