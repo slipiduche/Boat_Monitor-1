@@ -41,7 +41,7 @@ module.exports.SEL = async function SEL(S,REST,TABLE,WHERE,RANGE,LAST)
 
   let q1 = "SELECT ",q2 = " FROM " + TABLE, q3 = " WHERE ", Q, params = [];
 
-  let keys = null;
+  let keys = Object.keys(WHERE), filters = keys.length;
 
   DB.connect( (error) =>
   {
@@ -65,11 +65,9 @@ module.exports.SEL = async function SEL(S,REST,TABLE,WHERE,RANGE,LAST)
   
   console.log("SELECT");
 
-  if(WHERE)
+  if(filters)
   {
-    keys = Object.keys(WHERE);
-
-    let iter = keys.length;
+    let iter = filters;
 
     for(let i = 0; i < iter; i++)
     {      
@@ -103,7 +101,7 @@ module.exports.SEL = async function SEL(S,REST,TABLE,WHERE,RANGE,LAST)
 
   if(REST)
   {
-    if(WHERE)
+    if(filters)
       q3 +=  " AND ";
 
     q3 += "usertype <= ?";
@@ -113,7 +111,7 @@ module.exports.SEL = async function SEL(S,REST,TABLE,WHERE,RANGE,LAST)
 
   if(RANGE)
   {
-    if(WHERE || REST)
+    if(filters || REST)
       q3 +=  " AND ";
 
     if(TABLE == "JOURNEYS")
@@ -136,13 +134,13 @@ module.exports.SEL = async function SEL(S,REST,TABLE,WHERE,RANGE,LAST)
   
   Q = q1 + S + q2;
 
-  if(LAST && WHERE)
+  if(LAST && filters)
   {
     let q4 = " WHERE id IN (SELECT MAX(id) FROM " + TABLE;
 
     let grp = " GROUP BY ";
 
-    let iter = keys.length;
+    let iter = filters;
 
     for(let i = 0; i < iter; i++)
     {
@@ -156,7 +154,7 @@ module.exports.SEL = async function SEL(S,REST,TABLE,WHERE,RANGE,LAST)
 
     Q += q4;
   }
-  else if(WHERE || RANGE || REST)
+  else if(filters || RANGE || REST)
     Q += q3;
 
   Q += ";";
