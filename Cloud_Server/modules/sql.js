@@ -41,8 +41,15 @@ module.exports.SEL = async function SEL(S,REST,TABLE,WHERE,RANGE,LAST)
 
   let q1 = "SELECT ",q2 = " FROM " + TABLE, q3 = " WHERE ", Q, params = [];
 
-  let keys = Object.keys(WHERE), filters = keys.length;
+  let keys, filters = null;
 
+  if(WHERE)
+  {
+    keys = Object.keys(WHERE);
+    
+    filters = keys.length;
+  }
+  
   DB.connect( (error) =>
   {
     if(error) //sql-error3
