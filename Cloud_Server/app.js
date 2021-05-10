@@ -211,8 +211,6 @@ async function verify(req, min)
             {
                 let password = Q[0].pswrd;
 
-                token = token.slice(0,token.length-1);
-
                 try
                 {
                     let decoded =  jwt.verify(token,password);
@@ -315,21 +313,33 @@ async function verify(req, min)
 
                             code = 7;
 
-                            message = "Bad token";
+                            message = "Bad Token";
                             
                             break;
                         }
                     }
                 } 
             }
-            else
+            else if (Q.status)
             {
+                http_code = 500;
+                
                 status = "failure";
                 
                 code = 5;
                 
                 message = Q.message;
-            }                            
+            } 
+            else
+            {
+                http_code = 400;
+                
+                status = "unauthorized";
+                
+                code = 7;
+                
+                message = "Bad Token";
+            }                           
         }        
     }
 
