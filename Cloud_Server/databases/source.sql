@@ -174,7 +174,7 @@ CREATE TABLE REQUESTS
         REFERENCES USERS (id)
 );
 
-INSERT INTO USERS (username,pswrd,names,mail,usertype,latt,blocked,st,dt) VALUES 
+INSERT INTO USERS (username,pswrd,names,mail,usertype,latt,blocked,st,approval,dt) VALUES 
     (
         'orbittas@orbittas.com',
         '$2b$10$wLj4ndTj2fr5tSjcU4tUYu728JpxjlngTBFrFI5UeZDFeccUk6BPy',
@@ -188,7 +188,7 @@ INSERT INTO USERS (username,pswrd,names,mail,usertype,latt,blocked,st,dt) VALUES
         '2021/4/27 19:35:00'  
     );
 
-INSERT INTO USERS (username,pswrd,names,mail,usertype,latt,blocked,st,dt) 
+INSERT INTO USERS (username,pswrd,names,mail,usertype,latt,blocked,st,approval,dt) 
     VALUES 
     (
         'SUD@orbittas.com',
