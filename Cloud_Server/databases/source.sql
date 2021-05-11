@@ -208,7 +208,7 @@ INSERT INTO USERS (username,pswrd,names,mail,usertype,latt,blocked,st,approval,d
 
 
 
-INSERT INTO BOATS(mac,boat_name,max_st,resp,st,obs)
+INSERT INTO BOATS(mac,boat_name,max_st,resp,st,dt,obs)
     VALUES
     (
         'b8:27:eb:4f:15:95',
