@@ -13,6 +13,7 @@ CREATE TABLE BOATS
     max_st FLOAT,
     resp TEXT,
     st TINYINT NOT NULL, #-- 0 Disabled, 1 Enabled
+    dt DATETIME NOT NULL,
     obs TEXT,
 
     PRIMARY KEY(id)
@@ -215,6 +216,7 @@ INSERT INTO BOATS(mac,boat_name,max_st,resp,st,obs)
         '491.7',
         1,
         0,
+        '2021/4/29 09:37:00',
         'TEST DATA'
    );
 
