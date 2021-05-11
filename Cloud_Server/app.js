@@ -885,12 +885,12 @@ if(creds)
                         let csv = req.body.csv;
 
                         if(!csv)
-                            handle.response(res,200,{BOATS:Q[0],status:"success",code:1});
+                            handle.response(res,200,{BOATS:Q,status:"success",code:1});
                         else
                         {
                             let ok, url;
 
-                            [ok,url] = handle.data2CSV(id,req.hostname,"BOATS",Q[0]);
+                            [ok,url] = handle.data2CSV(id,req.hostname,"BOATS",Q);
 
                             if(ok)
                             {
@@ -955,12 +955,12 @@ if(creds)
                         let csv = req.body.csv;
 
                         if(!csv)
-                            handle.response(res,200,{USERS:Q[0],status:"success",code:1});
+                            handle.response(res,200,{USERS:Q,status:"success",code:1});
                         else
                         {
                             let ok, url;
 
-                            [ok,url] = handle.data2CSV(id,req.hostname,"USERS",Q[0]);
+                            [ok,url] = handle.data2CSV(id,req.hostname,"USERS",Q);
 
                             if(ok)
                             {
@@ -1025,12 +1025,12 @@ if(creds)
                         let csv = req.body.csv;
 
                         if(!csv)
-                            handle.response(res,200,{JOURNEYS:Q[0],status:"success",code:1});
+                            handle.response(res,200,{JOURNEYS:Q,status:"success",code:1});
                         else
                         {
                             let ok, url;
 
-                            [ok,url] = handle.data2CSV(id,req.hostname,"TRAVELS",Q[0]);
+                            [ok,url] = handle.data2CSV(id,req.hostname,"TRAVELS",Q);
 
                             if(ok)
                             {
@@ -1094,12 +1094,12 @@ if(creds)
                         let csv = req.body.csv;
 
                         if(!csv)
-                            handle.response(res,200,{FILES:Q[0],status:"success",code:1});
+                            handle.response(res,200,{FILES:Q,status:"success",code:1});
                         else
                         {
                             let ok, url;
 
-                            [ok,url] = handle.data2CSV(id,req.hostname,"FILES",Q[0]);
+                            [ok,url] = handle.data2CSV(id,req.hostname,"FILES",Q);
 
                             if(ok)
                             {
@@ -1162,12 +1162,12 @@ if(creds)
                         let csv = req.body.csv;
 
                         if(!csv)
-                            handle.response(res,200,{HISTORICS:Q[0],status:"success",code:1});
+                            handle.response(res,200,{HISTORICS:Q,status:"success",code:1});
                         else
                         {
                             let ok, url;
 
-                            [ok,url] = handle.data2CSV(id,req.hostname,"HISTORICS",Q[0]);
+                            [ok,url] = handle.data2CSV(id,req.hostname,"HISTORICS",Q);
 
                             if(ok)
                             {
@@ -1230,12 +1230,12 @@ if(creds)
                         let csv = req.body.csv;
 
                         if(!csv)
-                            handle.response(res,200,{ALERTS:Q[0],status:"success",code:1});
+                            handle.response(res,200,{ALERTS:Q,status:"success",code:1});
                         else
                         {
                             let ok, url;
 
-                            [ok,url] = handle.data2CSV(id,req.hostname,"ALERTS",Q[0]);
+                            [ok,url] = handle.data2CSV(id,req.hostname,"ALERTS",Q);
 
                             if(ok)
                             {
@@ -1298,12 +1298,12 @@ if(creds)
                         let csv = req.body.csv;
 
                         if(!csv)
-                            handle.response(res,200,{REQUESTS:Q[0],status:"success",code:1});
+                            handle.response(res,200,{REQUESTS:Q,status:"success",code:1});
                         else
                         {
                             let ok, url;
 
-                            [ok,url] = handle.data2CSV(id,req.hostname,"REQUESTS",Q[0]);
+                            [ok,url] = handle.data2CSV(id,req.hostname,"REQUESTS",Q);
 
                             if(ok)
                             {
