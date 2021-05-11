@@ -40,7 +40,7 @@ const SQL = require('./modules/sql.js');
 
 const port = [8443,9443,8883];
 
-const BOATS = ["id","boat_name","max_st","resp","st","obs"];
+const BOATS = ["id","boat_name","max_st","resp","st","dt","obs"];
 
 const USERS = ["id","username","names","mail","usertype","latt","ldt","blocked","st","approval","lva","dt"];
 
