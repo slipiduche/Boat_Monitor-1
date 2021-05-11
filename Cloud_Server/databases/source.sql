@@ -41,7 +41,7 @@ CREATE TABLE BOATS
 
     CONSTRAINT FK_RESP_U
         FOREIGN KEY (resp)
-        REFERENCES USERS (id),
+        REFERENCES USERS (id)
 );
 
 
