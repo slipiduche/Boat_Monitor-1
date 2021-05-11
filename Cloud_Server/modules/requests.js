@@ -20,6 +20,7 @@ const pg = require('generate-password');
 const log = require('./logging.js');
 
 const sql = require('./sql.js');
+const { SSL_OP_SSLEAY_080_CLIENT_DH_BUG } = require('constants');
 
 const dir  = ["./files/historics/","./files/media/snapshots/","./files/media/recordings/","./files/csv","./files/zips"];
 
@@ -103,13 +104,159 @@ function dateNaming()
     return [`${y}${m+1}${d}${h}${min}${s}${z}`,date.toISOString().replace(regEX," ")];    
 }
 
-async function getTravel()
+async function getTravel(id)
 {
-    let J = SQL.SEL()
-}
-async function CSVgen()
-{
+    let  USERS = ["id","username","names","mail","usertype","latt","ldt","blocked","st","approval","lva","dt"];
+    
+    let J = null,B = null,H = null,A = null,U = null;
 
+    J = await SQL.SEL("*",null,"JOURNEYS",{id},null,null);
+    
+    if(!J.status)
+    {
+        if(J[0])
+        {
+            B = await SQL.SEL("*",null,"BOATS",{boat_id:J[0].boat_id},null,null);
+
+            H = await SQL.SEL("*",null,"HISTORICS",{journey_id:id},null,null);
+        
+            A = await SQL.SEL("*",null,"ALERTS",{journey_id:id},null,null);
+        }
+        else
+            J = null;
+    }
+
+    if(J && B)
+    {
+        if(!J.status && !B.status)
+        {
+            if(J[0] && B[0])
+                U = await SQL.SEL(USERS.join(),null,"USERS",{id:[B[0].resp,J[0].start_user,J[0].end_user]},null,null);
+            else
+                B = null;
+        }
+    }
+
+    return [J,B,H,A,U];
+}
+async function CSVgen(data,id)
+{
+    let save = util.promisify(fs.writeFile);
+    
+    let proceed = true, iter = data.length;
+
+    for(let l = 0; l < iter; l++)
+    {
+        if(!data[l] || data[l].status)
+        {
+            proceed = false;
+    
+            break;
+        }
+    }
+  
+       
+ 
+
+    for(let k = 0; k < iter; k++)
+    {
+        let len = data[k].length;
+
+        if(len)
+        { 
+            let str1 = null, str2 = null;
+
+            let keys = Object.keys(data[k][0]);
+            
+            let klen = keys.length;
+
+            for(let i = 0; i < klen; i++)
+            {
+                if(str1)
+                    str1 += quote(keys[i]);
+                else
+                    str1 = quote(keys[i]);
+
+                if(i < (klen - 1))
+                    str1 += ";"
+                else
+                    str1 += "\n";
+
+                for(let j = 0; j < len; j++)
+                {
+                    let values = data[k][i];
+
+                    if(str2)
+                        str2 += quote(values[keys[j]]);
+                    else
+                        str2 = quote(values[keys[j]]);
+        
+                    if(j < (len - 1))
+                        str2 += ";"
+                    else
+                        str2 += "\n";
+                }
+            }
+
+            let sufix, date;
+        
+            [sufix,date] = dateNaming();
+
+            let filename = `${base}_${sufix}`, type = 4;
+
+            try
+            {
+                let filepath = `./files/csv/${filename}.csv`;
+
+                let content = str1+str2;     
+
+                let pass = gen(8,false);
+            
+                let Q = await SQL.INS("REQUESTS",
+                {
+                    fl_type:".csv",
+                    fl_path:fpath,
+                    user_id:user,
+                    dt:date,
+                });
+                
+                if(!Q[0].status)
+                {
+                    if(Q[0].id)
+                    {
+                        let id = Q[0].id
+
+                        await save(filepath,content);
+
+                        let  fpath = path.resolve(filepath);
+
+                        console.log(`${fpath} successfully saved`);
+
+                        let token =  "https://" + host + "/" +  jwt.sign({id},pass,{ expiresIn: 60 * 60 * 24 });
+
+                        let url = token.slice(0,4) + pass + token.slice(4,token.length);
+                        
+                        return [true,{url}];
+                    }
+                    else
+                    {
+                        return [false,{message:"Request id couldn't be retrieved",status:"failure",code:5}];
+                    }
+                }                
+                else
+                {
+                    return [false,Q[0]];
+                }          
+            }
+            catch(error)
+            {
+                return [false,{message:error.toString() + error.stack.toString(),status:"failure",code:4}];
+            }  
+        }
+        else
+            return [false,{message:"No data supplied",status:"failure",code:4}];
+    }
+    
 }
 /**********************************EXPORTS************************************/
 module.exports.response = (res,status,payload) =>

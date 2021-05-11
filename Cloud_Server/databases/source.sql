@@ -5,19 +5,6 @@ CREATE DATABASE BOAT_MONITOR;
 
 USE BOAT_MONITOR;
 
-CREATE TABLE BOATS
-(
-    id INTEGER NOT NULL AUTO_INCREMENT,
-    mac VARCHAR(34) UNIQUE,
-    boat_name TEXT,
-    max_st FLOAT,
-    resp TEXT,
-    st TINYINT NOT NULL, #-- 0 Disabled, 1 Enabled
-    dt DATETIME NOT NULL,
-    obs TEXT,
-
-    PRIMARY KEY(id)
-);
 
 CREATE TABLE USERS
 (
@@ -37,6 +24,27 @@ CREATE TABLE USERS
 
     PRIMARY KEY(id)
 );
+
+CREATE TABLE BOATS
+(
+    id INTEGER NOT NULL AUTO_INCREMENT,
+    mac VARCHAR(34) UNIQUE,
+    boat_name TEXT,
+    max_st FLOAT,
+    resp INTEGER,
+    resp_name TEXT,
+    st TINYINT NOT NULL, #-- 0 Disabled, 1 Enabled
+    dt DATETIME NOT NULL,
+    obs TEXT,
+
+    PRIMARY KEY(id),
+
+    CONSTRAINT FK_RESP_U
+        FOREIGN KEY (resp)
+        REFERENCES USERS (id),
+);
+
+
 
 CREATE TABLE JOURNEYS
 (
@@ -208,13 +216,14 @@ INSERT INTO USERS (username,pswrd,names,mail,usertype,latt,blocked,st,approval,d
 
 
 
-INSERT INTO BOATS(mac,boat_name,max_st,resp,st,dt,obs)
+INSERT INTO BOATS(mac,boat_name,max_st,resp,resp_name,st,dt,obs)
     VALUES
     (
         'b8:27:eb:4f:15:95',
         'CAT',
         '491.7',
         1,
+        'Orbittas',
         0,
         '2021/4/29 09:37:00',
         'TEST DATA'
