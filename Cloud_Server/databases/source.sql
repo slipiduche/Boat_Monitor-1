@@ -149,7 +149,7 @@ CREATE TABLE ALERTS
     ua TINYINT NOT NULL,
     sus TINYINT NOT NULL,
     dt DATETIME NOT NULL,
-    obs TEXT,
+    descr TEXT,
 
     PRIMARY KEY(id),
 

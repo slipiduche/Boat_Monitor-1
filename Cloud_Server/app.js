@@ -898,7 +898,7 @@ if(creds)
                             {
                                 try
                                 {
-                                    await handle.mailing({url},true,testAccount);
+                                    await handle.mailing({mail,url},true,testAccount);
 
                                     let resp = {message:`URL: ${url} sent. Valid for 24 hours only`,status:"success",code:1};
 
@@ -968,7 +968,7 @@ if(creds)
                             {
                                 try
                                 {
-                                    await handle.mailing({url},true,testAccount);
+                                    await handle.mailing({mail,url},true,testAccount);
 
                                     let resp = {message:`URL: ${url} sent. Valid for 24 hours only`,status:"success",code:1};
 
@@ -1038,7 +1038,7 @@ if(creds)
                             {
                                 try
                                 {
-                                    await handle.mailing({url},true,testAccount);
+                                    await handle.mailing({mail,url},true,testAccount);
 
                                     let resp = {message:`URL: ${url} sent. Valid for 24 hours only`,status:"success",code:1};
 
@@ -1107,7 +1107,7 @@ if(creds)
                             {
                                 try
                                 {
-                                    await handle.mailing({url},true,testAccount);
+                                    await handle.mailing({mail,url},true,testAccount);
 
                                     let resp = {message:`URL: ${url} sent. Valid for 24 hours only`,status:"success",code:1};
 
@@ -1175,7 +1175,7 @@ if(creds)
                             {
                                 try
                                 {
-                                    await handle.mailing({url},true,testAccount);
+                                    await handle.mailing({mail,url},true,testAccount);
 
                                     let resp = {message:`URL: ${url} sent. Valid for 24 hours only`,status:"success",code:1};
 
@@ -1243,7 +1243,7 @@ if(creds)
                             {
                                 try
                                 {
-                                    await handle.mailing({url},true,testAccount);
+                                    await handle.mailing({mail,url},true,testAccount);
 
                                     let resp = {message:`URL: ${url} sent. Valid for 24 hours only`,status:"success",code:1};
 
@@ -1311,7 +1311,7 @@ if(creds)
                             {
                                 try
                                 {
-                                    await handle.mailing({url},true,testAccount);
+                                    await handle.mailing({mail,url},true,testAccount);
 
                                     let resp = {message:`URL: ${url} sent. Valid for 24 hours only`,status:"success",code:1};
 

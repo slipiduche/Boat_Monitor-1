@@ -423,7 +423,7 @@ module.exports.downloads = async (req,res) =>
                             {
                                 let size = stats.size;
     
-                                res.writeHead(200, {'Content-Type': "image/jpeg",'Content-Length':size});       
+                                res.writeHead(200, {'Content-Type': ct,'Content-Length':size});       
                 
                                 stream.pipe(res);
                                    
