@@ -1487,6 +1487,133 @@ if(creds)
         else
             handle.response(res,400,{message:"No Body",status:"failure",code:4});
     });
+    
+    app.post("/journeys/start", async (req,res) =>
+    {
+        let authorized = false, access, http_code, status, code, message, min = 1;
+        
+        let id, mail, usertype, body = Object.keys(req.body).length;
+        
+        console.log(); process.stdout.write(req.get["host"]); console.log(req.url); console.log();
+
+        process.stdout.write("Request: "); console.log(req.body); console.log();
+
+        if(body)
+        {
+            let aux;
+
+            [authorized,http_code,status,code,message,aux,id,mail] =  await verify(req,min);
+
+            console.log({authorized,http_code,status,code,message}); console.log();
+        }
+        else
+            [http_code,status,code,message] = [400,"failure",4,"No Body"];
+        
+       
+        if(authorized)
+        {
+            if(req.body.boat_id)
+            {
+                let  TZOfsset = (new Date()).getTimezoneOffset() * 60000; 
+
+                let dt = (new Date(Date.now() - TZOfsset)).toISOString().replace(/T|Z/g,' ');
+                
+                let obs = null;
+
+                if(req.body.obs)
+                    obs = req.body.obs;
+                
+                let params = 
+                {
+                    ini: dt,
+                    start_user: id,
+                    boat_id: req.body.boat_id,
+                    i_weight: /* get weight */ 47.5,
+                    s_img: 0,
+                    total_img: 0,
+                    synced: 0,
+                    obs,
+                    alert:0
+                }
+            
+                let Q = await SQL.PROC("bm_JOURNEYS_ST",params); 
+
+                if(!Q.status)
+                {
+                    handle.response(res,200,{message:"New entry successfully created",status:"success",code:1});
+                }     
+                else
+                    handle.response(res,500,Q);
+            }
+            else
+                handle.response(res,400,{message:"Missing parameters",status:"unchanged",code:10});   
+            
+         }
+         else
+            handle.response(res,http_code,{message,status,code}); 
+   
+    });
+
+    app.post("/journeys/end", async (req,res) =>
+    {
+        let authorized = false, access, http_code, status, code, message, min = 1;
+        
+        let id, mail, usertype, body = Object.keys(req.body).length;
+        
+        console.log(); process.stdout.write(req.get["host"]); console.log(req.url); console.log();
+
+        process.stdout.write("Request: "); console.log(req.body); console.log();
+
+        if(body)
+        {
+            let aux;
+
+            [authorized,http_code,status,code,message,aux,id,mail] =  await verify(req,min);
+
+            console.log({authorized,http_code,status,code,message}); console.log();
+        }
+        else
+            [http_code,status,code,message] = [400,"failure",4,"No Body"];
+        
+       
+        if(authorized)
+        {
+            if(req.body.id)
+            {
+                let  TZOfsset = (new Date()).getTimezoneOffset() * 60000; 
+
+                let dt = (new Date(Date.now() - TZOfsset)).toISOString().replace(/T|Z/g,' ');
+                
+                let obs = null;
+
+                if(req.body.obs)
+                    obs = req.body.obs;
+                
+                let params = 
+                {
+                    id: req.body.id,
+                    ed: dt,
+                    f_weight: /* get weight */ 321.5,
+                    obs
+                }
+
+                let Q = await SQL.PROC("bm_JOURNEYS_ED",params); 
+
+                if(!Q.status)
+                {
+                    handle.response(res,200,{message:"New entry successfully created",status:"success",code:1});
+                }     
+                else
+                    handle.response(res,500,Q);
+            }
+            else
+                handle.response(res,400,{message:"Missing parameters",status:"unchanged",code:10});   
+            
+         }
+         else
+            handle.response(res,http_code,{message,status,code}); 
+   
+    });
 
     app.post("/create", async (req,res) => 
     {

@@ -33,6 +33,8 @@ CREATE TABLE BOATS
     max_st FLOAT,
     resp INTEGER,
     resp_name TEXT,
+    lj INTEGER,
+    on_journey TINYINT,
     st TINYINT NOT NULL, #-- 0 Disabled, 1 Enabled
     dt DATETIME NOT NULL,
     obs TEXT,
@@ -199,6 +201,33 @@ BEGIN
     UPDATE REQUESTS SET fl_path = @PATH WHERE id = @ID;
 
     SELECT @ID id;
+
+END $$
+
+CREATE PROCEDURE bm_JOURNEYS_ST(IN ini0 DATETIME,IN start_user0 INT,IN boat_id0 INT,IN i_weight0 FLOAT,IN s_img0 TINYINT,IN total_img0 TINYINT,IN synced0 TINYINT,IN obs0 TEXT,IN alert0 TINYINT)
+
+BEGIN
+
+    INSERT INTO JOURNEYS (ini,start_user,boat_id,i_weight,s_img,total_img,synced,obs,alert) 
+        VALUES (ini0,start_user0,boat_id0,i_weight0,s_img,total_img0,synced0,obs0,alert0);
+
+    SET @ID = LAST_INSERT_ID();
+
+    UPDATE BOATS SET on_journey = 1, SET lj = @ID WHERE id = boat_id0;
+
+    SELECT @ID id;
+
+END $$
+
+CREATE PROCEDURE bm_JOURNEYS_ED(IN id0 INT, IN ed0 DATETIME,IN f_weight0 FLOAT, IN obs0 TEXT)
+
+BEGIN
+    
+    UPDATE JOURNEYS SET ed = ed0, f_weight = f_weight0, obs = obs0 WHERE id = id0;
+
+    SET @ID = (SELECT boat_id FROM JOURNEYS WHERE id = id0);
+
+    UPDATE BOATS SET on_journey = 0 WHERE id = @ID;
 
 END $$
 
