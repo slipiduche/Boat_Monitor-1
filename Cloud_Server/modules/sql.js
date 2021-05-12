@@ -256,15 +256,6 @@ module.exports.INS = async function INS(TABLE,COLS)
     let result = await DB.promise().query(Q,params);
 
     r = JSON.parse(JSON.stringify(result));
-
-    if(r[0].affectedRows)
-    {
-      let query = `SELECT id FROM ${TABLE} ORDER BY ASC LIMIT 1`;
-
-      let id = (await DB.promise().query(query))[0][0].id;
-
-      r[0].id = id;
-    }
   }
   catch(error) //sql-error6
   {
@@ -408,6 +399,83 @@ module.exports.DEL = async function DEL(TAB,WHERE)
     log.errorLog("sql",error,10);
 
     r = {message:error,status:"failure",code:5};
+  }
+
+  try
+  {
+    DB.destroy();
+  }
+  catch
+  {}
+
+  console.log(r);
+
+  return r;
+}
+
+module.exports.PROC = (PROC,COLS) =>
+{
+  let DB = DBconnection(), r = "";
+  
+  let q1 = "CALL " + PROC, q2 = " (", Q, params = [];
+
+  let keys = Object.keys(COLS), values = COLS;
+
+  let columns = keys.length;
+
+  DB.connect( (error) =>
+  {
+    if(error)
+    {
+      try
+      {
+        DB.destroy();
+      }
+      catch
+      {}
+      
+      log.errorLog("sql",error,5); //sql-error5
+      
+      r = {message:error,status:"failure",code:5};
+    }  
+  });
+
+  if(r.STATUS)
+    return r;
+
+  console.log("PROCEDURE");
+
+  for(let i = 0; i < columns; i++)
+  {
+    if(i > 0)
+    {
+      q2 += ","; 
+    }
+
+    q2 += "?";
+
+    params.push(values[keys[i]]);
+  }
+
+  q2 += ");";
+  
+  Q = q1 + q2;
+
+  console.log(Q);
+
+  process.stdout.write("Params: "); console.log(params);
+
+  try
+  {
+    let result = await DB.promise().query(Q,params);
+
+    r = JSON.parse(JSON.stringify(result));
+  }
+  catch(error) //sql-error6
+  {
+      log.errorLog("sql",error,6);
+
+      r = {message:error,status:"failure",code:5};
   }
 
   try

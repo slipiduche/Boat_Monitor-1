@@ -19,8 +19,7 @@ const pg = require('generate-password');
 
 const log = require('./logging.js');
 
-const sql = require('./sql.js');
-const { SSL_OP_SSLEAY_080_CLIENT_DH_BUG } = require('constants');
+const SQL = require('./sql.js');
 
 const dir  = ["./files/historics/","./files/media/snapshots/","./files/media/recordings/","./files/csv","./files/zips"];
 
@@ -142,121 +141,109 @@ async function getTravel(id)
 async function CSVgen(data,id)
 {
     let save = util.promisify(fs.writeFile);
+
+    let base = ["TRAVEL","BOAT","HISTORICS","ALERTS","USERS"], addresses = [];
     
-    let proceed = true, iter = data.length;
+    let proceed = true, iter = data.length, resp = null;
 
     for(let l = 0; l < iter; l++)
     {
-        if(!data[l] || data[l].status)
+        if(!data[l])
         {
             proceed = false;
+
+            resp = {message:"Missing data",status:"failure",code:5};
     
             break;
         }
+        else if(data[l].status)
+        {
+            proceed = false;
+            
+            resp = data[l];
+
+            break; 
+        }
     }
   
-       
- 
-
-    for(let k = 0; k < iter; k++)
+    if(proceed)
     {
-        let len = data[k].length;
-
-        if(len)
-        { 
-            let str1 = null, str2 = null;
-
-            let keys = Object.keys(data[k][0]);
-            
-            let klen = keys.length;
-
-            for(let i = 0; i < klen; i++)
-            {
-                if(str1)
-                    str1 += quote(keys[i]);
-                else
-                    str1 = quote(keys[i]);
-
-                if(i < (klen - 1))
-                    str1 += ";"
-                else
-                    str1 += "\n";
-
-                for(let j = 0; j < len; j++)
-                {
-                    let values = data[k][i];
-
-                    if(str2)
-                        str2 += quote(values[keys[j]]);
-                    else
-                        str2 = quote(values[keys[j]]);
-        
-                    if(j < (len - 1))
-                        str2 += ";"
-                    else
-                        str2 += "\n";
-                }
-            }
-
-            let sufix, date;
-        
-            [sufix,date] = dateNaming();
-
-            let filename = `${base}_${sufix}`, type = 4;
-
-            try
-            {
-                let filepath = `./files/csv/${filename}.csv`;
-
-                let content = str1+str2;     
-
-                let pass = gen(8,false);
-            
-                let Q = await SQL.INS("REQUESTS",
-                {
-                    fl_type:".csv",
-                    fl_path:fpath,
-                    user_id:user,
-                    dt:date,
-                });
-                
-                if(!Q[0].status)
-                {
-                    if(Q[0].id)
-                    {
-                        let id = Q[0].id
-
-                        await save(filepath,content);
-
-                        let  fpath = path.resolve(filepath);
-
-                        console.log(`${fpath} successfully saved`);
-
-                        let token =  "https://" + host + "/" +  jwt.sign({id},pass,{ expiresIn: 60 * 60 * 24 });
-
-                        let url = token.slice(0,4) + pass + token.slice(4,token.length);
-                        
-                        return [true,{url}];
-                    }
-                    else
-                    {
-                        return [false,{message:"Request id couldn't be retrieved",status:"failure",code:5}];
-                    }
-                }                
-                else
-                {
-                    return [false,Q[0]];
-                }          
-            }
-            catch(error)
-            {
-                return [false,{message:error.toString() + error.stack.toString(),status:"failure",code:4}];
-            }  
-        }
-        else
-            return [false,{message:"No data supplied",status:"failure",code:4}];
-    }
+        for(let k = 0; k < iter; k++)
+        {
+            let len = data[k].length;
     
+            if(len)
+            { 
+                let str1 = null, str2 = null;
+    
+                let keys = Object.keys(data[k][0]);
+                
+                let klen = keys.length;
+    
+                for(let i = 0; i < klen; i++)
+                {
+                    if(str1)
+                        str1 += quote(keys[i]);
+                    else
+                        str1 = quote(keys[i]);
+    
+                    if(i < (klen - 1))
+                        str1 += ";"
+                    else
+                        str1 += "\n";
+    
+                    for(let j = 0; j < len; j++)
+                    {
+                        let values = data[k][i];
+    
+                        if(str2)
+                            str2 += quote(values[keys[j]]);
+                        else
+                            str2 = quote(values[keys[j]]);
+            
+                        if(j < (len - 1))
+                            str2 += ";"
+                        else
+                            str2 += "\n";
+                    }
+                }
+    
+                let sufix, date;
+            
+                [sufix,date] = dateNaming();
+    
+                let filename = `${base[k]}_${sufix}`;
+    
+                try
+                {
+                    let filepath = `./files/csv/R${id}/${filename}.csv`;
+    
+                    let content = str1+str2;
+            
+                    await save(filepath,content);
+
+                    let  fpath = path.resolve(filepath);
+                    
+                    addresses.push(filpath.slice(2));
+
+                    console.log(`${fpath} successfully saved on ${date}`);
+    
+                }
+                catch(error)
+                {
+                    return [false,{message:error.toString() + error.stack.toString(),status:"failure",code:4}];
+                }  
+            }
+            else
+                return [false,{message:"No data supplied",status:"failure",code:4}];
+        }
+
+        return [true,addresses]
+    }
+    else
+    {
+        return [false,resp]
+    }   
 }
 /**********************************EXPORTS************************************/
 module.exports.response = (res,status,payload) =>
@@ -313,35 +300,40 @@ module.exports.data2CSV = async (user,host,base,data) =>
      
         [sufix,date] = dateNaming();
 
-        let filename = `${base}_${sufix}`, type = 4;
+        let filename = `${base}_${sufix}.csv`;
 
         try
         {
-            let filepath = `./files/csv/${filename}.csv`;
+            let filepath = "./files/csv/";
+
+            let  fpath = path.resolve(filepath);
 
             let content = str1+str2;     
 
             let pass = gen(8,false);
           
-            let Q = await SQL.INS("REQUESTS",
+            let Q = await SQL.PROC("bm_REQUESTS_INS",
             {
-                fl_type:".csv",
-                fl_path:fpath,
-                user_id:user,
-                dt:date,
+                ftype:".csv",
+                fpath:fpath,
+                user,
+                fl:filename,
+                dat:date,
             });
             
-            if(!Q[0].status)
+            if(!Q.status)
             {
                 if(Q[0].id)
                 {
                     let id = Q[0].id
 
+                    filepath = `./files/csv/R${id}/${filename}`;
+
                     await save(filepath,content);
 
-                    let  fpath = path.resolve(filepath);
-
-                    console.log(`${fpath} successfully saved`);
+                    fpath = path.resolve(filepath);
+                    
+                    console.log(`${fpath} successfully saved on ${date}.`);
 
                     let token =  "https://" + host + "/" +  jwt.sign({id},pass,{ expiresIn: 60 * 60 * 24 });
 
@@ -981,11 +973,11 @@ module.exports.mailing = async (data,download,test) =>
   // Preview URL: https://ethereal.email/message/WaQKMgKddxQDoou...
 }
 
-module.exports.zipping = async (user,name,targets) =>
-{
-  let destination = 'C:\\My_Workspace\\Boat_Monitor\\Cloud_Server\\files\\zips\\';
-  
-  let  getOS = (o) => os.type().toLowerCase().includes(o), params = ["-",destination + name], zip = null;
+module.exports.zipping = async (res,mail,test,destination,targets,url) =>
+{ 
+  let  getOS = (o) => os.type().toLowerCase().includes(o), params = ["-",destination], zip = null;
+
+  let sendResponse = module.exports.response;
 
   params = params.concat(targets);
   
@@ -1006,7 +998,6 @@ module.exports.zipping = async (user,name,targets) =>
     zip = spawn('zip', params);
   }
     
-
   if(zip)
   {
     zip.stdout.on('data', (data) => 
@@ -1026,58 +1017,120 @@ module.exports.zipping = async (user,name,targets) =>
       if(!code)
       {
         console.log("Operation was successful.");
-        
         try
         {
-            let filepath = `./files/zips/${name}.zip`;
+            await module.exports.mailing({url,mail},true,test);
 
-            let content = str1+str2;     
-
-            let pass = gen(8,false);
-          
-            let Q = await SQL.INS("REQUESTS",
-            {
-                fl_type:".zip",
-                fl_path:fpath,
-                user_id:user,
-                dt:date,
-            });
-            
-            if(!Q[0].status)
-            {
-                if(Q[0].id)
-                {
-                    let id = Q[0].id
-
-                    await save(filepath,content);
-
-                    let  fpath = path.resolve(filepath);
-
-                    console.log(`${fpath} successfully saved`);
-
-                    let token =  "https://" + host + "/" +  jwt.sign({id},pass,{ expiresIn: 60 * 60 * 24 });
-
-                    let url = token.slice(0,4) + pass + token.slice(4,token.length);
-                    
-                    return [true,{url}];
-                }
-                else
-                {
-                    return [false,{message:"Request id couldn't be retrieved",status:"failure",code:5}];
-                }
-            }                
-            else
-            {
-                return [false,Q[0]];
-            }          
+            sendResponse(res,200,{message:`Travel files sucessfully zipped: ${url}. Mail sent to ${mail}`,status:"success",code:1})
         }
         catch(error)
         {
-            return [false,{message:error.toString() + error.stack.toString(),status:"failure",code:4}];
-        } 
+            sendResponse(res,200,{message:`Travel files sucessfully zipped: ${url}, but unable to send mail to ${mail}`,status:"success",code:1})
+        }
+ 
       }
       else
+      {
         console.log("Operation did not succeed");
+
+        sendResponse(res,500,{message:"Unable to zip Travel files",status:"failure",code:4});
+      }
+        
     });
   }
+  else
+    sendResponse(res,500,{message:"OS error",status:"failure",code:4});
+}
+
+
+module.exports.zipTravel = async (host,user,mail,test,journey_id) =>
+{
+        let proceed, resp, sendResponse = module.exports.response;
+
+        let Q = await SQL.SEL("id",null,"JOURNEYS",{id:journey_id},null,null);
+       
+        if(!Q.status)
+        {
+            if(Q[0])
+            {
+                let sufix, date;
+     
+                [sufix,date] = dateNaming();
+
+                let filename = `TRAVEL${journey_id}_${sufix}.zip`;
+
+                try
+                {
+                    let filepath = "./files/zips/";
+
+                    let  fpath = path.resolve(filepath);
+
+                    let pass = gen(8,false);
+                
+                    let P = await SQL.PROC("bm_REQUESTS_INS",
+                    {
+                        ftype:".zip",
+                        fpath:fpath,
+                        user,
+                        fl:filename,
+                        dat:date,
+                    });
+                    
+                    if(!P.status)
+                    {
+                        if(P[0].id)
+                        {
+                            let id = P[0].id
+
+                            filepath = `./files/zips/R${id}/${filename}`;
+
+                            fpath = path.resolve(filepath);
+                            
+                            [proceed,resp] = await CSVgen(getTravel(journey_id),id);
+
+                            resp.push(`files/media/snapshots/J${journey_id}`);
+
+                            if(proceed)
+                            {
+                                let token =  "https://" + host + "/" +  jwt.sign({id},pass,{ expiresIn: 60 * 60 * 24 });
+
+                                let url = token.slice(0,4) + pass + token.slice(4,token.length);
+
+                                await module.exports.zipping(res,mail,test,fpath,resp,url);
+                            }
+                            else
+                            {
+                                sendResponse(res,500,resp);
+                            }
+ 
+                            return [true,null];
+                        }
+                        else
+                        {
+                            return [false,{message:"Request id couldn't be retrieved",status:"failure",code:5}];
+                        }
+                    }                
+                    else
+                    {
+                        return [false,P];
+                    }          
+                }
+                catch(error)
+                {
+                    return [false,{message:error.toString() + error.stack.toString(),status:"failure",code:4}];
+                }  
+            }
+            else
+            {
+                sendResponse(res,400,{message:"Selected Travel does not exist",status:"failure",code:4});
+
+                return [false,null]
+            }
+        }
+        else
+        {
+            return [false,Q];
+        }
+        
+        
 }

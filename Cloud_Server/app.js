@@ -193,7 +193,7 @@ async function filter(tab,retrieve,params,command)
 
 async function verify(req, min)
 {
-    let authorized = false, http_code = 500, status = null, code = null, message = null, usertype = null, id = null;
+    let authorized = false, http_code = 500, status = null, code = null, message = null, usertype = null, id = null, mail = null;
 
     if (req.body.token)
     {
@@ -281,6 +281,8 @@ async function verify(req, min)
 
                         usertype = Q[0].usertype;
 
+                        mail = Q[0].mail;
+
                         authorized = true; 
                     }
                     
@@ -343,7 +345,7 @@ async function verify(req, min)
         }        
     }
 
-    return [authorized,http_code,status,code,message,usertype,id];
+    return [authorized,http_code,status,code,message,usertype,id,mail];
 }
 
 async function appAuthorizer(username,password,signup)
@@ -759,7 +761,7 @@ if(creds)
     {
         let user = req.auth.user, id = null, secret = null, usertype = null, token = null;
         
-        console.log(); process.stdout.write(req.hostname); console.log(req.url); console.log();
+        console.log(); process.stdout.write(req.get["host"]); console.log(req.url); console.log();
 
         process.stdout.write("Request: "); console.log(req.body); console.log();
 
@@ -805,7 +807,7 @@ if(creds)
     {
         let params = req.body;
 
-        console.log(); process.stdout.write(req.hostname); console.log(req.url); console.log();
+        console.log(); process.stdout.write(req.get["host"]); console.log(req.url); console.log();
 
         process.stdout.write("Request: "); console.log(req.body); console.log();
 
@@ -862,15 +864,15 @@ if(creds)
 
     app.get("/boats", async (req,res) => 
     {
-        let authorized, http_code, status, code, message, usertype, id, body = Object.keys(req.body).length;
+        let authorized, http_code, status, code, message, usertype, id, mail, body = Object.keys(req.body).length;
 
-        console.log(); process.stdout.write(req.hostname); console.log(req.url); console.log();
+        console.log(); process.stdout.write(req.get["host"]); console.log(req.url); console.log();
 
         process.stdout.write("Request: "); console.log(req.body); console.log();
 
         if(body)
         {
-            [authorized,http_code,status,code,message,usertype,id] = await verify(req,1);
+            [authorized,http_code,status,code,message,usertype,id,mail] = await verify(req,1);
 
             if(authorized)
             {
@@ -890,7 +892,7 @@ if(creds)
                         {
                             let ok, url;
 
-                            [ok,url] = handle.data2CSV(id,req.hostname,"BOATS",Q);
+                            [ok,url] = handle.data2CSV(id,req.get["host"],"BOATS",Q);
 
                             if(ok)
                             {
@@ -932,15 +934,15 @@ if(creds)
 
     app.get("/users", async (req,res) => 
     {
-        let authorized, http_code, status, code, message, usertype, id, body = Object.keys(req.body).length;
+        let authorized, http_code, status, code, message, usertype, id, mail, body = Object.keys(req.body).length;
 
-        console.log(); process.stdout.write(req.hostname); console.log(req.url); console.log();
+        console.log(); process.stdout.write(req.get["host"]); console.log(req.url); console.log();
 
         process.stdout.write("Request: "); console.log(req.body); console.log();
 
         if(body)
         {
-            [authorized,http_code,status,code,message,usertype, id] =  await verify(req,1);
+            [authorized,http_code,status,code,message,usertype,id,mail] =  await verify(req,1);
 
             if(authorized)
             {   
@@ -960,7 +962,7 @@ if(creds)
                         {
                             let ok, url;
 
-                            [ok,url] = handle.data2CSV(id,req.hostname,"USERS",Q);
+                            [ok,url] = handle.data2CSV(id,req.get["host"],"USERS",Q);
 
                             if(ok)
                             {
@@ -1004,15 +1006,15 @@ if(creds)
 
     app.get("/journeys", async (req,res) => 
     {
-        let authorized, http_code, status, code, message, usertype, id, body = Object.keys(req.body).length;
+        let authorized, http_code, status, code, message, usertype, id, mail, body = Object.keys(req.body).length;
 
-        console.log(); process.stdout.write(req.hostname); console.log(req.url); console.log();
+        console.log(); process.stdout.write(req.get["host"]); console.log(req.url); console.log();
 
         process.stdout.write("Request: "); console.log(req.body); console.log();
 
         if(body)
         {
-            [authorized,http_code,status,code,message,usertype,id] =  await verify(req,1);
+            [authorized,http_code,status,code,message,usertype,id,mail] =  await verify(req,1);
       
             if(authorized)
             {
@@ -1030,7 +1032,7 @@ if(creds)
                         {
                             let ok, url;
 
-                            [ok,url] = handle.data2CSV(id,req.hostname,"TRAVELS",Q);
+                            [ok,url] = handle.data2CSV(id,req.get["host"],"TRAVELS",Q);
 
                             if(ok)
                             {
@@ -1073,15 +1075,15 @@ if(creds)
 
     app.get("/files", async (res,req) => 
     {
-        let authorized, http_code, status, code, message, usertype, id, body = Object.keys(req.body).length;
+        let authorized, http_code, status, code, message, usertype, id, mail, body = Object.keys(req.body).length;
 
-        console.log(); process.stdout.write(req.hostname); console.log(req.url); console.log();
+        console.log(); process.stdout.write(req.get["host"]); console.log(req.url); console.log();
 
         process.stdout.write("Request: "); console.log(req.body); console.log();
 
         if(body)
         {
-            [authorized,http_code,status,code,message,usertype,id] =  await verify(req,1);
+            [authorized,http_code,status,code,message,usertype,id,mail] =  await verify(req,1);
 
             if(authorized)
             {
@@ -1099,7 +1101,7 @@ if(creds)
                         {
                             let ok, url;
 
-                            [ok,url] = handle.data2CSV(id,req.hostname,"FILES",Q);
+                            [ok,url] = handle.data2CSV(id,req.get["host"],"FILES",Q);
 
                             if(ok)
                             {
@@ -1141,15 +1143,15 @@ if(creds)
 
     app.get("/historics", async (req,res) =>
     {
-        let authorized, http_code, status, code, message, usertype, id, body = Object.keys(req.body).length;
+        let authorized, http_code, status, code, message, usertype, id, mail, body = Object.keys(req.body).length;
 
-        console.log(); process.stdout.write(req.hostname); console.log(req.url); console.log();
+        console.log(); process.stdout.write(req.get["host"]); console.log(req.url); console.log();
 
         process.stdout.write("Request: "); console.log(req.body); console.log();
 
         if(body)
         {
-            [authorized,http_code,status,code,message,usertype,id] = await verify(req,1);
+            [authorized,http_code,status,code,message,usertype,id,mail] = await verify(req,1);
             
             if(authorized)
             {
@@ -1167,7 +1169,7 @@ if(creds)
                         {
                             let ok, url;
 
-                            [ok,url] = handle.data2CSV(id,req.hostname,"HISTORICS",Q);
+                            [ok,url] = handle.data2CSV(id,req.get["host"],"HISTORICS",Q);
 
                             if(ok)
                             {
@@ -1209,15 +1211,15 @@ if(creds)
 
     app.get("/alerts", async (req,res) =>
     {
-        let authorized, http_code, status, code, message, usertype, id, body = Object.keys(req.body).length;
+        let authorized, http_code, status, code, message, usertype, id, mail, body = Object.keys(req.body).length;
 
-        console.log(); process.stdout.write(req.hostname); console.log(req.url); console.log();
+        console.log(); process.stdout.write(req.get["host"]); console.log(req.url); console.log();
 
         process.stdout.write("Request: "); console.log(req.body); console.log();
 
         if(body)
         {
-            [authorized,http_code,status,code,message,usertype,id] = await verify(req,1);
+            [authorized,http_code,status,code,message,usertype,id,mail] = await verify(req,1);
 
             if(authorized)
             {
@@ -1235,7 +1237,7 @@ if(creds)
                         {
                             let ok, url;
 
-                            [ok,url] = handle.data2CSV(id,req.hostname,"ALERTS",Q);
+                            [ok,url] = handle.data2CSV(id,req.get["host"],"ALERTS",Q);
 
                             if(ok)
                             {
@@ -1277,15 +1279,15 @@ if(creds)
 
     app.get("/requests", async (req,res) =>
     {
-        let authorized, http_code, status, code, message, usertype, id, body = Object.keys(req.body).length;
+        let authorized, http_code, status, code, message, usertype, id, mail, body = Object.keys(req.body).length;
 
-        console.log(); process.stdout.write(req.hostname); console.log(req.url); console.log();
+        console.log(); process.stdout.write(req.get["host"]); console.log(req.url); console.log();
 
         process.stdout.write("Request: "); console.log(req.body); console.log();
 
         if(body)
         {
-            [authorized,http_code,status,code,message,usertype,id] = await verify(req,2);
+            [authorized,http_code,status,code,message,usertype,id,mail] = await verify(req,2);
 
             if(authorized)
             {
@@ -1303,7 +1305,7 @@ if(creds)
                         {
                             let ok, url;
 
-                            [ok,url] = handle.data2CSV(id,req.hostname,"REQUESTS",Q);
+                            [ok,url] = handle.data2CSV(id,req.get["host"],"REQUESTS",Q);
 
                             if(ok)
                             {
@@ -1345,18 +1347,33 @@ if(creds)
 
     app.get("files/zip", async (req,res) => 
     {
-        let authorized, http_code, status, code, message, usertype, id,  body = Object.keys(req.body).length;
+        let authorized, http_code, status, code, message, usertype, id, mail, body = Object.keys(req.body).length;
 
-        console.log(); process.stdout.write(req.hostname); console.log(req.url); console.log();
+        console.log(); process.stdout.write(req.get["host"]); console.log(req.url); console.log();
 
         process.stdout.write("Request: "); console.log(req.body); console.log();
 
         if(body)
         {
-            [authorized,http_code,status,code,message,usertype,id] = await verify(req,1);
+            [authorized,http_code,status,code,message,usertype,id,mail] = await verify(req,1);
+
+            let journey_id = req.body.journey_id;
 
             if(authorized)
-                handle.downloads(req,res);
+            {
+                if(journey_id)
+                {
+                    let host = req.get["host"], zip, res;
+                    
+                    [zip,resp]= handle.zipTravel(host,id,mail,testAccount,journey_id);
+
+                    if(!zip && resp)
+                        handle.response(res,500,resp);
+                }
+                else
+                    handle.response(res,400,{message:"No travel specified",status:"failure",code:10})
+               
+            }
             else
                 handle.response(res,http_code,{message,status,code});
         }
@@ -1366,15 +1383,15 @@ if(creds)
 
     app.get("files/:type/:file", async (req,res) => 
     {
-        let authorized, http_code, status, code, message, usertype, id, body = Object.keys(req.body).length;
+        let authorized, http_code, status, code, message, usertype, id, mail, body = Object.keys(req.body).length;
 
-        console.log(); process.stdout.write(req.hostname); console.log(req.url); console.log();
+        console.log(); process.stdout.write(req.get["host"]); console.log(req.url); console.log();
 
         process.stdout.write("Request: "); console.log(req.body); console.log();
 
         if(body)
         {
-            [authorized,http_code,status,code,message,usertype,id] = await verify(req,1);
+            [authorized,http_code,status,code,message,usertype,id,mail] = await verify(req,1);
 
             if(authorized)
                 handle.downloads(req,res);
@@ -1387,7 +1404,7 @@ if(creds)
 
     app.get("download/:token", async (req,res) =>
     {
-        console.log(); process.stdout.write(req.hostname); console.log(req.url); console.log();
+        console.log(); process.stdout.write(req.get["host"]); console.log(req.url); console.log();
 
         process.stdout.write("Request: "); console.log(req.body); console.log();
 
@@ -1401,7 +1418,7 @@ if(creds)
 
         let body = Object.keys(req.body).length;
 
-        console.log(); process.stdout.write(req.hostname); console.log(req.url); console.log();
+        console.log(); process.stdout.write(req.get["host"]); console.log(req.url); console.log();
 
         process.stdout.write("Request: "); console.log(req.body); console.log();
 
@@ -1475,9 +1492,9 @@ if(creds)
     {
         let authorized = false, access, http_code, status, code, message, min = 1;
         
-        let id, usertype, body = Object.keys(req.body).length;
+        let id, mail, usertype, body = Object.keys(req.body).length;
         
-        console.log(); process.stdout.write(req.hostname); console.log(req.url); console.log();
+        console.log(); process.stdout.write(req.get["host"]); console.log(req.url); console.log();
 
         process.stdout.write("Request: "); console.log(req.body); console.log();
 
@@ -1494,7 +1511,7 @@ if(creds)
             {
                 let aux; 
 
-                [authorized,http_code,status,code,message,aux,id] =  await verify(req,min);
+                [authorized,http_code,status,code,message,aux,id,mail] =  await verify(req,min);
 
                 console.log({authorized,http_code,status,code,message}); console.log();
             }
@@ -1582,7 +1599,7 @@ if(creds)
 
         let usertype, id, body = Object.keys(req.body).length, params;
         
-        console.log(); process.stdout.write(req.hostname); console.log(req.url); console.log();
+        console.log(); process.stdout.write(req.get["host"]); console.log(req.url); console.log();
 
         process.stdout.write("Request: "); console.log(req.body); console.log();
 
@@ -1607,10 +1624,10 @@ if(creds)
             {
                 params = req.body;
 
-                let aux, aux1;
+                let aux, aux1, aux2;
 
                 if(params.id)
-                    [authorized,http_code,status,code,message,aux,aux1] =  await verify(req,min);
+                    [authorized,http_code,status,code,message,aux,aux1,aux2] =  await verify(req,min);
                 else
                     [http_code,status,code,message] = [400,"unchanged",10,"Missing parameters"];
 

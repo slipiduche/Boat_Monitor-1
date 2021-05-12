@@ -183,6 +183,27 @@ CREATE TABLE REQUESTS
         REFERENCES USERS (id)
 );
 
+
+DELIMITER $$
+
+CREATE PROCEDURE bm_REQUESTS_INS(IN ftype TEXT, IN fpath TEXT, IN fl TEXT, IN user INT, IN dat DATETIME)
+
+BEGIN
+
+    INSERT INTO REQUESTS (fl_type,fl_path,user_id,dt) VALUES (ftype,fpath,user,dat);
+
+    SET @ID = LAST_INSERT_ID();
+
+    SET @PATH = CONCAT(fpath,'/R',@ID,'/',fl);
+
+    UPDATE REQUESTS SET fl_path = @PATH WHERE id = @ID;
+
+    SELECT @ID id;
+
+END $$
+
+DELIMITER ;
+
 INSERT INTO USERS (username,pswrd,names,mail,usertype,latt,blocked,st,approval,dt) VALUES 
     (
         'orbittas@orbittas.com',
