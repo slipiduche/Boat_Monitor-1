@@ -1010,7 +1010,7 @@ module.exports.zipping = async (res,mail,test,destination,targets,url) =>
       console.error(`stderr: ${data}`);
     });
     
-    zip.on('close', (code) => 
+    zip.on('close', async (code) => 
     {
       console.log(`child process exited with code ${code}\n\r`);
       

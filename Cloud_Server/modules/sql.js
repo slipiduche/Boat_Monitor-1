@@ -413,7 +413,7 @@ module.exports.DEL = async function DEL(TAB,WHERE)
   return r;
 }
 
-module.exports.PROC = (PROC,COLS) =>
+module.exports.PROC = async (PROC,COLS) =>
 {
   let DB = DBconnection(), r = "";
   
