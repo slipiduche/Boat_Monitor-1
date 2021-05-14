@@ -268,21 +268,24 @@ module.exports.data2CSV = async (user,host,base,data) =>
         
         let klen = keys.length;
 
-        for(let i = 0; i < klen; i++)
+        for(let i = 0; i < len; i++)
         {
-            if(str1)
-                str1 += quote(keys[i]);
-            else
-                str1 = quote(keys[i]);
+            let values = data[i];
 
-            if(i < (klen - 1))
-                str1 += ";"
-            else
-                str1 += "\n";
-
-            for(let j = 0; j < len; j++)
+            for(let j = 0; j < klen; j++)
             {
-                let values = data[i];
+                if(!i)
+                {
+                    if(str1)
+                        str1 += quote(keys[i]);
+                    else
+                        str1 = quote(keys[i]);
+        
+                    if(i < (klen - 1))
+                        str1 += ";"
+                    else
+                        str1 += "\n";
+                }
 
                 if(str2)
                     str2 += quote(values[keys[j]]);
