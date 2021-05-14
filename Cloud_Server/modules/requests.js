@@ -128,7 +128,7 @@ async function getTravel(id)
 }
 async function CSVgen(data,id)
 {
-    let save = util.promisify(fs.writeFile);
+    let save = util.promisify(fs.writeFile), mkdir = util.promisify(fs.mkdir), exists = util.promisify(fs.access);
 
     let base = ["TRAVEL","BOAT","HISTORICS","ALERTS","USERS"], addresses = [];
     
@@ -168,28 +168,32 @@ async function CSVgen(data,id)
                 
                 let klen = keys.length;
     
-                for(let i = 0; i < klen; i++)
+                for(let i = 0; i < len; i++)
                 {
-                    if(str1)
-                        str1 += quote(keys[i]);
-                    else
-                        str1 = quote(keys[i]);
-    
-                    if(i < (klen - 1))
-                        str1 += ";"
-                    else
-                        str1 += "\n";
-    
-                    for(let j = 0; j < len; j++)
+                    let values = data[k][i];
+
+                    for(let j = 0; j < klen; j++)
                     {
-                        let values = data[k][i];
+                        if(j < 1)
+                        {
+                            if(str1)
+                                str1 += quote(keys[i]);
+                            else
+                                str1 = quote(keys[i]);
+            
+                            if(i < (klen - 1))
+                                str1 += ";"
+                            else
+                                str1 += "\n";
+                        }
+
     
                         if(str2)
                             str2 += quote(values[keys[j]]);
                         else
                             str2 = quote(values[keys[j]]);
             
-                        if(j < (len - 1))
+                        if(j < (klen - 1))
                             str2 += ";"
                         else
                             str2 += "\n";
@@ -205,9 +209,11 @@ async function CSVgen(data,id)
                 try
                 {
                     let filepath = `./files/csv/R${id}/${filename}.csv`;
-    
+                    
                     let content = str1+str2;
-            
+                    
+                    try { await exists(`./files/csv/R${id}`); } catch { await mkdir(`./files/csv/R${id}`); }
+
                     await save(filepath,content);
 
                     let  fpath = path.resolve(filepath);
@@ -1013,7 +1019,7 @@ module.exports.zipping = async (res,mail,test,destination,targets,url) =>
         }
         catch(error)
         {
-            sendResponse(res,200,{message:`Travel files sucessfully zipped: ${url}, but unable to send mail to ${mail}`,status:"success",code:1})
+            sendResponse(res,500,{message:`Travel files sucessfully zipped: ${url}, but unable to send mail to ${mail}`,status:"success",code:1})
         }
  
       }
@@ -1059,8 +1065,8 @@ module.exports.zipTravel = async (host,user,mail,test,journey_id) =>
                     {
                         ftype:".zip",
                         fpath:fpath,
-                        user,
                         fl:filename,
+                        user,
                         dat:date,
                     });
                     
@@ -1080,9 +1086,9 @@ module.exports.zipTravel = async (host,user,mail,test,journey_id) =>
 
                             if(proceed)
                             {
-                                let token =  "https://" + host + "/" +  jwt.sign({id},pass,{ expiresIn: 60 * 60 * 24 });
+                                let token =  jwt.sign({id},pass,{ expiresIn: 60 * 60 * 24 });
 
-                                let url = token.slice(0,4) + pass + token.slice(4,token.length);
+                                let url = "https://" + host + "/" +  token.slice(0,4) + pass + token.slice(4,token.length);
 
                                 await module.exports.zipping(res,mail,test,fpath,resp,url);
                             }
