@@ -485,7 +485,11 @@ module.exports.PROC = async (PROC,COLS) =>
   catch
   {}
 
-  console.log(r);
+  console.log(r[0][0]);
+  
+  console.log(r[0][1]);
+
+  console.log(r[1]);
 
   return r;
 }

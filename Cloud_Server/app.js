@@ -66,6 +66,24 @@ var test = true;
 
 var testAccount = null;
 
+/*********************************PARAMETERS**********************************/
+var transporter = null;
+
+if(!test)
+{
+    transporter = nodemailer.createTransport(
+    {
+        host: "smtp.ethereal.email",
+        port: 465,
+        secure: true, // true for 465, false for other ports
+        auth: 
+        {
+            user: "", // generated ethereal user
+            pass: "", // generated ethereal password
+        },
+    });    
+}
+    
 //Status Codes:
 /*
 1: Success
@@ -671,6 +689,9 @@ function NaNFinder(str)
 }
 /*******************************INITIALIZATION********************************/
 
+setImmediate(async() =>
+{
+
 try
 {
     privateKey = fs.readFileSync('sslcert/domain.key', 'utf8');
@@ -689,7 +710,27 @@ catch(error)
 try
 {
     if(test)
-        testAccount = nodemailer.createTestAccount();
+    {
+        testAccount = await nodemailer.createTestAccount();
+
+        console.log("Nodemailer Test Account successfully created");
+
+        console.log(testAccount);
+
+        transporter = nodemailer.createTransport(
+        {
+            host: "smtp.ethereal.email",
+            port: 587,
+            secure: false, // true for 465, false for other ports
+            auth: 
+            {
+                user: testAccount.user, // generated ethereal user
+                pass: testAccount.pass, // generated ethereal password
+            },
+        });
+        
+    }
+        
 
 }
 catch(error)
@@ -844,13 +885,13 @@ if(creds)
                     {
                         try
                         {   
-                            handle.mailing({username,mail,password},testAccount);
+                            handle.mailing({username,mail,password},false,transporter);
 
                             handle.response(res,200,{message:"An email containing new credentials was sent",status:"success",code:1});
                         }
                         catch(error)
                         {
-                            log.errorLog(mail,error.tostring(),1);
+                            log.errorLog("mail",error.toString(),1);
 
                             handle.response(res,500,{message:"Unable to send email",status:"failure",code:4});
                         }
@@ -909,7 +950,7 @@ if(creds)
                             {
                                 try
                                 {
-                                    await handle.mailing({mail,url},true,testAccount);
+                                    await handle.mailing({mail,url},true,transporter);
 
                                     let resp = {message:`URL: ${url} sent. Valid for 24 hours only`,status:"success",code:1};
 
@@ -979,7 +1020,7 @@ if(creds)
                             {
                                 try
                                 {
-                                    await handle.mailing({mail,url},true,testAccount);
+                                    await handle.mailing({mail,url},true,transporter);
 
                                     let resp = {message:`URL: ${url} sent. Valid for 24 hours only`,status:"success",code:1};
 
@@ -1049,7 +1090,7 @@ if(creds)
                             {
                                 try
                                 {
-                                    await handle.mailing({mail,url},true,testAccount);
+                                    await handle.mailing({mail,url},true,transporter);
 
                                     let resp = {message:`URL: ${url} sent. Valid for 24 hours only`,status:"success",code:1};
 
@@ -1118,7 +1159,7 @@ if(creds)
                             {
                                 try
                                 {
-                                    await handle.mailing({mail,url},true,testAccount);
+                                    await handle.mailing({mail,url},true,transporter);
 
                                     let resp = {message:`URL: ${url} sent. Valid for 24 hours only`,status:"success",code:1};
 
@@ -1186,7 +1227,7 @@ if(creds)
                             {
                                 try
                                 {
-                                    await handle.mailing({mail,url},true,testAccount);
+                                    await handle.mailing({mail,url},true,transporter);
 
                                     let resp = {message:`URL: ${url} sent. Valid for 24 hours only`,status:"success",code:1};
 
@@ -1254,7 +1295,7 @@ if(creds)
                             {
                                 try
                                 {
-                                    await handle.mailing({mail,url},true,testAccount);
+                                    await handle.mailing({mail,url},true,transporter);
 
                                     let resp = {message:`URL: ${url} sent. Valid for 24 hours only`,status:"success",code:1};
 
@@ -1322,7 +1363,7 @@ if(creds)
                             {
                                 try
                                 {
-                                    await handle.mailing({mail,url},true,testAccount);
+                                    await handle.mailing({mail,url},true,transporter);
 
                                     let resp = {message:`URL: ${url} sent. Valid for 24 hours only`,status:"success",code:1};
 
@@ -1376,7 +1417,7 @@ if(creds)
                 {
                     let host = req.get("host"), zip, res;
                     
-                    [zip,resp]= handle.zipTravel(host,id,mail,testAccount,journey_id);
+                    [zip,resp]= handle.zipTravel(host,id,mail,transporter,journey_id);
 
                     if(!zip && resp)
                         handle.response(res,500,resp);
@@ -1832,3 +1873,5 @@ if(creds)
 //splits//\n\r
 
 //will received weight be an average of samples done by the boat device?
+
+});

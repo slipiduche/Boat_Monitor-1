@@ -23,18 +23,6 @@ const SQL = require('./sql.js');
 
 const dir  = ["./files/historics/","./files/media/snapshots/","./files/media/recordings/","./files/csv","./files/zips"];
 
-/*********************************PARAMETERS**********************************/
-var transporter = nodemailer.createTransport(
-{
-    host: "smtp.ethereal.email",
-    port: 465,
-    secure: true, // true for 465, false for other ports
-    auth: 
-    {
-      user: "", // generated ethereal user
-      pass: "", // generated ethereal password
-    },
-});
 
 /*********************************FUNCTIONS***********************************/
 
@@ -260,7 +248,7 @@ module.exports.data2CSV = async (user,host,base,data) =>
 
     if(len)
     {
-        let save = util.promisify(fs.writeFile);
+        let save = util.promisify(fs.writeFile), mkdir = util.promisify(fs.mkdir), exists = util.promisify(fs.access);
 
         let str1 = null, str2 = null;
 
@@ -277,9 +265,9 @@ module.exports.data2CSV = async (user,host,base,data) =>
                 if(!i)
                 {
                     if(str1)
-                        str1 += quote(keys[i]);
+                        str1 += quote(keys[j]);
                     else
-                        str1 = quote(keys[i]);
+                        str1 = quote(keys[j]);
         
                     if(i < (klen - 1))
                         str1 += ";"
@@ -292,7 +280,7 @@ module.exports.data2CSV = async (user,host,base,data) =>
                 else
                     str2 = quote(values[keys[j]]);
     
-                if(j < (len - 1))
+                if(j < (klen - 1))
                     str2 += ";"
                 else
                     str2 += "\n";
@@ -326,11 +314,13 @@ module.exports.data2CSV = async (user,host,base,data) =>
             
             if(!Q.status)
             {
-                if(Q[0].id)
-                {
-                    let id = Q[0].id
+                let id = Q[0][0][0].id
 
+                if(id)
+                {
                     filepath = `./files/csv/R${id}/${filename}`;
+
+                    try { await exists(`./files/csv/R${id}`); } catch { await mkdir(`./files/csv/R${id}`); }
 
                     await save(filepath,content);
 
@@ -338,11 +328,11 @@ module.exports.data2CSV = async (user,host,base,data) =>
                     
                     console.log(`${fpath} successfully saved on ${date}.`);
 
-                    let token =  "https://" + host + "/" +  jwt.sign({id},pass,{ expiresIn: 60 * 60 * 24 });
+                    let token =  jwt.sign({id},pass,{ expiresIn: 60 * 60 * 24 });
 
-                    let url = token.slice(0,4) + pass + token.slice(4,token.length);
+                    let url = "https://" + host + "/" +   token.slice(0,4) + pass + token.slice(4,token.length);
                     
-                    return [true,{url}];
+                    return [true,url];
                 }
                 else
                 {
@@ -356,6 +346,8 @@ module.exports.data2CSV = async (user,host,base,data) =>
         }
         catch(error)
         {
+            console.log(error);
+
             return [false,{message:error.toString() + error.stack.toString(),status:"failure",code:4}];
         }  
     }
@@ -920,17 +912,10 @@ module.exports.data = async (res,req,filenames) =>
     return [result,code];
 };
 
-module.exports.mailing = async (data,download,test) =>
+module.exports.mailing = async (data,download,transporter) =>
 {   
     let subject, text, html;
 
-    if(test)
-    {
-        transporter.auth.user = test.user;
-
-        transporter.auth.pass = test.pass;
-    }
-    
     if(download)
     {
         subject = "Your Download ✔";
