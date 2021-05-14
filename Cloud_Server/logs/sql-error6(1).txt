@@ -1,0 +1,3 @@
+Date: Fri May 14 2021 14:44:13 GMT-0400 (Venezuela Time)
+
+Error: Incorrect integer value: 'BOATS_202151414441344.csv' for column 'user' at row 1

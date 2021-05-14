@@ -903,7 +903,7 @@ if(creds)
                         {
                             let ok, url;
 
-                            [ok,url] = handle.data2CSV(id,req.get("host"),"BOATS",Q);
+                            [ok,url] = await handle.data2CSV(id,req.get("host"),"BOATS",Q);
 
                             if(ok)
                             {
@@ -973,7 +973,7 @@ if(creds)
                         {
                             let ok, url;
 
-                            [ok,url] = handle.data2CSV(id,req.get("host"),"USERS",Q);
+                            [ok,url] = await handle.data2CSV(id,req.get("host"),"USERS",Q);
 
                             if(ok)
                             {
@@ -1043,7 +1043,7 @@ if(creds)
                         {
                             let ok, url;
 
-                            [ok,url] = handle.data2CSV(id,req.get("host"),"TRAVELS",Q);
+                            [ok,url] = await handle.data2CSV(id,req.get("host"),"TRAVELS",Q);
 
                             if(ok)
                             {
@@ -1112,7 +1112,7 @@ if(creds)
                         {
                             let ok, url;
 
-                            [ok,url] = handle.data2CSV(id,req.get("host"),"FILES",Q);
+                            [ok,url] = await handle.data2CSV(id,req.get("host"),"FILES",Q);
 
                             if(ok)
                             {
@@ -1180,7 +1180,7 @@ if(creds)
                         {
                             let ok, url;
 
-                            [ok,url] = handle.data2CSV(id,req.get("host"),"HISTORICS",Q);
+                            [ok,url] = await handle.data2CSV(id,req.get("host"),"HISTORICS",Q);
 
                             if(ok)
                             {
@@ -1248,7 +1248,7 @@ if(creds)
                         {
                             let ok, url;
 
-                            [ok,url] = handle.data2CSV(id,req.get("host"),"ALERTS",Q);
+                            [ok,url] = await handle.data2CSV(id,req.get("host"),"ALERTS",Q);
 
                             if(ok)
                             {
@@ -1316,7 +1316,7 @@ if(creds)
                         {
                             let ok, url;
 
-                            [ok,url] = handle.data2CSV(id,req.get("host"),"REQUESTS",Q);
+                            [ok,url] = await handle.data2CSV(id,req.get("host"),"REQUESTS",Q);
 
                             if(ok)
                             {

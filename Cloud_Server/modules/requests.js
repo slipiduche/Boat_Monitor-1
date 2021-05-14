@@ -319,9 +319,9 @@ module.exports.data2CSV = async (user,host,base,data) =>
             {
                 ftype:".csv",
                 fpath:fpath,
-                user,
                 fl:filename,
-                dat:date,
+                user,
+                dat:date
             });
             
             if(!Q.status)
