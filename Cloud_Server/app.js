@@ -40,7 +40,7 @@ const SQL = require('./modules/sql.js');
 
 const port = [8443,9443,8883];
 
-const BOATS = ["id","boat_name","max_st","resp","resp_name","st","dt","obs"];
+const BOATS = ["id","boat_name","max_st","resp","resp_name","st","on_journey","lj","dt","obs"];
 
 const USERS = ["id","username","names","mail","usertype","latt","ldt","blocked","st","approval","lva","dt"];
 
@@ -98,6 +98,9 @@ async function filter(tab,retrieve,params,command)
 
     if(params.tab)
         delete params.tab;
+
+    if(params.csv)
+        delete params.csv;
     
     if(params.id)
     {
@@ -105,7 +108,7 @@ async function filter(tab,retrieve,params,command)
 
         delete params.id;
     }
-
+    
     if(params.rest)
     {
         rest = params.rest;
@@ -343,6 +346,16 @@ async function verify(req, min)
                 message = "Bad Token";
             }                           
         }        
+    }
+    else
+    {
+        http_code = 400;
+        
+        status = "unauthorized";
+
+        code = 10;
+
+        message = "Missing data";
     }
 
     return [authorized,http_code,status,code,message,usertype,id,mail];
@@ -761,7 +774,7 @@ if(creds)
     {
         let user = req.auth.user, id = null, secret = null, usertype = null, token = null;
         
-        console.log(); process.stdout.write(req.get["host"]); console.log(req.url); console.log();
+        console.log(); process.stdout.write(req.get("host")); console.log(req.url); console.log();
 
         process.stdout.write("Request: "); console.log(req.body); console.log();
 
@@ -807,7 +820,7 @@ if(creds)
     {
         let params = req.body;
 
-        console.log(); process.stdout.write(req.get["host"]); console.log(req.url); console.log();
+        console.log(); process.stdout.write(req.get("host")); console.log(req.url); console.log();
 
         process.stdout.write("Request: "); console.log(req.body); console.log();
 
@@ -866,7 +879,7 @@ if(creds)
     {
         let authorized, http_code, status, code, message, usertype, id, mail, body = Object.keys(req.body).length;
 
-        console.log(); process.stdout.write(req.get["host"]); console.log(req.url); console.log();
+        console.log(); process.stdout.write(req.get("host")); console.log(req.url); console.log();
 
         process.stdout.write("Request: "); console.log(req.body); console.log();
 
@@ -876,23 +889,21 @@ if(creds)
 
             if(authorized)
             {
-                console.log(req.body);
-
+                let csv = req.body.csv;
+                
                 let Q = await filter("BOATS",BOATS,req.body,"SEL");
                 
                 if(!Q.status)
                 {
                     if(Q[0])
                     {
-                        let csv = req.body.csv;
-
                         if(!csv)
                             handle.response(res,200,{BOATS:Q,status:"success",code:1});
                         else
                         {
                             let ok, url;
 
-                            [ok,url] = handle.data2CSV(id,req.get["host"],"BOATS",Q);
+                            [ok,url] = handle.data2CSV(id,req.get("host"),"BOATS",Q);
 
                             if(ok)
                             {
@@ -936,7 +947,7 @@ if(creds)
     {
         let authorized, http_code, status, code, message, usertype, id, mail, body = Object.keys(req.body).length;
 
-        console.log(); process.stdout.write(req.get["host"]); console.log(req.url); console.log();
+        console.log(); process.stdout.write(req.get("host")); console.log(req.url); console.log();
 
         process.stdout.write("Request: "); console.log(req.body); console.log();
 
@@ -947,22 +958,22 @@ if(creds)
             if(authorized)
             {   
                 req.body.rest = usertype;
+                
+                let csv = req.body.csv;
 
                 let Q = await filter("USERS",USERS,req.body,"SEL");
                 
                 if(!Q.status)
                 {
                     if(Q[0])
-                    {
-                        let csv = req.body.csv;
-
+                    {               
                         if(!csv)
                             handle.response(res,200,{USERS:Q,status:"success",code:1});
                         else
                         {
                             let ok, url;
 
-                            [ok,url] = handle.data2CSV(id,req.get["host"],"USERS",Q);
+                            [ok,url] = handle.data2CSV(id,req.get("host"),"USERS",Q);
 
                             if(ok)
                             {
@@ -1008,7 +1019,7 @@ if(creds)
     {
         let authorized, http_code, status, code, message, usertype, id, mail, body = Object.keys(req.body).length;
 
-        console.log(); process.stdout.write(req.get["host"]); console.log(req.url); console.log();
+        console.log(); process.stdout.write(req.get("host")); console.log(req.url); console.log();
 
         process.stdout.write("Request: "); console.log(req.body); console.log();
 
@@ -1018,21 +1029,21 @@ if(creds)
       
             if(authorized)
             {
+                let csv = req.body.csv;
+
                 let Q = await filter("JOURNEYS",null,req.body,"SEL");
                 
                 if(!Q.status)
                 {
                     if(Q[0])
-                    {
-                        let csv = req.body.csv;
-
+                    {       
                         if(!csv)
                             handle.response(res,200,{JOURNEYS:Q,status:"success",code:1});
                         else
                         {
                             let ok, url;
 
-                            [ok,url] = handle.data2CSV(id,req.get["host"],"TRAVELS",Q);
+                            [ok,url] = handle.data2CSV(id,req.get("host"),"TRAVELS",Q);
 
                             if(ok)
                             {
@@ -1077,7 +1088,7 @@ if(creds)
     {
         let authorized, http_code, status, code, message, usertype, id, mail, body = Object.keys(req.body).length;
 
-        console.log(); process.stdout.write(req.get["host"]); console.log(req.url); console.log();
+        console.log(); process.stdout.write(req.get("host")); console.log(req.url); console.log();
 
         process.stdout.write("Request: "); console.log(req.body); console.log();
 
@@ -1087,21 +1098,21 @@ if(creds)
 
             if(authorized)
             {
+                let csv = req.body.csv;
+
                 let Q = await filter("FILES",null,req.body,"SEL");
                 
                 if(!Q.status)
                 {
                     if(Q[0])
                     {
-                        let csv = req.body.csv;
-
                         if(!csv)
                             handle.response(res,200,{FILES:Q,status:"success",code:1});
                         else
                         {
                             let ok, url;
 
-                            [ok,url] = handle.data2CSV(id,req.get["host"],"FILES",Q);
+                            [ok,url] = handle.data2CSV(id,req.get("host"),"FILES",Q);
 
                             if(ok)
                             {
@@ -1145,7 +1156,7 @@ if(creds)
     {
         let authorized, http_code, status, code, message, usertype, id, mail, body = Object.keys(req.body).length;
 
-        console.log(); process.stdout.write(req.get["host"]); console.log(req.url); console.log();
+        console.log(); process.stdout.write(req.get("host")); console.log(req.url); console.log();
 
         process.stdout.write("Request: "); console.log(req.body); console.log();
 
@@ -1155,21 +1166,21 @@ if(creds)
             
             if(authorized)
             {
+                let csv = req.body.csv;
+
                 let Q = await filter("HISTORICS",null,req.body,"SEL");
                 
                 if(!Q.status)
                 {
                     if(Q[0])
                     {
-                        let csv = req.body.csv;
-
                         if(!csv)
                             handle.response(res,200,{HISTORICS:Q,status:"success",code:1});
                         else
                         {
                             let ok, url;
 
-                            [ok,url] = handle.data2CSV(id,req.get["host"],"HISTORICS",Q);
+                            [ok,url] = handle.data2CSV(id,req.get("host"),"HISTORICS",Q);
 
                             if(ok)
                             {
@@ -1213,7 +1224,7 @@ if(creds)
     {
         let authorized, http_code, status, code, message, usertype, id, mail, body = Object.keys(req.body).length;
 
-        console.log(); process.stdout.write(req.get["host"]); console.log(req.url); console.log();
+        console.log(); process.stdout.write(req.get("host")); console.log(req.url); console.log();
 
         process.stdout.write("Request: "); console.log(req.body); console.log();
 
@@ -1223,21 +1234,21 @@ if(creds)
 
             if(authorized)
             {
+                let csv = req.body.csv;
+
                 let Q = await filter("ALERTS",null,req.body,"SEL");
                 
                 if(!Q.status)
                 {
                     if(Q[0])
                     {
-                        let csv = req.body.csv;
-
                         if(!csv)
                             handle.response(res,200,{ALERTS:Q,status:"success",code:1});
                         else
                         {
                             let ok, url;
 
-                            [ok,url] = handle.data2CSV(id,req.get["host"],"ALERTS",Q);
+                            [ok,url] = handle.data2CSV(id,req.get("host"),"ALERTS",Q);
 
                             if(ok)
                             {
@@ -1281,7 +1292,7 @@ if(creds)
     {
         let authorized, http_code, status, code, message, usertype, id, mail, body = Object.keys(req.body).length;
 
-        console.log(); process.stdout.write(req.get["host"]); console.log(req.url); console.log();
+        console.log(); process.stdout.write(req.get("host")); console.log(req.url); console.log();
 
         process.stdout.write("Request: "); console.log(req.body); console.log();
 
@@ -1291,21 +1302,21 @@ if(creds)
 
             if(authorized)
             {
+                let csv = req.body.csv;
+
                 let Q = await filter("ALERTS",null,req.body,"SEL");
                 
                 if(!Q.status)
                 {
                     if(Q[0])
-                    {
-                        let csv = req.body.csv;
-
+                    {       
                         if(!csv)
                             handle.response(res,200,{REQUESTS:Q,status:"success",code:1});
                         else
                         {
                             let ok, url;
 
-                            [ok,url] = handle.data2CSV(id,req.get["host"],"REQUESTS",Q);
+                            [ok,url] = handle.data2CSV(id,req.get("host"),"REQUESTS",Q);
 
                             if(ok)
                             {
@@ -1349,7 +1360,7 @@ if(creds)
     {
         let authorized, http_code, status, code, message, usertype, id, mail, body = Object.keys(req.body).length;
 
-        console.log(); process.stdout.write(req.get["host"]); console.log(req.url); console.log();
+        console.log(); process.stdout.write(req.get("host")); console.log(req.url); console.log();
 
         process.stdout.write("Request: "); console.log(req.body); console.log();
 
@@ -1363,7 +1374,7 @@ if(creds)
             {
                 if(journey_id)
                 {
-                    let host = req.get["host"], zip, res;
+                    let host = req.get("host"), zip, res;
                     
                     [zip,resp]= handle.zipTravel(host,id,mail,testAccount,journey_id);
 
@@ -1385,7 +1396,7 @@ if(creds)
     {
         let authorized, http_code, status, code, message, usertype, id, mail, body = Object.keys(req.body).length;
 
-        console.log(); process.stdout.write(req.get["host"]); console.log(req.url); console.log();
+        console.log(); process.stdout.write(req.get("host")); console.log(req.url); console.log();
 
         process.stdout.write("Request: "); console.log(req.body); console.log();
 
@@ -1404,7 +1415,7 @@ if(creds)
 
     app.get("download/:token", async (req,res) =>
     {
-        console.log(); process.stdout.write(req.get["host"]); console.log(req.url); console.log();
+        console.log(); process.stdout.write(req.get("host")); console.log(req.url); console.log();
 
         process.stdout.write("Request: "); console.log(req.body); console.log();
 
@@ -1418,7 +1429,7 @@ if(creds)
 
         let body = Object.keys(req.body).length;
 
-        console.log(); process.stdout.write(req.get["host"]); console.log(req.url); console.log();
+        console.log(); process.stdout.write(req.get("host")); console.log(req.url); console.log();
 
         process.stdout.write("Request: "); console.log(req.body); console.log();
 
@@ -1494,7 +1505,7 @@ if(creds)
         
         let id, mail, usertype, body = Object.keys(req.body).length;
         
-        console.log(); process.stdout.write(req.get["host"]); console.log(req.url); console.log();
+        console.log(); process.stdout.write(req.get("host")); console.log(req.url); console.log();
 
         process.stdout.write("Request: "); console.log(req.body); console.log();
 
@@ -1560,7 +1571,7 @@ if(creds)
         
         let id, mail, usertype, body = Object.keys(req.body).length;
         
-        console.log(); process.stdout.write(req.get["host"]); console.log(req.url); console.log();
+        console.log(); process.stdout.write(req.get("host")); console.log(req.url); console.log();
 
         process.stdout.write("Request: "); console.log(req.body); console.log();
 
@@ -1621,7 +1632,7 @@ if(creds)
         
         let id, mail, usertype, body = Object.keys(req.body).length;
         
-        console.log(); process.stdout.write(req.get["host"]); console.log(req.url); console.log();
+        console.log(); process.stdout.write(req.get("host")); console.log(req.url); console.log();
 
         process.stdout.write("Request: "); console.log(req.body); console.log();
 
@@ -1726,7 +1737,7 @@ if(creds)
 
         let usertype, id, body = Object.keys(req.body).length, params;
         
-        console.log(); process.stdout.write(req.get["host"]); console.log(req.url); console.log();
+        console.log(); process.stdout.write(req.get("host")); console.log(req.url); console.log();
 
         process.stdout.write("Request: "); console.log(req.body); console.log();
 
