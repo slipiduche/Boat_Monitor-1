@@ -351,7 +351,7 @@ module.exports.data2CSV = async (user,host,base,data) =>
             }                
             else
             {
-                return [false,Q[0]];
+                return [false,Q];
             }          
         }
         catch(error)
