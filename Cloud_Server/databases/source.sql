@@ -229,7 +229,7 @@ BEGIN
 
     SET @ID = LAST_INSERT_ID();
 
-    UPDATE BOATS SET on_journey = 1, SET lj = @ID WHERE id = boat_id0;
+    UPDATE BOATS SET on_journey = 1, lj = @ID WHERE id = boat_id0;
 
     SELECT @ID id;
 
@@ -346,7 +346,7 @@ INSERT INTO FILES(fl_name,fl_type,fl_path,fl_url,journey_id,boat_id,cam,rl,dt,re
         '2021/4/27 19:35:00'
     );
 
-INSERT INTO ALERTS(hist_id,boat_id,journey_id,ta,wa,ua,sus,dt,obs)
+INSERT INTO ALERTS(hist_id,boat_id,journey_id,ta,wa,ua,sus,dt,descr)
     VALUES
     (
         1,
