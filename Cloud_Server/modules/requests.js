@@ -1029,11 +1029,11 @@ module.exports.zipping = async (res,mail,test,destination,targets,url) =>
         {
             await module.exports.mailing({url,mail},true,test);
 
-            sendResponse(res,200,{message:`Travel files sucessfully zipped: ${url}. Mail sent to ${mail}`,status:"success",code:1})
+            sendResponse(res,200,{url,message:`Travel files sucessfully zipped and sent`,status:"success",code:1})
         }
         catch(error)
         {
-            sendResponse(res,500,{message:`Travel files sucessfully zipped: ${url}, but unable to send mail to ${mail}`,status:"success",code:1})
+            sendResponse(res,500,{url,message:`Travel files sucessfully zipped, but unanable to send mail`,status:"undelivered",code:13})
         }
  
       }
