@@ -956,7 +956,7 @@ if(creds)
                                 {
                                     await handle.mailing({mail,url},true,transporter);
 
-                                    let resp = {url,message:`CSV Genrated. URL valid for 24 hours only`,status:"success",code:1};
+                                    let resp = {url,message:"CSV Generated and sent. URL valid for 24 hours only",status:"success",code:1};
 
                                     handle.response(res,200,resp);
                                 }
@@ -964,7 +964,7 @@ if(creds)
                                 {
                                     console.log(error);
 
-                                    let resp = {url, message:`Unable to send mail. But URL was generated. Valid for 24 hours only`,status:"undelivered",code:13};
+                                    let resp = {url,message:"Unable to send mail, but URL generated. Valid for 24 hours only",status:"undelivered",code:13};
 
                                     handle.response(res,500,resp);
                                 }   
@@ -1029,7 +1029,7 @@ if(creds)
                                 {
                                     await handle.mailing({mail,url},true,transporter);
 
-                                    let resp = {url,message:`CSV Genrated. URL valid for 24 hours only`,status:"success",code:1};
+                                    let resp = {url,message:"CSV Generated and sent. URL valid for 24 hours only",status:"success",code:1};
 
                                     handle.response(res,200,resp);
                                 }
@@ -1037,7 +1037,7 @@ if(creds)
                                 {
                                     console.log(error);
 
-                                    let resp = {url, message:`Unable to send mail. But URL was generated. Valid for 24 hours only`,status:"undelivered",code:13};
+                                    let resp = {url, message:"Unable to send mail, but URL generated. Valid for 24 hours only",status:"undelivered",code:13};
 
                                     handle.response(res,500,resp);
                                 }
@@ -1102,7 +1102,7 @@ if(creds)
                                 {
                                     await handle.mailing({mail,url},true,transporter);
 
-                                    let resp = {url,message:`CSV Genrated. URL valid for 24 hours only`,status:"success",code:1};
+                                    let resp = {url,message:"CSV Generated and sent. URL valid for 24 hours only",status:"success",code:1};
 
                                     handle.response(res,200,resp);
                                 }
@@ -1110,7 +1110,7 @@ if(creds)
                                 {
                                     console.log(error);
 
-                                    let resp = {url, message:`Unable to send mail. But URL was generated. Valid for 24 hours only`,status:"undelivered",code:13};
+                                    let resp = {url, message:"Unable to send mail, but URL generated. Valid for 24 hours only",status:"undelivered",code:13};
 
                                     handle.response(res,500,resp);
                                 }  
@@ -1174,7 +1174,7 @@ if(creds)
                                 {
                                     await handle.mailing({mail,url},true,transporter);
 
-                                    let resp = {url,message:`CSV Genrated. URL valid for 24 hours only`,status:"success",code:1};
+                                    let resp = {url,message:"CSV Generated and sent. URL valid for 24 hours only",status:"success",code:1};
 
                                     handle.response(res,200,resp);
                                 }
@@ -1182,7 +1182,7 @@ if(creds)
                                 {
                                     console.log(error);
 
-                                    let resp = {url, message:`Unable to send mail. But URL was generated. Valid for 24 hours only`,status:"undelivered",code:13};
+                                    let resp = {url, message:"Unable to send mail, but URL generated. Valid for 24 hours only",status:"undelivered",code:13};
 
                                     handle.response(res,500,resp);
                                 }  
@@ -1245,7 +1245,7 @@ if(creds)
                                 {
                                     await handle.mailing({mail,url},true,transporter);
 
-                                    let resp = {url,message:`CSV Genrated. URL valid for 24 hours only`,status:"success",code:1};
+                                    let resp = {url,message:"CSV Generated and sent. URL valid for 24 hours only",status:"success",code:1};
 
                                     handle.response(res,200,resp);
                                 }
@@ -1253,7 +1253,7 @@ if(creds)
                                 {
                                     console.log(error);
 
-                                    let resp = {url, message:`Unable to send mail. But URL was generated. Valid for 24 hours only`,status:"undelivered",code:13};
+                                    let resp = {url, message:"Unable to send mail, but URL generated. Valid for 24 hours only",status:"undelivered",code:13};
 
                                     handle.response(res,500,resp);
                                 }  
@@ -1316,7 +1316,7 @@ if(creds)
                                 {
                                     await handle.mailing({mail,url},true,transporter);
 
-                                    let resp = {url,message:`CSV Genrated. URL valid for 24 hours only`,status:"success",code:1};
+                                    let resp = {url,message:"CSV Generated and sent. URL valid for 24 hours only",status:"success",code:1};
 
                                     handle.response(res,200,resp);
                                 }
@@ -1324,7 +1324,7 @@ if(creds)
                                 {
                                     console.log(error);
 
-                                    let resp = {url, message:`Unable to send mail. But URL was generated. Valid for 24 hours only`,status:"undelivered",code:13};
+                                    let resp = {url, message:"Unable to send mail, but URL generated. Valid for 24 hours only",status:"undelivered",code:13};
 
                                     handle.response(res,500,resp);
                                 }
@@ -1387,7 +1387,7 @@ if(creds)
                                 {
                                     await handle.mailing({mail,url},true,transporter);
 
-                                    let resp = {url,message:`CSV Genrated. URL valid for 24 hours only`,status:"success",code:1};
+                                    let resp = {url,message:"CSV Generated and sent. URL valid for 24 hours only",status:"success",code:1};
 
                                     handle.response(res,200,resp);
                                 }
@@ -1395,7 +1395,7 @@ if(creds)
                                 {
                                     console.log(error);
 
-                                    let resp = {url, message:`Unable to send mail. But URL was generated. Valid for 24 hours only`,status:"undelivered",code:13};
+                                    let resp = {url, message:"Unable to send mail, but URL generated. Valid for 24 hours only",status:"undelivered",code:13};
 
                                     handle.response(res,500,resp);
                                 } 
