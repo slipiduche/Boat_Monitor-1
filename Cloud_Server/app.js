@@ -942,7 +942,7 @@ if(creds)
                     if(Q[0])
                     {
                         if(!csv)
-                            handle.response(res,200,{BOATS:Q,status:"success",code:1});
+                            handle.response(res,200,{BOATS:Q,message:"List successfully retrieved",status:"success",code:1});
                         else
                         {
                             let ok, url;
@@ -975,7 +975,7 @@ if(creds)
                         }
                     }         
                     else
-                        handle.response(res,200,{BOATS:[],status:"empty",code:2});
+                        handle.response(res,200,{BOATS:[],message:"No Results",status:"empty",code:2});
                 }     
                 else
                     handle.response(res,500,Q); 
@@ -1015,7 +1015,7 @@ if(creds)
                     if(Q[0])
                     {               
                         if(!csv)
-                            handle.response(res,200,{USERS:Q,status:"success",code:1});
+                            handle.response(res,200,{USERS:Q,message:"List successfully retrieved",status:"success",code:1});
                         else
                         {
                             let ok, url;
@@ -1048,7 +1048,7 @@ if(creds)
                         }
                     }
                     else
-                        handle.response(res,200,{USERS:[],status:"empty",code:2});
+                        handle.response(res,200,{USERS:[],message:"No Results",status:"empty",code:2});
                 }     
                 else
                     handle.response(res,500,Q); 
@@ -1088,7 +1088,7 @@ if(creds)
                     if(Q[0])
                     {       
                         if(!csv)
-                            handle.response(res,200,{JOURNEYS:Q,status:"success",code:1});
+                            handle.response(res,200,{JOURNEYS:Q,message:"List successfully retrieved",status:"success",code:1});
                         else
                         {
                             let ok, url;
@@ -1121,7 +1121,7 @@ if(creds)
                         }
                     }
                     else
-                        handle.response(res,200,{JOURNEYS:[],status:"empty",code:2});
+                        handle.response(res,200,{JOURNEYS:[],message:"No Results",status:"empty",code:2});
                 }     
                 else
                     handle.response(res,500,Q); 
@@ -1160,7 +1160,7 @@ if(creds)
                     if(Q[0])
                     {
                         if(!csv)
-                            handle.response(res,200,{FILES:Q,status:"success",code:1});
+                            handle.response(res,200,{FILES:Q,message:"List successfully retrieved",status:"success",code:1});
                         else
                         {
                             let ok, url;
@@ -1193,7 +1193,7 @@ if(creds)
                         }
                     }
                     else
-                        handle.response(res,200,{FILES:[],status:"empty",code:2});
+                        handle.response(res,200,{FILES:[],message:"No Results",status:"empty",code:2});
                 }     
                 else
                     handle.response(res,500,Q); 
@@ -1231,7 +1231,7 @@ if(creds)
                     if(Q[0])
                     {
                         if(!csv)
-                            handle.response(res,200,{HISTORICS:Q,status:"success",code:1});
+                            handle.response(res,200,{HISTORICS:Q,message:"List successfully retrieved",status:"success",code:1});
                         else
                         {
                             let ok, url;
@@ -1264,7 +1264,7 @@ if(creds)
                         }
                     }
                     else
-                        handle.response(res,200,{HISTORICS:[],status:"empty",code:2});
+                        handle.response(res,200,{HISTORICS:[],message:"No Results",status:"empty",code:2});
                 }     
                 else
                     handle.response(res,500,Q);
@@ -1302,7 +1302,7 @@ if(creds)
                     if(Q[0])
                     {
                         if(!csv)
-                            handle.response(res,200,{ALERTS:Q,status:"success",code:1});
+                            handle.response(res,200,{ALERTS:Q,message:"List successfully retrieved",status:"success",code:1});
                         else
                         {
                             let ok, url;
@@ -1335,7 +1335,7 @@ if(creds)
                         }
                     }
                     else
-                        handle.response(res,200,{ALERTS:[],status:"empty",code:2});
+                        handle.response(res,200,{ALERTS:[],message:"No Results",status:"empty",code:2});
                 }     
                 else
                     handle.response(res,500,Q);
@@ -1373,7 +1373,7 @@ if(creds)
                     if(Q[0])
                     {       
                         if(!csv)
-                            handle.response(res,200,{REQUESTS:Q,status:"success",code:1});
+                            handle.response(res,200,{REQUESTS:Q,message:"List successfully retrieved",status:"success",code:1});
                         else
                         {
                             let ok, url;
@@ -1406,7 +1406,7 @@ if(creds)
                         }
                     }
                     else
-                        handle.response(res,200,{ALERTS:[],status:"empty",code:2});
+                        handle.response(res,200,{ALERTS:[],message:"No Results",status:"empty",code:2});
                 }     
                 else
                     handle.response(res,500,Q);
