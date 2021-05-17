@@ -918,8 +918,11 @@ if(creds)
 
     app.get("/boats", async (req,res) => 
     {
-        let authorized, http_code, status, code, message, usertype, id, mail, body = Object.keys(req.body).length;
+        let authorized, http_code, status, code, message, usertype, id, mail,  body = req.body;
 
+        if(body)
+            body = Object.keys(body).length;
+            
         console.log(); process.stdout.write(req.get("host")); console.log(req.url); console.log();
 
         process.stdout.write("Request: "); console.log(req.body); console.log();
@@ -986,8 +989,11 @@ if(creds)
 
     app.get("/users", async (req,res) => 
     {
-        let authorized, http_code, status, code, message, usertype, id, mail, body = Object.keys(req.body).length;
+        let authorized, http_code, status, code, message, usertype, id, mail, body = req.body;
 
+        if(body)
+            body = Object.keys(body).length;
+            
         console.log(); process.stdout.write(req.get("host")); console.log(req.url); console.log();
 
         process.stdout.write("Request: "); console.log(req.body); console.log();
@@ -1058,7 +1064,10 @@ if(creds)
 
     app.get("/journeys", async (req,res) => 
     {
-        let authorized, http_code, status, code, message, usertype, id, mail, body = Object.keys(req.body).length;
+        let authorized, http_code, status, code, message, usertype, id, mail, body = req.body;
+
+        if(body)
+            body = Object.keys(body).length;
 
         console.log(); process.stdout.write(req.get("host")); console.log(req.url); console.log();
 
@@ -1125,9 +1134,12 @@ if(creds)
   
     });
 
-    app.get("/files", async (res,req) => 
+    app.get("/files", async (req,res) => 
     {
-        let authorized, http_code, status, code, message, usertype, id, mail, body = Object.keys(req.body).length;
+        let authorized, http_code, status, code, message, usertype, id, mail, body = req.body;
+
+        if(body)
+            body = Object.keys(body).length
 
         console.log(); process.stdout.write(req.get("host")); console.log(req.url); console.log();
 
@@ -1195,8 +1207,11 @@ if(creds)
 
     app.get("/historics", async (req,res) =>
     {
-        let authorized, http_code, status, code, message, usertype, id, mail, body = Object.keys(req.body).length;
+        let authorized, http_code, status, code, message, usertype, id, mail, body = req.body;
 
+        if(body)
+            body = Object.keys(body).length;
+            
         console.log(); process.stdout.write(req.get("host")); console.log(req.url); console.log();
 
         process.stdout.write("Request: "); console.log(req.body); console.log();
@@ -1263,8 +1278,11 @@ if(creds)
 
     app.get("/alerts", async (req,res) =>
     {
-        let authorized, http_code, status, code, message, usertype, id, mail, body = Object.keys(req.body).length;
+        let authorized, http_code, status, code, message, usertype, id, mail,  body = req.body;
 
+        if(body)
+            body = Object.keys(body).length;
+            
         console.log(); process.stdout.write(req.get("host")); console.log(req.url); console.log();
 
         process.stdout.write("Request: "); console.log(req.body); console.log();
@@ -1331,8 +1349,11 @@ if(creds)
 
     app.get("/requests", async (req,res) =>
     {
-        let authorized, http_code, status, code, message, usertype, id, mail, body = Object.keys(req.body).length;
+        let authorized, http_code, status, code, message, usertype, id, mail, body = req.body;
 
+        if(body)
+            body = Object.keys(body).length;
+            
         console.log(); process.stdout.write(req.get("host")); console.log(req.url); console.log();
 
         process.stdout.write("Request: "); console.log(req.body); console.log();
@@ -1345,7 +1366,7 @@ if(creds)
             {
                 let csv = req.body.csv;
 
-                let Q = await filter("ALERTS",null,req.body,"SEL");
+                let Q = await filter("REQUESTS",null,req.body,"SEL");
                 
                 if(!Q.status)
                 {
@@ -1397,7 +1418,7 @@ if(creds)
             handle.response(res,400,{message:"No Body",status:"failure",code:4});    
     }); 
 
-    app.get("files/zip", async (req,res) => 
+    app.get("/files/zip", async (req,res) => 
     {
         let authorized, http_code, status, code, message, usertype, id, mail, body = Object.keys(req.body).length;
 
@@ -1415,9 +1436,9 @@ if(creds)
             {
                 if(journey_id)
                 {
-                    let host = req.get("host"), zip, res;
+                    let host = req.get("host"), zip, resp;
                     
-                    [zip,resp]= handle.zipTravel(host,id,mail,transporter,journey_id);
+                    [zip,resp] = await handle.zipTravel(res,host,id,mail,transporter,journey_id);
 
                     if(!zip && resp)
                         handle.response(res,500,resp);
@@ -1433,7 +1454,7 @@ if(creds)
             handle.response(res,400,{message:"No Body",status:"failure",code:4});    
     });
 
-    app.get("files/:type/:file", async (req,res) => 
+    app.get("/files/:type/:file", async (req,res) => 
     {
         let authorized, http_code, status, code, message, usertype, id, mail, body = Object.keys(req.body).length;
 
@@ -1454,7 +1475,7 @@ if(creds)
             handle.response(res,400,{message:"No Body",status:"failure",code:4});    
     });
 
-    app.get("download/:token", async (req,res) =>
+    app.get("/dl/:token", async (req,res) =>
     {
         console.log(); process.stdout.write(req.get("host")); console.log(req.url); console.log();
 

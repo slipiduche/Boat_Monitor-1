@@ -26,7 +26,10 @@ function DBconnection()
     database: "BOAT_MONITOR"
   });
 
-  connection.on("error",(err) => {console.log(err);});
+  connection.on("error",(err) => 
+  {
+    //console.log(err);
+  });
 
   return connection;
 }

@@ -1,0 +1,3 @@
+Date: Mon May 17 2021 16:12:48 GMT-0400 (Venezuela Time)
+
+Error: Unknown column 'boat_id' in 'where clause'

@@ -5,11 +5,17 @@
 *******************************************************************************/
 
 /**********************************MODULES*************************************/
+const os = require('os');
+
+const { spawn } = require('child_process');
+
 const fs = require('fs');
 
 const path = require('path');
 
 const util = require('util');
+
+const sharp = require('sharp');
 
 const nodemailer = require('nodemailer');
 
@@ -103,7 +109,7 @@ async function getTravel(id)
     {
         if(J[0])
         {
-            B = await SQL.SEL("*",null,"BOATS",{boat_id:J[0].boat_id},null,null);
+            B = await SQL.SEL("*",null,"BOATS",{id:J[0].boat_id},null,null);
 
             H = await SQL.SEL("*",null,"HISTORICS",{journey_id:id},null,null);
         
@@ -174,14 +180,14 @@ async function CSVgen(data,id)
 
                     for(let j = 0; j < klen; j++)
                     {
-                        if(j < 1)
+                        if(!i)
                         {
                             if(str1)
-                                str1 += quote(keys[i]);
+                                str1 += quote(keys[j]);
                             else
-                                str1 = quote(keys[i]);
+                                str1 = quote(keys[j]);
             
-                            if(i < (klen - 1))
+                            if(j < (klen - 1))
                                 str1 += ";"
                             else
                                 str1 += "\n";
@@ -218,7 +224,7 @@ async function CSVgen(data,id)
 
                     let  fpath = path.resolve(filepath);
                     
-                    addresses.push(filpath.slice(2));
+                    addresses.push(filepath.slice(2));
 
                     console.log(`${fpath} successfully saved on ${date}`);
     
@@ -275,7 +281,7 @@ module.exports.data2CSV = async (user,host,base,data) =>
                     else
                         str1 = quote(keys[j]);
         
-                    if(i < (klen - 1))
+                    if(j < (klen - 1))
                         str1 += ";"
                     else
                         str1 += "\n";
@@ -301,7 +307,7 @@ module.exports.data2CSV = async (user,host,base,data) =>
 
         try
         {
-            let filepath = "./files/csv/";
+            let filepath = "./files/csv";
 
             let  fpath = path.resolve(filepath);
 
@@ -336,7 +342,7 @@ module.exports.data2CSV = async (user,host,base,data) =>
 
                     let token =  jwt.sign({id},pass,{ expiresIn: 60 * 60 * 24 });
 
-                    let url = "https://" + host + "/" +   token.slice(0,4) + pass + token.slice(4,token.length);
+                    let url = "https://" + host + "/dl/" +   token.slice(0,4) + pass + token.slice(4,token.length);
                     
                     return [true,url];
                 }
@@ -370,11 +376,22 @@ module.exports.downloads = async (req,res) =>
 
     let token = req.params.token;
 
+    let print = (hrstart,size,filepath) =>
+    {
+        let hrend = process.hrtime(hrstart);
+
+        console.log("\n\rDone Streaming " + filepath + " from " + req.get("host") + req.url);
+        
+        console.log("\n\r%d bytes of data sent in %ds %dms",size,hrend[0],hrend[1]/1000000);
+    }
+
 	if (file)
 	{ 
+        file = parseInt(file);
+
         let compression = req.body.compress;
 
-        let Q = SQL.SEL("fl_path,fl_type",null,"FILES",{id:file});
+        let Q = await SQL.SEL("fl_path,fl_type",null,"FILES",{id:file});
 
         if(!Q.status)
         {
@@ -401,18 +418,10 @@ module.exports.downloads = async (req,res) =>
                         
                         try
                         {
-                            let print = (hrstart,size) =>
-                            {
-                                let hrend = process.hrtime(hrstart);
-                        
-                                console.log("\n\rDone Streaming " + req.params.file + " from " + req.hostname);
-                                
-                                console.log("\n\r%d bytes of data sent in %ds %dms",size,hrend[0],hrend[1]/1000000);
-                            }
     
                             let stream = fs.createReadStream(filepath), hrstart = process.hrtime();                        
     
-                            if(compression && ext == ".jpg")
+                            if(compression && type == ".jpg")
                             {
                                 res.writeHead(200, {'Content-Type': "image/jpeg"});
                                 
@@ -437,7 +446,7 @@ module.exports.downloads = async (req,res) =>
 
                             stream.on("finish",() => 
                             {
-                                print(hrstart,size)
+                                print(hrstart,size,filepath)
                             });
 
                         }
@@ -500,30 +509,35 @@ module.exports.downloads = async (req,res) =>
 
                 if(j.id)
                 {
-                    let Q = SQL.SEL("fl_path,fl_type",null,"FILES",{id:j.id});
+                    let Q = await SQL.SEL("fl_name,fl_path,fl_type",null,"REQUESTS",{id:j.id});
 
                     if(!Q.status)
                     {
                         if(Q[0])
                         {
-                            let filepath = Q[0].fl_path, type = Q[0].fl_type;
+                            let filename = Q[0].fl_name, filepath = Q[0].fl_path, type = Q[0].fl_type;
 
-                            if(filepath && type)
+                            if(filename && filepath && type)
                             {
                                 try
                                 {
-                                    let stat = util.promisify(fs.stat);
-            
+                                    let stat = util.promisify(fs.stat), hrstart = process.hrtime();  
+
                                     let stats = await stat(filepath);
             
                                     let size = stats.size;
                 
                                     if(type == ".csv") 
-                                        ct = "text/plain";
+                                        ct = "text/csv";
                                     else
                                         ct = "application/zip"
                         
-                                    res.writeHead(200, {'Content-Type': ct,'Content-Length': size});
+                                    res.writeHead(200, 
+                                    {
+                                        "Content-Type": ct,
+                                        "Content-Disposition": `attachment; filename="${filename}"`,
+                                        "Content-Length": size
+                                    });
                         
                                     console.log("Attempting  " + filepath + " pipe.");
                                     
@@ -538,7 +552,7 @@ module.exports.downloads = async (req,res) =>
 
                                         stream.on("finish",() => 
                                         {
-                                            print(hrstart,size)
+                                            print(hrstart,size,filepath)
                                         });                                       
                                     }
                                     catch(error)
@@ -560,7 +574,7 @@ module.exports.downloads = async (req,res) =>
                 
                                     log.errorLog("download","File " + filepath + " can't be found.\n\r\n\r" + e,2);
                                     
-                                    sendResponse(res,404,{message:"File " + filepath + "can't be found.",status:"failure",code:4});
+                                    sendResponse(res,404,{message:"File " + filepath + " can't be found.",status:"failure",code:4});
                                     try
                                     {
                                         sendResponse(res,500,{message:"piping error",status:"failure",code:4});
@@ -972,7 +986,7 @@ module.exports.zipping = async (res,mail,test,destination,targets,url) =>
   let  getOS = (o) => os.type().toLowerCase().includes(o), params = ["-",destination], zip = null;
 
   let sendResponse = module.exports.response;
-
+  
   params = params.concat(targets);
   
   if(getOS("windows"))
@@ -1037,9 +1051,11 @@ module.exports.zipping = async (res,mail,test,destination,targets,url) =>
 }
 
 
-module.exports.zipTravel = async (host,user,mail,test,journey_id) =>
+module.exports.zipTravel = async (res,host,user,mail,test,journey_id) =>
 {
-        let proceed, resp, sendResponse = module.exports.response;
+        let proceed, resp = [], sendResponse = module.exports.response;
+
+        let mkdir = util.promisify(fs.mkdir), exists = util.promisify(fs.access);
 
         let Q = await SQL.SEL("id",null,"JOURNEYS",{id:journey_id},null,null);
        
@@ -1055,7 +1071,7 @@ module.exports.zipTravel = async (host,user,mail,test,journey_id) =>
 
                 try
                 {
-                    let filepath = "./files/zips/";
+                    let filepath = "./files/zips";
 
                     let  fpath = path.resolve(filepath);
 
@@ -1069,26 +1085,30 @@ module.exports.zipTravel = async (host,user,mail,test,journey_id) =>
                         user,
                         dat:date,
                     });
-                    
+                       
                     if(!P.status)
                     {
-                        if(P[0].id)
+                        let id = P[0][0][0].id
+                        
+                        if(id)
                         {
-                            let id = P[0].id
+                            filepath += `/R${id}`;
 
-                            filepath = `./files/zips/R${id}/${filename}`;
+                            try { await exists(filepath); } catch { await mkdir(filepath); }
+
+                            filepath += `/${filename}`;
 
                             fpath = path.resolve(filepath);
                             
-                            [proceed,resp] = await CSVgen(getTravel(journey_id),id);
-
-                            resp.push(`files/media/snapshots/J${journey_id}`);
+                            [proceed,resp] = await CSVgen(await getTravel(journey_id),id);
 
                             if(proceed)
                             {
+                                resp.push(`files/media/snapshots/J${journey_id}`);
+
                                 let token =  jwt.sign({id},pass,{ expiresIn: 60 * 60 * 24 });
 
-                                let url = "https://" + host + "/" +  token.slice(0,4) + pass + token.slice(4,token.length);
+                                let url = "https://" + host + "/dl/" +  token.slice(0,4) + pass + token.slice(4,token.length);
 
                                 await module.exports.zipping(res,mail,test,fpath,resp,url);
                             }

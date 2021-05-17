@@ -189,6 +189,7 @@ CREATE TABLE PARAMS
 CREATE TABLE REQUESTS
 (
     id INTEGER AUTO_INCREMENT,
+    fl_name TEXT NOT NULL,
     fl_type TEXT NOT NULL,
     fl_path TEXT NOT NULL,
     user_id INTEGER,
@@ -208,7 +209,7 @@ CREATE PROCEDURE bm_REQUESTS_INS(IN ftype TEXT, IN fpath TEXT, IN fl TEXT, IN us
 
 BEGIN
 
-    INSERT INTO REQUESTS (fl_type,fl_path,user_id,dt) VALUES (ftype,fpath,user,dat);
+    INSERT INTO REQUESTS (fl_name,fl_type,fl_path,user_id,dt) VALUES (fl,ftype,fpath,user,dat);
 
     SET @ID = LAST_INSERT_ID();
 
@@ -305,8 +306,8 @@ INSERT INTO JOURNEYS(ini,ed,start_user,end_user,boat_id,i_weight,f_weight,s_img,
         1,
         30.7,
         417.15,
-        0,
-        0,
+        1,
+        1,
         1,
         1,
         NULL,
@@ -336,16 +337,31 @@ INSERT INTO FILES(fl_name,fl_type,fl_path,fl_url,journey_id,boat_id,cam,rl,dt,re
     (
         'B1_042220211937415959.txt',
         '.txt',
-        './files/historics/journey1/B1_042220211937415959.txt',
+        './files/historics/J1/B1_042220211937415959.txt',
         'files/1/1',
         1,
         1,
-        null,
+        NULL,
         1,
         '2021/4/27 19:35:00',
         '2021/4/27 19:35:00'
     );
 
+
+INSERT INTO FILES(fl_name,fl_type,fl_path,fl_url,journey_id,boat_id,cam,rl,dt,reg)
+    VALUES
+    (
+        'IMG_20210506_140531547.jpg',
+        '.jpg',
+        './files/media/snapshots/J1/IMG_20210506_140531547.jpg',
+        'files/2/2',
+        1,
+        1,
+        1,
+        NULL,
+        '2021/4/27 19:35:00',
+        '2021/4/27 19:35:00'
+    );
 INSERT INTO ALERTS(hist_id,boat_id,journey_id,ta,wa,ua,sus,dt,descr)
     VALUES
     (

@@ -1,0 +1,6 @@
+Date: Mon May 17 2021 12:49:09 GMT-0400 (Venezuela Time)
+
+Piping error of file ./files/media/snapshots/J1/IMG_20210506_140531547.jpg.
+
+ReferenceError: sharp is not definedReferenceError: sharp is not defined
+    at Object.module.exports.downloads (C:\My_Workspace\Boat_Monitor\Cloud_Server\modules\requests.js:421:48)
