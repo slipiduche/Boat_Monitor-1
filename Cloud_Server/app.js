@@ -40,6 +40,11 @@ const SQL = require('./modules/sql.js');
 
 const port = [8443,9443,8883];
 
+const FK =
+{
+  JOURNEYS:{USERS:["JOURNEYS.start_user","JOURNEYS.end_user"],BOATS:["JOURNEYS.boat_id"]}
+}
+
 const BOATS = ["id","boat_name","max_st","resp","resp_name","st","on_journey","lj","dt","obs"];
 
 const USERS = ["id","username","names","mail","usertype","latt","ldt","blocked","st","approval","lva","dt"];
@@ -49,6 +54,10 @@ const bex = ["mac","max_st"];
 const uex_self = ["username","names","mail","usertype","latt","ldt","blocked","st","approval","dt"];
 
 const uex = ["latt","ldt","blocked","lav"];
+
+const uin = ["names"];
+
+const bin = ["boat_name"]
 
 const jex_ini = ["ed","end_user","i_weight","f_weight","s_img","total_img","synced"];
 
@@ -101,7 +110,47 @@ if(!test)
 13: undelivered
 */
 /*********************************FUNCTIONS***********************************/
-async function filter(tab,retrieve,params,command)
+
+function getJoinParams(tab,retrieve,inner)
+{
+    let elements = retrieve.map((el) => tab + '.' + el)
+
+    let values = inner[0], keys = Object.keys(values);
+    
+    let fields = inner[1], nicks = inner[2];
+
+    let len = keys.length;
+    
+    let sum = 0;
+    
+    let join = "";
+
+    for(let i = 0; i < len; i++)
+    {    
+        let n = values[keys[i]];
+    
+        for(let j = 0; j < n; j++)
+        {
+            let prefix = keys[i][0] + (j + 1).toString();
+            
+            let result = [];
+
+            fields[j + sum].forEach((item,index) => 
+            {
+                result.push(prefix + "." + item + nicks[j + sum][index]); 
+            });
+
+            elements = elements.concat(result);
+
+            join += "INNER JOIN " + keys[i] + " AS " + prefix + " ON " + FK[tab][keys[i]][j] + " = " + prefix +".id \n";
+        }
+                    
+        sum += n;
+    } 
+
+    return [elements.join(),join]
+}
+async function filter(tab,retrieve,params,command,inner)
 {
     let range = null, id = null,  rest = null, uid = null, last = false;
     
@@ -168,18 +217,26 @@ async function filter(tab,retrieve,params,command)
     {
         case "SEL":
         {
-            let where = null;
-
+            let where = null, join = null;
             let selection = "*";
 
             if(retrieve)
-                selection = retrieve.join();
+            {
+                if(!inner)
+                    selection = retrieve.join();
+                else
+                    [selection,join] = getJoinParams(tab,retrieve,inner)            
+            }
+            else if(inner)
+            {
+                [selection,join] = getJoinParams(tab,[selection],inner) 
+            }
             
 
             if(Object.keys(params).length > 0)
                 where = params;
            
-            Q = await SQL.SEL(selection,rest,tab,where,range,last);
+            Q = await SQL.SEL(selection,rest,tab,where,range,last,join);
 
             break;
         }
@@ -1082,7 +1139,14 @@ if(creds)
             {
                 let csv = req.body.csv;
 
-                let Q = await filter("JOURNEYS",null,req.body,"SEL");
+                let inner =
+                [
+                    {USERS:2,BOATS:1},
+                    [uin,uin,bin],
+                    [[" start_user_names"],[" end_user_names"],[""]]
+                ];
+
+                let Q = await filter("JOURNEYS",null,req.body,"SEL",inner);
                 
                 if(!Q.status)
                 {

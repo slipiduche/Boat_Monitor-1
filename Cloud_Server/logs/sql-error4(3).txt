@@ -1,0 +1,3 @@
+Date: Tue May 18 2021 16:35:58 GMT-0400 (Venezuela Time)
+
+Error: Table 'boat_monitor.journeysinner' doesn't exist

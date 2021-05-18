@@ -1,0 +1,3 @@
+Date: Tue May 18 2021 16:38:43 GMT-0400 (Venezuela Time)
+
+Error: Unknown column 'B1.boat_id' in 'field list'

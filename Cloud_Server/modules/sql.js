@@ -38,7 +38,7 @@ function DBconnection()
 
 /*SELECT QUERY*/
 
-module.exports.SEL = async function SEL(S,REST,TABLE,WHERE,RANGE,LAST)
+module.exports.SEL = async function SEL(S,REST,TABLE,WHERE,RANGE,LAST,JOIN)
 {  
   let DB = DBconnection(), r = "";
 
@@ -92,6 +92,9 @@ module.exports.SEL = async function SEL(S,REST,TABLE,WHERE,RANGE,LAST)
 
       if(i > 0)
         q3 += " AND ";
+      
+      if(JOIN)
+        q3 += TABLE + '.';
 
       q3 +=  keys[i] + " IN ( ";
 
@@ -144,6 +147,9 @@ module.exports.SEL = async function SEL(S,REST,TABLE,WHERE,RANGE,LAST)
   
   Q = q1 + S + q2;
 
+  if(JOIN)
+    Q += " \n" + JOIN;
+    
   if(LAST && filters)
   {
     let q4 = " WHERE id IN (SELECT MAX(id) FROM " + TABLE;

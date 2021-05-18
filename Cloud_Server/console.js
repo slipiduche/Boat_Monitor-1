@@ -1,39 +1,56 @@
-const os = require('os');
-
-let mod = "cat";
-
-let str = `I am your ${mod}`;
-
-console.log(str);
-
-
-let s = "!@#$%^&*()_-=+/*{}[]\"';,<>.?"
-
-console.log("Length: " + s.length);
-
-
-function isDigit(char)
+const FK =
 {
-    if(char >= '0' && char <= '9')
-        return true;
-    else
-        return false;
+  JOURNEYS:{USERS:["JOURNEYS.start_user","JOURNEYS.end_user"],BOATS:["JOURNEYS.boat_id"]}
+}
+const uin = ["names"], bin = ["boat_name"];
+
+const tab = "JOURNEYS";
+
+const retrieve = ["a","b","c"];
+
+var inner = 
+[
+  {USERS:2,BOATS:1, FILES:3,CATS:1},
+  [uin,uin,bin,bin,bin,uin,uin],
+  [[" start_user_names"],[" end_user_names"],[""],[""],[""],[""],[""]]
+]
+
+let elements = retrieve.map((el) => tab + '.' + el)
+
+let values = inner[0], keys = Object.keys(values);
+
+let len = keys.length;
+
+let sum = 0;
+
+let join = "";
+
+let cat ;
+for(let i = 0; i < len; i++)
+{    
+    let n = values[keys[i]];
+
+    for(let j = 0; j < n; j++)
+    {
+      let prefix = keys[i][0] + (j + 1).toString();
+
+      let arg = [];
+
+      inner[1][j + sum].forEach((item,index) => 
+      {
+        arg[index] = prefix  + "." + item + inner[2][j+sum][index]
+      });
+
+      elements = elements.concat(arg);
+
+      if(i < 2)
+        join += "INNER JOIN " + keys[i] + " AS " + prefix + " ON " + FK[tab][keys[i]][j] + " = " + prefix +".id \n";
+    }
+      
+
+    sum += n;
 }
 
-let sys = "crap"//(os.type());
+console.log(elements);
 
-sys.toLowerCase().includes("windows");
-console.log();
-
-let ar = "eiubfiewb";
-
-if(!Array.isArray(ar))
-{
-  let aux = ar;
-
-  ar = [];
-
-  ar.push(aux);
-}
-
-console.log(ar);
+console.log(join);
