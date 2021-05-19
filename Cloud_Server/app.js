@@ -896,7 +896,7 @@ if(creds)
                     console.log("\n\rToken: " + token + "\n\r");
 
                     if(token)
-                        handle.response(res,200,{token,usertype,status:"success",code:1});
+                        handle.response(res,200,{token,usertype,message:"Login Successful",status:"success",code:1});
                     else
                         handle.response(res,500,{message:"Unknown Error",status:"failure",code:4});
                 }              
