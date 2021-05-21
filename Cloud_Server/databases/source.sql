@@ -9,10 +9,10 @@ USE BOAT_MONITOR;
 CREATE TABLE USERS
 (
     id INTEGER NOT NULL AUTO_INCREMENT,
-    username VARCHAR(320), 
+    username VARCHAR(320) NOT NULL, 
     pswrd TEXT NOT NULL,
     names TEXT NOT NULL,
-    mail VARCHAR(320),
+    mail VARCHAR(320) NOT NULL,
     usertype INTEGER NOT NULL, #--1 Viewer, 2 Supervisor, 3 Admin, 4 Super Admin
     latt INTEGER NOT NULL, #--number of longin attempts withinv X mins
     ldt DATETIME, #--date of last login Attepmt
@@ -28,7 +28,7 @@ CREATE TABLE USERS
 CREATE TABLE BOATS
 (
     id INTEGER NOT NULL AUTO_INCREMENT,
-    mac VARCHAR(34) UNIQUE,
+    mac VARCHAR(34) NOT NULL UNIQUE,
     boat_name TEXT,
     max_st FLOAT,
     resp INTEGER,
@@ -87,11 +87,11 @@ CREATE TABLE HISTORICS
     boat_id INT NOT NULL, #--unique identifier for pi in the boat
     journey_id INT NOT NULL,
     cont_status TINYINT NOT NULL, #--'OPEN' OR 'CLOSED'
-    open_time FLOAT,
     cont_weight FLOAT NOT NULL, #--KG
+    open_time FLOAT,
     bat FLOAT,
     dsk FLOAT,
-    temp FLOAT,
+    temp FLOAT NOT NULL,
     b_location TEXT NOT NULL, #--LAT, LONG? gOOGLE COMPATIBLE
     TiP FLOAT,
     fl_name TEXT NOT NULL, #--filename
@@ -173,9 +173,9 @@ CREATE TABLE ALERTS
 CREATE TABLE PARAMS 
 (
     id INTEGER NOT NULL AUTO_INCREMENT,
-    dweight FLOAT,
-    dtemp FLOAT,
-    time_out INTEGER,
+    dweight FLOAT NOT NULL,
+    dtemp FLOAT NOT NULL,
+    time_out INTEGER NOT NULL,
     user_id INTEGER NOT NULL,
     dt DATETIME NOT NULL,
 
@@ -192,8 +192,8 @@ CREATE TABLE REQUESTS
     fl_name TEXT NOT NULL,
     fl_type TEXT NOT NULL,
     fl_path TEXT NOT NULL,
-    user_id INTEGER,
-    dt DATETIME,
+    user_id INTEGER NOT NULL,
+    dt DATETIME NOT NULL,
 
     PRIMARY KEY (id),
 

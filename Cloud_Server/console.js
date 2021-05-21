@@ -72,4 +72,9 @@ console.log(range);
   "code":13
 }
 
-{url, message:"Unable to send mail, but URL generated. Valid for 24 hours only",status:"undelivered",code:13}
+{
+  "url":"string",
+  "message":"Travel files sucessfully zipped and URL sent. URL valid for 24 hours only ",
+  "status":"success",
+  "code":1
+}
