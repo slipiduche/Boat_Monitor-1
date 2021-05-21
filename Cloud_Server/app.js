@@ -62,9 +62,9 @@ const bin = ["boat_name"]
 
 const jex_INS = ["s_img","total_img","synced","um"];
 
-const jex_UPD = ["s_img","total_img","synced","ug","alert"];
+const jex_UPD = ["s_img","total_img","synced","ug","alert","start_user","end_user"];
 
-const jex_UPD2 = ["ini","ed","i_weight","f_weight","s_img","total_img","synced","ug","alert","boat_id"];
+const jex_UPD2 = ["ini","ed","i_weight","f_weight","s_img","total_img","synced","ug","alert","boat_id","start_user","end_user"];
 
 const jex_ini = ["ed","end_user","i_weight","f_weight","s_img","total_img","synced"];
 
@@ -2062,7 +2062,7 @@ if(creds)
     
                 if(!Q.status)
                 {
-                    handle.response(res,200,{message:"New entry successfully created",status:"success",code:1});
+                    handle.response(res,200,{message:"Entry successfully modified",status:"success",code:1});
                 }     
                 else
                 {
