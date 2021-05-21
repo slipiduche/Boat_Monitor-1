@@ -53,17 +53,19 @@ const bex = ["mac","max_st"];
 
 const uex_self = ["username","names","mail","usertype","latt","ldt","blocked","st","approval","dt"];
 
-const uex = ["latt","ldt","blocked","lav"];
+const uex = ["latt","ldt","blocked","lva","dt"];
 
 const uin = ["names"];
 
 const bin = ["boat_name"]
 
+const jex = ["s_img","total_img","synced"];
+
 const jex_ini = ["ed","end_user","i_weight","f_weight","s_img","total_img","synced"];
 
 const jex_ed = ["ini","start_user","i_weight","f_weight","s_img","total_img","synced"];
 
-const C = ["USERS","JOURNEYS"];
+const C = ["USERS","JOURNEYS","PARAMS"];
 
 const M = ["BOATS","USERS","JOURNEYS"];
 
@@ -663,11 +665,16 @@ function exclude(tab,command,params,id,uid)
 
         case "JOURNEYS":
         {
-            if(command == "INS")
+            
+            if(command == "UPD")
+                params = removal(params,jex);
+
+            /*if(command == "INS")
                 params = removal(params,jex_ini);
             else
                 params = removal(params,jex_ed);
-
+            */
+           
             break;
         }
     }
@@ -1827,7 +1834,7 @@ if(creds)
 
     app.post("/create", async (req,res) => 
     {
-        let authorized = false, access, http_code, status, code, message, min = 1;
+        let authorized = false, access, http_code, status, code, message, min = 2;
         
         let id, mail, usertype, body = Object.keys(req.body).length;
         
@@ -1893,28 +1900,41 @@ if(creds)
 
             if(proceed)
             {
-                if(params.dt || params.ini)
+                if(params.tab == "USERS" || params.tab == "PARAMS")
                 {
                     let  TZOfsset = (new Date()).getTimezoneOffset() * 60000; 
     
                     let dt = (new Date(Date.now() - TZOfsset)).toISOString().replace(/T|Z/g,' ');
                     
-                    if(params.dt)
-                        params.dt = dt;
-                    else
-                        params.ini = dt;
+                    params.dt = dt;
+
+                    if(params.tab == "USERS")
+                    {
+                        params.blocked = 0;
+
+                        params.latt = 0;
+    
+                        params.lva = null;
+    
+                        params.ldt = null;
+    
+                        if(params.pswrd)
+                        {
+                            params.pswrd = await bcrypt.hash(params.pswrd,10);
+        
+                            console.log("hashing complete");    
+                        } 
+                    }                 
                 }
-
-                if(params.start_user)
-                    params.start_user = id;
-
-                if(params.pswrd)
+                else if(params.tab == "JOURNEYS")
                 {
-                    params.pswrd = await bcrypt.hash(params.pswrd,10);
+                    params.s_img = 0;
 
-                    console.log("hashing complete");    
+                    params.total_img = 0;
+
+                    params.synced = 0;
                 }
-                
+               
                 let Q = await filter(params.tab,null,params,"INS"); 
     
                 if(!Q.status)
@@ -1954,6 +1974,8 @@ if(creds)
 
             if(usertype && req.body.id != id)
                 min = usertype + 1;
+            else if(!usertype)
+                min = 2;
         
             access = data_access(req.body.tab,M);
 
@@ -1980,23 +2002,6 @@ if(creds)
 
         if(authorized)
         {
-            if(params.dt || params.ed)
-            {
-                let  TZOfsset = (new Date()).getTimezoneOffset() * 60000; 
-
-                let dt = (new Date(Date.now() - TZOfsset)).toISOString().replace(/T|Z/g,' ');
-                
-                if(params.dt)
-                    params.dt = dt;
-                else
-                    params.ed = dt
-            }
-            
-            if(params.end_user)
-            {
-                params.end_user = id;
-            }
-
             if(params.pswrd)
             {
                 params.pswrd = await bcrypt.hash(params.pswrd,10);

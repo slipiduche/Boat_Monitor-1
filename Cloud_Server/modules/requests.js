@@ -1033,7 +1033,7 @@ module.exports.zipping = async (res,mail,test,destination,targets,url) =>
         }
         catch(error)
         {
-            sendResponse(res,500,{url,message:`Travel files successfully zipped, but unanable to send mail. URL valid for 24 hours only`,status:"undelivered",code:13})
+            sendResponse(res,500,{url,message:`Travel files successfully zipped, but unable to send mail. URL valid for 24 hours only`,status:"undelivered",code:13})
         }
  
       }
