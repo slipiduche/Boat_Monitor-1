@@ -35,6 +35,7 @@ const log = require('./modules/logging.js');
 const handle = require('./modules/requests.js');
 
 const SQL = require('./modules/sql.js');
+const e = require('express');
 
 /*************************VARIABLES AND INSTANCES*****************************/
 
@@ -59,7 +60,11 @@ const uin = ["names"];
 
 const bin = ["boat_name"]
 
-const jex = ["s_img","total_img","synced"];
+const jex_INS = ["s_img","total_img","synced","um"];
+
+const jex_UPD = ["s_img","total_img","synced","ug","alert"];
+
+const jex_UPD2 = ["ini","ed","i_weight","f_weight","s_img","total_img","synced","ug","alert","boat_id"];
 
 const jex_ini = ["ed","end_user","i_weight","f_weight","s_img","total_img","synced"];
 
@@ -667,14 +672,25 @@ function exclude(tab,command,params,id,uid)
         {
             
             if(command == "UPD")
-                params = removal(params,jex);
+            {
+                if(params.forbid)
+                {
+                    params = removal(params,jex_UPD2);
 
+                    delete params.forbid;
+                }
+                else
+                    params = removal(params,jex_UPD);
+            }
+            else 
+                params = removal(params,jex_INS);
+            
             /*if(command == "INS")
                 params = removal(params,jex_ini);
             else
                 params = removal(params,jex_ed);
             */
-           
+
             break;
         }
     }
@@ -1917,6 +1933,8 @@ if(creds)
                         params.lva = null;
     
                         params.ldt = null;
+
+                        params.alert = 0;
     
                         if(params.pswrd)
                         {
@@ -1924,7 +1942,9 @@ if(creds)
         
                             console.log("hashing complete");    
                         } 
-                    }                 
+                    }
+                    else
+                        params.user_id = id;                 
                 }
                 else if(params.tab == "JOURNEYS")
                 {
@@ -1933,6 +1953,8 @@ if(creds)
                     params.total_img = 0;
 
                     params.synced = 0;
+
+                    params.ug = id;
                 }
                
                 let Q = await filter(params.tab,null,params,"INS"); 
@@ -2001,27 +2023,56 @@ if(creds)
             [http_code,status,code,message] = [400,"failure",4,"No Body"];
 
         if(authorized)
-        {
-            if(params.pswrd)
-            {
-                params.pswrd = await bcrypt.hash(params.pswrd,10);
+        {  
+            let proceed = true;
 
-                console.log("hashing complete");    
+            if(params.tab == "JOURNEYS")
+            {
+                let W = await SQL.SEL("ug,um",null,"JOURNEYS",{id});
+                
+                if(W[0])
+                {
+                    if(W[0].um)
+                        params.um = W[0].um + ',' + id.toString();
+                    else
+                        params.um = id.toString();
+
+                    if(!W[0].ug)
+                        params.forbid = true;
+                }
+                else
+                {
+                    handle.response(res,404,{message:"Travel does not exists",status:"unchamged",code:3});
+
+                    proceed = false;
+                }                
+                
             }
 
-            let Q = await filter(params.tab,null,params,"UPD"); 
-
-            if(!Q.status)
+            if(proceed)
             {
-                handle.response(res,200,{message:"New entry successfully created",status:"success",code:1});
-            }     
-            else
-            {
-                if(Q.code == 3)
-                    handle.response(res,400,Q);
-                else 
-                    handle.response(res,500,Q);
-            }           
+                if(params.pswrd)
+                {
+                    params.pswrd = await bcrypt.hash(params.pswrd,10);
+    
+                    console.log("hashing complete");    
+                }
+    
+                let Q = await filter(params.tab,null,params,"UPD"); 
+    
+                if(!Q.status)
+                {
+                    handle.response(res,200,{message:"New entry successfully created",status:"success",code:1});
+                }     
+                else
+                {
+                    if(Q.code == 3)
+                        handle.response(res,400,Q);
+                    else 
+                        handle.response(res,500,Q);
+                }           
+            }
+           
         }
         else
             handle.response(res,http_code,{message,status,code});       

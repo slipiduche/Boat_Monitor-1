@@ -62,6 +62,8 @@ CREATE TABLE JOURNEYS
     total_img INTEGER,
     synced TINYINT NOT NULL,
     alert TINYINT NOT NULL,
+    ug INTEGER,
+    um INTEGER,
     eta FLOAT,
     obs TEXT,
 
