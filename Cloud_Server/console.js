@@ -54,3 +54,22 @@ for(let i = 0; i < len; i++)
 console.log(elements);
 
 console.log(join);
+
+let params = {ini:"cat",end:"dog"}
+
+range = [params.ini,params.end];
+
+        delete params.ini;
+
+        delete params.end;
+
+console.log(range);
+
+{
+  "url":"string",
+  "message":"Unable to send mail, but URL generated. Valid for 24 hours only",
+  "status":"undelivered",
+  "code":13
+}
+
+{url, message:"Unable to send mail, but URL generated. Valid for 24 hours only",status:"undelivered",code:13}

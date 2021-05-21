@@ -1412,6 +1412,78 @@ if(creds)
             handle.response(res,400,{message:"No Body",status:"failure",code:4});    
     }); 
 
+    app.get("/params", async (req,res) =>
+    {
+        let authorized, http_code, status, code, message, usertype, id, mail,  body = req.body;
+
+        if(body)
+            body = Object.keys(body).length;
+            
+        console.log(); process.stdout.write(req.get("host")); console.log(req.url); console.log();
+
+        process.stdout.write("Request: "); console.log(req.body); console.log();
+
+        if(body)
+        {
+            [authorized,http_code,status,code,message,usertype,id,mail] = await verify(req,2);
+
+            if(authorized)
+            {
+                let csv = req.body.csv;
+
+                let Q = await filter("PARAMS",null,req.body,"SEL");
+                
+                if(!Q.status)
+                {
+                    if(Q[0])
+                    {
+                        if(!csv)
+                            handle.response(res,200,{PARAMS:Q,message:"List successfully retrieved",status:"success",code:1});
+                        else
+                        {
+                            let ok, url;
+
+                            [ok,url] = await handle.data2CSV(id,req.get("host"),"PARAMS",Q);
+
+                            if(ok)
+                            {
+                                try
+                                {
+                                    await handle.mailing({mail,url},true,transporter);
+
+                                    let resp = {url,message:"CSV Generated and sent. URL valid for 24 hours only",status:"success",code:1};
+
+                                    handle.response(res,200,resp);
+                                }
+                                catch(error)
+                                {
+                                    console.log(error);
+
+                                    let resp = {url, message:"Unable to send mail, but URL generated. Valid for 24 hours only",status:"undelivered",code:13};
+
+                                    handle.response(res,500,resp);
+                                }
+                            }
+                            else
+                            {
+                                handle.response(res,500,url);
+                            }
+                        }
+                    }
+                    else
+                        handle.response(res,200,{PARAMS:[],message:"No Results",status:"empty",code:2});
+                }     
+                else
+                    handle.response(res,500,Q);
+            }
+            else
+                handle.response(res,http_code,{message,status,code});
+        }
+        else
+            handle.response(res,400,{message:"No Body",status:"failure",code:4});    
+    }); 
+
+
     app.get("/requests", async (req,res) =>
     {
         let authorized, http_code, status, code, message, usertype, id, mail, body = req.body;

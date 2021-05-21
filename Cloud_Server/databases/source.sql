@@ -86,7 +86,7 @@ CREATE TABLE HISTORICS
     id INTEGER NOT NULL AUTO_INCREMENT,
     boat_id INT NOT NULL, #--unique identifier for pi in the boat
     journey_id INT NOT NULL,
-    cont_status TEXT NOT NULL, #--'OPEN' OR 'CLOSED'
+    cont_status TINYINT NOT NULL, #--'OPEN' OR 'CLOSED'
     open_time FLOAT,
     cont_weight FLOAT NOT NULL, #--KG
     bat FLOAT,
@@ -175,7 +175,7 @@ CREATE TABLE PARAMS
     id INTEGER NOT NULL AUTO_INCREMENT,
     dweight FLOAT,
     dtemp FLOAT,
-    time_out FLOAT,
+    time_out INTEGER,
     user_id INTEGER NOT NULL,
     dt DATETIME NOT NULL,
 
@@ -306,8 +306,8 @@ INSERT INTO JOURNEYS(ini,ed,start_user,end_user,boat_id,i_weight,f_weight,s_img,
         1,
         30.7,
         417.15,
-        1,
-        1,
+        14,
+        14,
         1,
         1,
         NULL,
@@ -362,6 +362,202 @@ INSERT INTO FILES(fl_name,fl_type,fl_path,fl_url,journey_id,boat_id,cam,rl,dt,re
         '2021/4/27 19:35:00',
         '2021/4/27 19:35:00'
     );
+
+INSERT INTO FILES(fl_name,fl_type,fl_path,fl_url,journey_id,boat_id,cam,rl,dt,reg)
+    VALUES
+    (
+        'IMG_20210506_140531547.jpg',
+        '.jpg',
+        './files/media/snapshots/J1/IMG_20210506_140531547.jpg',
+        'files/2/2',
+        1,
+        1,
+        1,
+        NULL,
+        '2021/4/27 19:35:00',
+        '2021/4/27 19:35:00'
+    );
+
+INSERT INTO FILES(fl_name,fl_type,fl_path,fl_url,journey_id,boat_id,cam,rl,dt,reg)
+    VALUES
+    (
+        'IMG_20210506_140531547.jpg',
+        '.jpg',
+        './files/media/snapshots/J1/IMG_20210506_140531547.jpg',
+        'files/2/2',
+        1,
+        1,
+        1,
+        NULL,
+        '2021/4/27 19:35:00',
+        '2021/4/27 19:35:00'
+    );
+
+INSERT INTO FILES(fl_name,fl_type,fl_path,fl_url,journey_id,boat_id,cam,rl,dt,reg)
+    VALUES
+    (
+        'IMG_20210506_140531547.jpg',
+        '.jpg',
+        './files/media/snapshots/J1/IMG_20210506_140531547.jpg',
+        'files/2/2',
+        1,
+        1,
+        1,
+        NULL,
+        '2021/4/27 19:35:00',
+        '2021/4/27 19:35:00'
+    );
+
+INSERT INTO FILES(fl_name,fl_type,fl_path,fl_url,journey_id,boat_id,cam,rl,dt,reg)
+    VALUES
+    (
+        'IMG_20210506_140531547.jpg',
+        '.jpg',
+        './files/media/snapshots/J1/IMG_20210506_140531547.jpg',
+        'files/2/2',
+        1,
+        1,
+        1,
+        NULL,
+        '2021/4/27 19:35:00',
+        '2021/4/27 19:35:00'
+    );
+
+INSERT INTO FILES(fl_name,fl_type,fl_path,fl_url,journey_id,boat_id,cam,rl,dt,reg)
+    VALUES
+    (
+        'IMG_20210506_140531547.jpg',
+        '.jpg',
+        './files/media/snapshots/J1/IMG_20210506_140531547.jpg',
+        'files/2/2',
+        1,
+        1,
+        1,
+        NULL,
+        '2021/4/27 19:35:00',
+        '2021/4/27 19:35:00'
+    );
+
+INSERT INTO FILES(fl_name,fl_type,fl_path,fl_url,journey_id,boat_id,cam,rl,dt,reg)
+    VALUES
+    (
+        'IMG_20210506_140531547.jpg',
+        '.jpg',
+        './files/media/snapshots/J1/IMG_20210506_140531547.jpg',
+        'files/2/2',
+        1,
+        1,
+        1,
+        NULL,
+        '2021/4/27 19:35:00',
+        '2021/4/27 19:35:00'
+    );
+
+INSERT INTO FILES(fl_name,fl_type,fl_path,fl_url,journey_id,boat_id,cam,rl,dt,reg)
+    VALUES
+    (
+        'IMG_20210506_140531547.jpg',
+        '.jpg',
+        './files/media/snapshots/J1/IMG_20210506_140531547.jpg',
+        'files/2/2',
+        1,
+        1,
+        1,
+        NULL,
+        '2021/4/27 19:35:00',
+        '2021/4/27 19:35:00'
+    );
+
+INSERT INTO FILES(fl_name,fl_type,fl_path,fl_url,journey_id,boat_id,cam,rl,dt,reg)
+    VALUES
+    (
+        'IMG_20210506_140531547.jpg',
+        '.jpg',
+        './files/media/snapshots/J1/IMG_20210506_140531547.jpg',
+        'files/2/2',
+        1,
+        1,
+        1,
+        NULL,
+        '2021/4/27 19:35:00',
+        '2021/4/27 19:35:00'
+    );
+
+INSERT INTO FILES(fl_name,fl_type,fl_path,fl_url,journey_id,boat_id,cam,rl,dt,reg)
+    VALUES
+    (
+        'IMG_20210506_140531547.jpg',
+        '.jpg',
+        './files/media/snapshots/J1/IMG_20210506_140531547.jpg',
+        'files/2/2',
+        1,
+        1,
+        1,
+        NULL,
+        '2021/4/27 19:35:00',
+        '2021/4/27 19:35:00'
+    );
+
+INSERT INTO FILES(fl_name,fl_type,fl_path,fl_url,journey_id,boat_id,cam,rl,dt,reg)
+    VALUES
+    (
+        'IMG_20210506_140531547.jpg',
+        '.jpg',
+        './files/media/snapshots/J1/IMG_20210506_140531547.jpg',
+        'files/2/2',
+        1,
+        1,
+        1,
+        NULL,
+        '2021/4/27 19:35:00',
+        '2021/4/27 19:35:00'
+    );
+
+INSERT INTO FILES(fl_name,fl_type,fl_path,fl_url,journey_id,boat_id,cam,rl,dt,reg)
+    VALUES
+    (
+        'IMG_20210506_140531547.jpg',
+        '.jpg',
+        './files/media/snapshots/J1/IMG_20210506_140531547.jpg',
+        'files/2/2',
+        1,
+        1,
+        1,
+        NULL,
+        '2021/4/27 19:35:00',
+        '2021/4/27 19:35:00'
+    );
+
+INSERT INTO FILES(fl_name,fl_type,fl_path,fl_url,journey_id,boat_id,cam,rl,dt,reg)
+    VALUES
+    (
+        'IMG_20210506_140531547.jpg',
+        '.jpg',
+        './files/media/snapshots/J1/IMG_20210506_140531547.jpg',
+        'files/2/2',
+        1,
+        1,
+        1,
+        NULL,
+        '2021/4/27 19:35:00',
+        '2021/4/27 19:35:00'
+    );
+
+INSERT INTO FILES(fl_name,fl_type,fl_path,fl_url,journey_id,boat_id,cam,rl,dt,reg)
+    VALUES
+    (
+        'IMG_20210506_140531547.jpg',
+        '.jpg',
+        './files/media/snapshots/J1/IMG_20210506_140531547.jpg',
+        'files/2/2',
+        1,
+        1,
+        1,
+        NULL,
+        '2021/4/27 19:35:00',
+        '2021/4/27 19:35:00'
+    );
+
 INSERT INTO ALERTS(hist_id,boat_id,journey_id,ta,wa,ua,sus,dt,descr)
     VALUES
     (
