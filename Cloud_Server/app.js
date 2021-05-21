@@ -1750,7 +1750,7 @@ if(creds)
 
                 if(!Q.status)
                 {
-                    handle.response(res,200,{message:"New entry successfully created",status:"success",code:1});
+                    handle.response(res,200,{message:"New Travel Started",status:"success",code:1});
                 }     
                 else
                     handle.response(res,500,Q);
@@ -1811,7 +1811,7 @@ if(creds)
 
                 if(!Q.status)
                 {
-                    handle.response(res,200,{message:"New entry successfully created",status:"success",code:1});
+                    handle.response(res,200,{message:"Travel Ended",status:"success",code:1});
                 }     
                 else
                     handle.response(res,500,Q);
