@@ -8,7 +8,11 @@
 /**********************************MODULES*************************************/
 const fs = require('fs');
 
+const tls = require('tls');
+
 const https = require('https');
+
+const ws = require('websocket-stream');
 
 const express = require('express');
 
@@ -35,11 +39,14 @@ const log = require('./modules/logging.js');
 const handle = require('./modules/requests.js');
 
 const SQL = require('./modules/sql.js');
-const e = require('express');
+
+const aedes = require('aedes')();
 
 /*************************VARIABLES AND INSTANCES*****************************/
 
 const port = [8443,9443,8883];
+
+const mqtts_port = 3000, wss_port = 500;
 
 const FK =
 {
@@ -74,7 +81,9 @@ const C = ["USERS","JOURNEYS","PARAMS"];
 
 const M = ["BOATS","USERS","JOURNEYS"];
 
-var collector, app, httpsServer = [];
+var collector, app, broker, httpsServer = [];
+
+var credentials; 
 
 var creds  = false;
 
@@ -99,7 +108,7 @@ if(!test)
         },
     });    
 }
-    
+  
 //Status Codes:
 /*
 1: Success
@@ -768,6 +777,25 @@ function NaNFinder(str)
             return [null,null];
     }
 }
+
+aedes.authenticate = async (client,username,password,callback) =>
+{
+    let access, data;
+
+    console.log("\n\r");
+
+    [access,data] = await appAuthorizer(username,password,false);
+
+    console.log("\n\r");
+    
+    if(access)
+        console.log(client.id," login attempt succeeded");
+    else
+        console.log(client.id," login attemtpt failed: ", data);
+    
+    callback(null, access);
+}
+
 /*******************************INITIALIZATION********************************/
 
 setImmediate(async() =>
@@ -775,9 +803,9 @@ setImmediate(async() =>
 
 try
 {
-    privateKey = fs.readFileSync('sslcert/domain.key', 'utf8');
+    let privateKey = fs.readFileSync('sslcert/domain.key', 'utf8');
 
-    certificate = fs.readFileSync('sslcert/domain.crt', 'utf8');
+    let certificate = fs.readFileSync('sslcert/domain.crt', 'utf8');
     
     credentials = {key: privateKey, cert: certificate};
 
@@ -821,6 +849,7 @@ catch(error)
 
 if(creds)
 {
+    
     collector = express();
     
     collector.use(fileUpload(
@@ -860,12 +889,18 @@ if(creds)
 
     httpsServer[1] = https.createServer(credentials, app);
 
+    httpsServer[2] = https.createServer(credentials);
+
+    broker = tls.createServer(credentials,aedes.handle);
+
+    ws.createServer({ server: httpsServer[2] },aedes.handle);
+
     httpsServer[0].listen(port[0], (error) =>
     {
         if(error)
             log.errorLog("",error,1); //error10
         else
-            console.log("App is listening on port " + port[0] + ".")
+            console.log("Collector is listening on port " + port[0] + ".")
     });
 
     httpsServer[1].listen(port[1], (error) =>
@@ -876,6 +911,21 @@ if(creds)
             console.log("App is listening on port " + port[1] + ".")
     });
 
+    httpsServer[2].listen(wss_port, (error) =>
+    {   
+        if(error)
+            log.errorLog("",error,1); //error10
+        else
+            console.log("Aedes MQTT over wss communication established on port " + wss_port + ".")
+    });
+
+
+    broker.listen(mqtts_port, () =>
+    {
+        console.log('Aedes (MQTTS netSocket) listening on port ', 3000);
+    });
+
+    /************************************************************************ */
     collector.post("/process", (req,res) =>
     {
         let ok = false, filenames = [], status = {},code;
@@ -2078,6 +2128,21 @@ if(creds)
             handle.response(res,http_code,{message,status,code});       
     });
 }
+
+/*****************************************MQTT**********************************************/
+
+
+aedes.on('publish',(packet,client) =>
+{
+    if(client)
+    {   
+        console.log("Client: ",client.id);
+        console.log("Topic: ",packet.topic);
+        console.log("Message: ",packet.payload.toString());
+   
+    }
+
+});
 
 
 //Location Google format
