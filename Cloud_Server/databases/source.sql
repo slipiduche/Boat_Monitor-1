@@ -234,21 +234,19 @@ BEGIN
 
     SET @ID = LAST_INSERT_ID();
 
-    UPDATE BOATS SET on_journey = 1, lj = @ID WHERE id = boat_id0;
+    UPDATE BOATS SET on_journey = 1, lj = @ID, queued = 0 WHERE id = boat_id0;
 
     SELECT @ID id;
 
 END $$
 
-CREATE PROCEDURE bm_JOURNEYS_ED(IN id0 INT, IN ed0 DATETIME,IN f_weight0 FLOAT, IN obs0 TEXT)
+CREATE PROCEDURE bm_JOURNEYS_ED(IN id0 INT, IN boat_id0 INT, IN ed0 DATETIME,IN f_weight0 FLOAT, IN obs0 TEXT)
 
 BEGIN
     
     UPDATE JOURNEYS SET ed = ed0, f_weight = f_weight0, obs = obs0 WHERE id = id0;
 
-    SET @ID = (SELECT boat_id FROM JOURNEYS WHERE id = id0);
-
-    UPDATE BOATS SET on_journey = 0 WHERE id = @ID;
+    UPDATE BOATS SET on_journey = 0, queued = 0 WHERE id = boat_id;
 
 END $$
 
