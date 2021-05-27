@@ -2592,13 +2592,15 @@ aedes.on('publish',(packet,client) =>
 
                         if(nxt)
                         {
-                            let Q = await SQL.SEL("id,queued,on_journey",null,"BOATS",{mac:cl[1]});
+                            let Q = await SQL.SEL("id,queued,on_journey,lj",null,"BOATS",{mac:cl[1]});
 
                             if(!Q.status)
                             {
                                 if(Q[0])
                                 {
                                     let id = Q[0].id, queued = Q[0].queued, on_journey = Q[0].on_journey;
+
+                                    let lj = Q[0].lj;
 
                                     switch(aux[2])
                                     {
@@ -2674,6 +2676,68 @@ aedes.on('publish',(packet,client) =>
 
                                         case "ARRIVAL":
                                         {
+                                            if(queued && on_journey)
+                                            {
+                                                if(timers[id.toString()])
+                                                {
+                                                    clearTimeout(timers[id.toString()]);
+
+                                                    delete timers[id.toString()];        
+                                                }
+
+                                                let  TZOfsset = (new Date()).getTimezoneOffset() * 60000; 
+
+                                                let dt = (new Date(Date.now() - TZOfsset)).toISOString().replace(/T|Z/g,' ');
+                                                
+                                                let params = 
+                                                {
+                                                    id: lj,
+                                                    boat_id: data.id,
+                                                    end_user: data.user_id,
+                                                    ed: dt,
+                                                    f_weight: data.weight,
+                                                    obs: datab.obs
+                                                }
+                                
+                                                let P = await SQL.PROC("bm_JOURNEYS_ED",params); 
+                                                
+                                                let message, status, code, stc;
+
+                                                device += mac + "/END";
+                                            
+                                                if(!P.status)
+                                                {
+                                                    try
+                                                    {
+                                                        handle.response(aedes,200,{message:"OK"},{topic:device});    
+        
+                                                        message = "Boat " + id + "," + boat_name + "'set for departure.";
+                                                    
+                                                        status = "success", code = "1", stc = 200;
+                                                        
+                                                    }
+                                                    catch(error)
+                                                    {
+                                                        console.log(error);  
+        
+                                                        message = "Aedes error."; status = "failure"; code = "14";
+                                                       
+                                                        stc = 500;         
+                                                    }
+                                                }
+                                            
+                                                let response = {message,status,code};
+
+                                                try
+                                                {
+                                                    handle.response(aedes,stc,response,{topic:outgoing});   
+                                                }
+                                                catch(error)
+                                                {
+                                                    console.log(error);
+                                                }
+                                            }
+
                                             break;
                                         }
                                         
