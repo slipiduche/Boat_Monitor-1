@@ -2644,7 +2644,7 @@ aedes.on('publish',(packet,client) =>
                                                     {
                                                         handle.response(aedes,200,{message:"OK"},{topic:device});    
         
-                                                        message = "Boat " + id + "," + boat_name + "'set for departure.";
+                                                        message = "Boat " + id + "," + boat_name + " set for departure.";
                                                     
                                                         status = "success", code = "1", stc = 200;
                                                         
@@ -2711,7 +2711,7 @@ aedes.on('publish',(packet,client) =>
                                                     {
                                                         handle.response(aedes,200,{message:"OK"},{topic:device});    
         
-                                                        message = "Boat " + id + "," + boat_name + "'set for departure.";
+                                                        message = "Boat " + id + "," + boat_name + ",  arrival confirmed";
                                                     
                                                         status = "success", code = "1", stc = 200;
                                                         
@@ -2742,18 +2742,12 @@ aedes.on('publish',(packet,client) =>
                                         }
                                         
                                     }
-                                    if(queued)
-                                    {
-                                        let U = SQL.UPD("BOATS",{queued:0,on_journey:1});
-                                    }
                                 }
                                 else
                                 {
                                     console.log("Uregistered Boat of client id: ",client.id," tried to initiate a journey");
                                 }
                             }
-                            
-
                         }
                     }
                 }
