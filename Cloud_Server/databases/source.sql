@@ -28,13 +28,15 @@ CREATE TABLE USERS
 CREATE TABLE BOATS
 (
     id INTEGER NOT NULL AUTO_INCREMENT,
-    mac VARCHAR(34) NOT NULL UNIQUE,
+    mac VARCHAR(17)) NOT NULL UNIQUE,
     boat_name TEXT,
     max_st FLOAT,
     resp INTEGER,
     resp_name TEXT,
     lj INTEGER,
     on_journey TINYINT,
+    queued TINYINT,
+    connected TINYINT,
     st TINYINT NOT NULL, #-- 0 Disabled, 1 Enabled
     dt DATETIME NOT NULL,
     obs TEXT,

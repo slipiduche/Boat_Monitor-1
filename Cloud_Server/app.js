@@ -46,7 +46,7 @@ const aedes = require('aedes')();
 
 const port = [8443,9443,8883];
 
-const mqtts_port = 3000, wss_port = 500;
+const mqtts_port = 3000, wss_port = 5000;
 
 const FK =
 {
@@ -81,6 +81,8 @@ const C = ["USERS","JOURNEYS","PARAMS"];
 
 const M = ["BOATS","USERS","JOURNEYS"];
 
+const pi_macs = ["B8:27:EB:","DC:A6:32:","E4:5F:01:"];
+
 var collector, app, broker, httpsServer = [];
 
 var credentials; 
@@ -90,6 +92,8 @@ var creds  = false;
 var test = true;
 
 var testAccount = null;
+
+var timers = {};
 
 /*********************************PARAMETERS**********************************/
 var transporter = null;
@@ -124,8 +128,50 @@ if(!test)
 11: Untregistered
 12: Expired
 13: undelivered
+14: Communication error
+15: queed
+16: Unexisting resource
+17: Invalid
 */
 /*********************************FUNCTIONS***********************************/
+function validateClient(id)
+{
+    if(id)
+    {
+        let res = id.toString().split('_');
+        
+        if(res[0] && res[1])
+        {
+            let output = [true];
+
+            if(res[0] == "BM-DEV" || res[0] == "BM-APP")
+                return output.concat(res);
+        }
+    }
+
+    return [false,null,null];
+}
+
+function validateMAC(mac)
+{
+    if(mac)
+    {
+        let len = mac.length, sep = mac.match(/:/g).length;
+
+        if(len == 17 && sep == 5)
+        {
+            let prefix = mac.slice(0,9);
+
+            for(let i = 0; i < pi_macs.length; i++)
+            {
+                if(prefix == pi_macs[i])
+                    return true;
+            }
+        }
+    }
+    
+    return false;
+}
 
 function getJoinParams(tab,retrieve,inner)
 {
@@ -288,7 +334,7 @@ async function filter(tab,retrieve,params,command,inner)
 
 async function verify(req, min)
 {
-    let authorized = false, http_code = 500, status = null, code = null, message = null, usertype = null, id = null, mail = null;
+    let authorized = false, http_code = 500, status = null, code = null, message = null, usertype = null, id = null, mail = null, password = null;
 
     if (req.body.token)
     {
@@ -304,7 +350,7 @@ async function verify(req, min)
 
             if(!Q.status && Q[0])
             {
-                let password = Q[0].pswrd;
+                password = Q[0].pswrd;
 
                 try
                 { 
@@ -450,7 +496,7 @@ async function verify(req, min)
         message = "Missing data";
     }
 
-    return [authorized,http_code,status,code,message,usertype,id,mail];
+    return [authorized,http_code,status,code,message,usertype,id,mail,password];
 }
 
 async function appAuthorizer(username,password,signup)
@@ -778,22 +824,91 @@ function NaNFinder(str)
     }
 }
 
-aedes.authenticate = async (client,username,password,callback) =>
+aedes.authenticate = async (client,info,password,callback) =>
 {
-    let access, data;
+    let access = false, data, device = null, username = null, max_st = null, val = true;
+    
+    let cl = validateClient(client.id);
 
-    console.log("\n\r");
+    let usertype = cl[1], mac = cl[2];
 
-    [access,data] = await appAuthorizer(username,password,false);
+    if(cl[0])
+    {
+        if(usertype == "BM-DEV")
+        {
+            try
+            {
+                device = JSON.parse(info);
+    
+                username = device.username;
+    
+                max_st = device.storage;
+    
+                val = validateMAC(mac);
+            }
+            catch
+            {
+                username = info;
+            }
+        }
+
+        console.log("\n\r");
+
+        [access,data] = await appAuthorizer(username,password,false);
+    }
 
     console.log("\n\r");
     
-    if(access)
-        console.log(client.id," login attempt succeeded");
+    callback(null, access & val);
+
+    if(access && val)
+    {
+        console.log(client.id," login attempt succeeded\n\r\n\r");
+        
+        if(max_st)
+        {
+            let Q = await SQL.SEL("id,boat_name,connected",null,"BOATS",{mac});
+
+            if(!Q.status)
+            {
+                if(Q[0])
+                {
+                    let id = Q[0].id, connected = Q[0].connected, boat_name = Q[0].boat_name;
+
+                    if(id && !connected)
+                    {
+                        await SQL.UPD("BOATS",{connected:1,max_st},id);
+
+                        console.log("\n\rBoat ",id,", ", boat_name, "is now connected\n\r\n\r");
+                    }
+                    else if(!id)
+                    {
+                        console.log("\n\rUnable to change Boat ",id," database fields\n\r\n\r");
+                    }
+                }
+                else
+                {
+                    let  TZOfsset = (new Date()).getTimezoneOffset() * 60000; 
+            
+                    let dt = (new Date(Date.now() - TZOfsset)).toISOString().replace(/T|Z/g,' ');
+        
+                    let params =
+                    {
+                        mac,
+                        max_st,
+                        connected:1,
+                        st:0,
+                        dt
+                    }
+                    
+                    await SQL.INS("BOATS",params);  
+                }
+            }
+        }  
+    }     
     else
         console.log(client.id," login attemtpt failed: ", data);
     
-    callback(null, access);
 }
 
 /*******************************INITIALIZATION********************************/
@@ -1049,7 +1164,7 @@ if(creds)
 
     app.get("/boats", async (req,res) => 
     {
-        let authorized, http_code, status, code, message, usertype, id, mail,  body = req.body;
+        let authorized, http_code, status, code, message, usertype, id, mail, secret,  body = req.body;
 
         if(body)
             body = Object.keys(body).length;
@@ -1060,7 +1175,7 @@ if(creds)
 
         if(body)
         {
-            [authorized,http_code,status,code,message,usertype,id,mail] = await verify(req,1);
+            [authorized,http_code,status,code,message,usertype,id,mail,secret] = await verify(req,1);
 
             if(authorized)
             {
@@ -1120,7 +1235,7 @@ if(creds)
 
     app.get("/users", async (req,res) => 
     {
-        let authorized, http_code, status, code, message, usertype, id, mail, body = req.body;
+        let authorized, http_code, status, code, message, usertype, id, mail, secret, body = req.body;
 
         if(body)
             body = Object.keys(body).length;
@@ -1131,7 +1246,7 @@ if(creds)
 
         if(body)
         {
-            [authorized,http_code,status,code,message,usertype,id,mail] =  await verify(req,1);
+            [authorized,http_code,status,code,message,usertype,id,mail,secret] =  await verify(req,1);
 
             if(authorized)
             {   
@@ -1195,7 +1310,7 @@ if(creds)
 
     app.get("/journeys", async (req,res) => 
     {
-        let authorized, http_code, status, code, message, usertype, id, mail, body = req.body;
+        let authorized, http_code, status, code, message, usertype, id, mail, secret, body = req.body;
 
         if(body)
             body = Object.keys(body).length;
@@ -1206,7 +1321,7 @@ if(creds)
 
         if(body)
         {
-            [authorized,http_code,status,code,message,usertype,id,mail] =  await verify(req,1);
+            [authorized,http_code,status,code,message,usertype,id,mail,secret] =  await verify(req,1);
       
             if(authorized)
             {
@@ -1274,7 +1389,7 @@ if(creds)
 
     app.get("/files", async (req,res) => 
     {
-        let authorized, http_code, status, code, message, usertype, id, mail, body = req.body;
+        let authorized, http_code, status, code, message, usertype, id, mail, secret, body = req.body;
 
         if(body)
             body = Object.keys(body).length
@@ -1285,7 +1400,7 @@ if(creds)
 
         if(body)
         {
-            [authorized,http_code,status,code,message,usertype,id,mail] =  await verify(req,1);
+            [authorized,http_code,status,code,message,usertype,id,mail,secret] =  await verify(req,1);
 
             if(authorized)
             {
@@ -1345,7 +1460,7 @@ if(creds)
 
     app.get("/historics", async (req,res) =>
     {
-        let authorized, http_code, status, code, message, usertype, id, mail, body = req.body;
+        let authorized, http_code, status, code, message, usertype, id, mail, secret, body = req.body;
 
         if(body)
             body = Object.keys(body).length;
@@ -1356,7 +1471,7 @@ if(creds)
 
         if(body)
         {
-            [authorized,http_code,status,code,message,usertype,id,mail] = await verify(req,1);
+            [authorized,http_code,status,code,message,usertype,id,mail,secret] = await verify(req,1);
             
             if(authorized)
             {
@@ -1416,7 +1531,7 @@ if(creds)
 
     app.get("/alerts", async (req,res) =>
     {
-        let authorized, http_code, status, code, message, usertype, id, mail,  body = req.body;
+        let authorized, http_code, status, code, message, usertype, id, mail, secret,  body = req.body;
 
         if(body)
             body = Object.keys(body).length;
@@ -1427,7 +1542,7 @@ if(creds)
 
         if(body)
         {
-            [authorized,http_code,status,code,message,usertype,id,mail] = await verify(req,1);
+            [authorized,http_code,status,code,message,usertype,id,secret] = await verify(req,1);
 
             if(authorized)
             {
@@ -1487,7 +1602,7 @@ if(creds)
 
     app.get("/params", async (req,res) =>
     {
-        let authorized, http_code, status, code, message, usertype, id, mail,  body = req.body;
+        let authorized, http_code, status, code, message, usertype, id, mail, secret,  body = req.body;
 
         if(body)
             body = Object.keys(body).length;
@@ -1498,7 +1613,7 @@ if(creds)
 
         if(body)
         {
-            [authorized,http_code,status,code,message,usertype,id,mail] = await verify(req,2);
+            [authorized,http_code,status,code,message,usertype,id,mail,secret] = await verify(req,2);
 
             if(authorized)
             {
@@ -1559,7 +1674,7 @@ if(creds)
 
     app.get("/requests", async (req,res) =>
     {
-        let authorized, http_code, status, code, message, usertype, id, mail, body = req.body;
+        let authorized, http_code, status, code, message, usertype, id, mail, secret, body = req.body;
 
         if(body)
             body = Object.keys(body).length;
@@ -1570,7 +1685,7 @@ if(creds)
 
         if(body)
         {
-            [authorized,http_code,status,code,message,usertype,id,mail] = await verify(req,2);
+            [authorized,http_code,status,code,message,usertype,id,mail,secret] = await verify(req,2);
 
             if(authorized)
             {
@@ -1630,7 +1745,7 @@ if(creds)
 
     app.get("/files/zip", async (req,res) => 
     {
-        let authorized, http_code, status, code, message, usertype, id, mail, body = Object.keys(req.body).length;
+        let authorized, http_code, status, code, message, usertype, id, mail, secret, body = Object.keys(req.body).length;
 
         console.log(); process.stdout.write(req.get("host")); console.log(req.url); console.log();
 
@@ -1638,7 +1753,7 @@ if(creds)
 
         if(body)
         {
-            [authorized,http_code,status,code,message,usertype,id,mail] = await verify(req,1);
+            [authorized,http_code,status,code,message,usertype,id,mail,secret] = await verify(req,1);
 
             let journey_id = req.body.journey_id;
 
@@ -1666,7 +1781,7 @@ if(creds)
 
     app.get("/files/:type/:file", async (req,res) => 
     {
-        let authorized, http_code, status, code, message, usertype, id, mail, body = Object.keys(req.body).length;
+        let authorized, http_code, status, code, message, usertype, id, mail, secret, body = Object.keys(req.body).length;
 
         console.log(); process.stdout.write(req.get("host")); console.log(req.url); console.log();
 
@@ -1674,7 +1789,7 @@ if(creds)
 
         if(body)
         {
-            [authorized,http_code,status,code,message,usertype,id,mail] = await verify(req,1);
+            [authorized,http_code,status,code,message,usertype,id,mail,secret] = await verify(req,1);
 
             if(authorized)
                 handle.downloads(req,res);
@@ -1773,7 +1888,7 @@ if(creds)
     
     app.post("/journeys/start", async (req,res) =>
     {
-        let authorized = false, access, http_code, status, code, message, min = 1;
+        let authorized = false, access, http_code, status, code, message, secret, min = 1;
         
         let id, mail, usertype, body = Object.keys(req.body).length;
         
@@ -1785,7 +1900,7 @@ if(creds)
         {
             let aux;
 
-            [authorized,http_code,status,code,message,aux,id,mail] =  await verify(req,min);
+            [authorized,http_code,status,code,message,aux,id,mail,secret] =  await verify(req,min);
 
             console.log({authorized,http_code,status,code,message}); console.log();
         }
@@ -1839,7 +1954,7 @@ if(creds)
 
     app.post("/journeys/end", async (req,res) =>
     {
-        let authorized = false, access, http_code, status, code, message, min = 1;
+        let authorized = false, access, http_code, status, code, message, secret, min = 1;
         
         let id, mail, usertype, body = Object.keys(req.body).length;
         
@@ -1851,7 +1966,7 @@ if(creds)
         {
             let aux;
 
-            [authorized,http_code,status,code,message,aux,id,mail] =  await verify(req,min);
+            [authorized,http_code,status,code,message,aux,id,mail,secret] =  await verify(req,min);
 
             console.log({authorized,http_code,status,code,message}); console.log();
         }
@@ -1921,7 +2036,7 @@ if(creds)
             {
                 let aux; 
 
-                [authorized,http_code,status,code,message,aux,id,mail] =  await verify(req,min);
+                [authorized,http_code,status,code,message,aux,id,mail,aux] =  await verify(req,min);
 
                 console.log({authorized,http_code,status,code,message}); console.log();
             }
@@ -2135,14 +2250,406 @@ if(creds)
 aedes.on('publish',(packet,client) =>
 {
     if(client)
-    {   
-        console.log("Client: ",client.id);
-        console.log("Topic: ",packet.topic);
-        console.log("Message: ",packet.payload.toString());
-   
+    { 
+        let topic = null, message = null, data = null;
+             
+        try
+        {
+            topic = packet.topic;
+            
+            message = packet.payload.toString();
+            
+            data = JSON.parse(message);
+        }
+        catch(error) 
+        { 
+            console.log("Erroneous INPUT DATA: ",data);
+
+            console.log(error);
+        }
+
+        if(data)
+        {
+            console.log("Client: ",client.id);
+            console.log("Topic: ",topic);
+            console.log("Message: ",data);
+
+            let authorized,http_code,status,code,message,usertype,user_id,mail,secret, min = 1;
+
+            if(topic == "APP/CLEAR")
+                min = 2;
+
+            [authorized,http_code,status,code,message,usertype,user_id,mail,secret] = verify(data,min);
+
+            if(authorized)
+            {
+                let aux = topic.toString().split('/');
+
+                let cl = client.id.toString().split('_');
+                
+                if(aux[0] != "DEVICE" && cl[0] == "BM-APP")
+                {
+                    let outgoing = "APP/" + cl[1], device = "DEVICE/";
+
+                    if(data.id)
+                    {
+                        let Q = await SQL.SEL("*",null,"BOATS",{id:data.id});
+
+                        if(Q[0])
+                        {
+                            let id = Q[0].id, mac = Q[0].mac, queued = Q[0].queued, boat_name = Q[0].boat_name;
+
+                            let on_journey = Q[0].on_journeym, connected = Q[0].connected, obs = null;
+
+                            if(data.obs)
+                                obs = data.obs;
+
+                            if(!queued && connected)
+                            {
+                                switch(topic)
+                                {
+                                    case "START":
+                                    {
+                                        if(!on_journey)
+                                        {
+                                            let U = await SQL.UPD("BOATS",{queued:1},id);
+                                        
+                                            if(U && !U.status)
+                                            {
+                                                let message = "Boat " + id + "," + boat_name + "departure queued";
+                                                
+                                                let status = "queued", code = "1", stc = 200;
+                                                
+                                                device += mac + "/START";
+    
+                                                try
+                                                {
+                                                    timers[id.toString()] = setTimeout(() =>
+                                                    {
+                                                        await SQL.UPD("BOATS",{queued:0},id);
+                                                        
+                                                        stc = 500;
+    
+                                                        message = "No response from Boat " + id;
+                                                        
+                                                        status = "failure", code = "14";
+
+                                                        let response = {id,boat_name,user_id,message,status,code};
+
+                                                        handle.response(aedes,stc,response,{topic:outgoing});  
+    
+                                                    }, 7000);
+                                                    
+                                                    let s1 = randomSymbol(), s2 = randomSymbol();
+
+                                                    let token = jwt.sign({user,id},secret,{expiresIn:60*60*24*14}) + s1 + user_id.toString() +  s2;
+
+                                                    
+                                                    handle.response(aedes,200,{id,token,start:1},{topic:device});    
+    
+                                                    message = "Boat " + id + "," + boat_name + "'s departure queued";
+                                                
+                                                    status = "queued", code = "15";
+                                                    
+                                                }
+                                                catch(error)
+                                                {
+                                                    console.log(error);
+    
+                                                    stc = 500;
+    
+                                                    message = "Aedes error."; status = "failure"; code = "14";
+
+                                                    try
+                                                    {
+                                                        handle.response(aedes,stc,response,{topic:outgoing});   
+                                                    }
+                                                    catch(error)
+                                                    {
+                                                        console.log(error);
+                                                    }
+                                                }
+    
+                                                let response = {message,status,code};
+
+                                                console.log(response,"\n\rStatus Code: ",stc); 
+                                             
+                                            }
+                                        }
+                                        else
+                                        {
+                                            let message = "Boat " + id + ", " + boat_name + " already queued";
+
+                                            let status = "unchanged", code = 3, stc = 200;
+
+                                            let response = {message,status,code};
+
+                                            try
+                                            {
+                                                handle.response(aedes,stc,response,{topic:outgoing});   
+                                            }
+                                            catch(error)
+                                            {
+                                                console.log(error);
+                                            }
+                                        }
+
+                                        break;
+                                    }
+            
+                                    case "END":
+                                    {
+                                        break;
+                                    }
+
+                                    case "CLEAR":
+                                    {
+                                        break;
+                                    }
+
+                                    default:
+                                    {
+                                        message = "Invalid command"; status = "invalid"; code = 17; stc = 400;
+        
+                                        let response = {message,status,code};
+        
+                                        try
+                                        {
+                                            handle.response(aedes,stc,response,{topic:outgoing});   
+                                        }
+                                        catch(error)
+                                        {
+                                            console.log(error);
+                                        }
+
+                                        break;
+                                    }
+                                }
+                            }
+                            else if(queued)
+                            {
+                                let message = "Boat " + id + ", " + boat_name + " already queued";
+
+                                let status = "unchanged", code = 3, stc = 200;
+
+                                let response = {message,status,code};
+
+                                try
+                                {
+                                    handle.response(aedes,stc,response,{topic:outgoing});   
+                                }
+                                catch(error)
+                                {
+                                    console.log(error);
+                                }
+                            }
+                            else
+                            {
+                                let message = "Boat " + id + ", " + boat_name + " not connected";
+
+                                let status = "failure", code = 14, stc = 200;
+
+                                let response = {message,status,code};
+
+                                try
+                                {
+                                    handle.response(aedes,stc,response,{topic:outgoing});   
+                                }
+                                catch(error)
+                                {
+                                    console.log(error);
+                                }
+                            }
+                            
+                        }
+                        else
+                        {
+                            let message = "No Boat by id " + data.id + " exists";
+
+                            let status = "failure", code = 16, stc = 400;
+
+                            let response = {message,status,code};
+
+                            try
+                            {
+                                handle.response(aedes,stc,response,{topic:outgoing});   
+                            }
+                            catch(error)
+                            {
+                                console.log(error);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        let message = "Missing parameters";
+
+                        let status = "unchanged", code = 10, stc = 400;
+
+                        let response = {message,status,code};
+
+                        try
+                        {
+                            handle.response(aedes,stc,response,{topic:outgoing});   
+                        }
+                        catch(error)
+                        {
+                            console.log(error);
+                        }
+                    }
+                }
+                else if(cl[0] == "BM-DEV")
+                {
+                    if(cl[1] == aux[1])
+                    {
+                        let nxt = validateMAC(cl[1]);
+
+                        if(nxt)
+                        {
+                            let Q = SQL.SEL("id,queued,on_journey",null,"BOATS",{mac:cl[1]});
+
+                            if(!Q.status)
+                            {
+                                if(Q[0])
+                                {
+                                    let id = Q[0].id, queued = Q[0].queued, on_journey = Q[0].on_journey;
+
+                                    switch(aux[2])
+                                    {
+                                        case "DEPARTURE":
+                                        {
+                                            if(queued && !on_journey)
+                                            {
+                                                if(timers[id.toString()])
+                                                {
+                                                    clearTimeout(timers[id.toString()]);
+
+                                                    delete timers[id.toString()];        
+                                                }
+
+                                                let  TZOfsset = (new Date()).getTimezoneOffset() * 60000; 
+
+                                                let dt = (new Date(Date.now() - TZOfsset)).toISOString().replace(/T|Z/g,' ');
+                                                
+                                                let params = 
+                                                {
+                                                    ini: dt,
+                                                    start_user: data.user_id,
+                                                    boat_id: data.boat_id,
+                                                    i_weight: data.weight,
+                                                    s_img: 0,
+                                                    total_img: 0,
+                                                    synced: 0,
+                                                    obs:data.obs,
+                                                    alert:0
+                                                }
+
+                                                let P = await SQL.PROC("bm_JOURNEYS_ST",params)
+                                                
+                                                let message, status, code, stc;
+
+                                                device += mac + "/START";
+                                            
+                                                if(!P.status)
+                                                {
+                                                    try
+                                                    {
+                                                        handle.response(aedes,200,{message:"OK"},{topic:device});    
+        
+                                                        message = "Boat " + id + "," + boat_name + "'set for departure.";
+                                                    
+                                                        status = "success", code = "1", stc = 200;
+                                                        
+                                                    }
+                                                    catch(error)
+                                                    {
+                                                        console.log(error);
+                                                        
+        
+                                                        message = "Aedes error."; status = "failure"; code = "14";
+                                                       
+                                                        stc = 500;         
+                                                    }
+                                                }
+                                            
+                                                let response = {message,status,code};
+
+                                                try
+                                                {
+                                                    handle.response(aedes,stc,response,{topic:outgoing});   
+                                                }
+                                                catch(error)
+                                                {
+                                                    console.log(error);
+                                                }
+                                            }
+
+                                            break;
+                                        }
+
+                                        case "ARRIVAL":
+                                        {
+                                            break;
+                                        }
+                                        
+                                    }
+                                    if(queued)
+                                    {
+                                        let U = SQL.UPD("BOATS",{queued:0,on_journey:1});
+                                    }
+                                }
+                                else
+                                {
+
+                                }
+                            }
+                            
+
+                        }
+                    }
+                }
+            }
+            else
+            {
+                let response = {message,status,code}, stc = http_code;
+
+                try
+                {   
+                    if(cl[0] == "BM-APP")
+                        handle.response(aedes,stc,response,{topic:outgoing});
+                    else
+                        console.log(response,"\n\rStatus Code: ",stc);
+                }
+                catch(error)
+                {
+                    console.log(error);
+                } 
+            }  
+        }
+        else
+        {
+            let message = "Incorrect data format";
+
+            let status = "failure", code = 10, stc = 400;
+
+            let response = {message,status,code};
+
+            try
+            {
+                if(cl[0] == "BM-APP")
+                    handle.response(aedes,stc,response,{topic:outgoing});
+                else
+                    console.log(response,"\n\rStatus Code: ",stc); 
+            }
+            catch(error)
+            {
+                console.log(error);
+            } 
+        }        
     }
 
 });
+
 
 
 //Location Google format

@@ -148,14 +148,34 @@ async function appAuthorizer(username,password,signup)
        
 }
 
-aedes.authenticate = async (client,username,password,callback) =>
+aedes.authenticate = async (client,info,password,callback) =>
 {
-    let access, data;
+    let access = null, data = null, device =  null, username = null;
 
-    [access,data] = await appAuthorizer(username,password,false);
+    let cl = client.id.toString().split('_');
+    
+    if(cl[0] == "BM-DEV")
+    {
+        device = JSON.parse(info);
+
+        username = device.username;
+    }
+    else
+    {
+        username = info;
+    }
+
+    if(username)
+        [access,data] = await appAuthorizer(username,password,false);
 
     if(access)
+    {
         console.log(client.id," login attempt succeeded");
+        
+        if(device)
+            console.log("Max Storage: ",device.storage);
+    }
+       
     else
         console.log(client.id," login attemtpt failed: ", data);
     

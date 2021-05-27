@@ -246,13 +246,31 @@ async function CSVgen(data,id)
     }   
 }
 /**********************************EXPORTS************************************/
-module.exports.response = (res,status,payload) =>
+module.exports.response = (res,status,payload,mqtt) =>
 {
-    process.stdout.write("\n\rServer Response: "); console.log(payload);
-    process.stdout.write("Status Code: "); console.log(status); console.log();
+    
+    console.log("\n\r\n\r");
 
-    res.status(status).send(payload);
+    if(!mqtt)
+    {
+        res.status(status).send(payload);
+        
+        process.stdout.write("\n\rServer Response: "); console.log(payload);
+        
+        process.stdout.write("Status Code: "); console.log(status); console.log();
+    }
+    else
+    {
+        res.publish(mqtt.topic,JSON.stringify(payload));
+
+        process.stdout.write("\n\rTopic: "); console.log(mqtt.topic);
+
+        process.stdout.write("\n\rServer Message: "); console.log(payload);
+        
+        process.stdout.write("Status Code: "); console.log(status); console.log();
+    }    
 }
+
 
 module.exports.data2CSV = async (user,host,base,data) =>
 {
