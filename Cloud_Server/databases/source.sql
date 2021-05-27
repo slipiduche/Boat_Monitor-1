@@ -63,6 +63,7 @@ CREATE TABLE JOURNEYS
     s_img INTEGER,
     total_img INTEGER,
     synced TINYINT NOT NULL,
+    in_boat TINYINT NOT NULL,
     alert TINYINT NOT NULL,
     ug INTEGER,
     um INTEGER,
@@ -229,8 +230,8 @@ CREATE PROCEDURE bm_JOURNEYS_ST(IN ini0 DATETIME,IN start_user0 INT,IN boat_id0 
 
 BEGIN
 
-    INSERT INTO JOURNEYS (ini,start_user,boat_id,i_weight,s_img,total_img,synced,obs,alert) 
-        VALUES (ini0,start_user0,boat_id0,i_weight0,s_img,total_img0,synced0,obs0,alert0);
+    INSERT INTO JOURNEYS (ini,start_user,boat_id,i_weight,s_img,total_img,synced,in_boat,obs,alert) 
+        VALUES (ini0,start_user0,boat_id0,i_weight0,s_img,total_img0,synced0,1,obs0,alert0);
 
     SET @ID = LAST_INSERT_ID();
 
