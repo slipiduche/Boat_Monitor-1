@@ -28,7 +28,7 @@ CREATE TABLE USERS
 CREATE TABLE BOATS
 (
     id INTEGER NOT NULL AUTO_INCREMENT,
-    mac VARCHAR(17)) NOT NULL UNIQUE,
+    mac VARCHAR(17) UNIQUE,
     boat_name TEXT,
     max_st FLOAT,
     resp INTEGER,
@@ -286,7 +286,7 @@ INSERT INTO USERS (username,pswrd,names,mail,usertype,latt,blocked,st,approval,d
 
 
 
-INSERT INTO BOATS(mac,boat_name,max_st,resp,resp_name,st,dt,obs)
+INSERT INTO BOATS(mac,boat_name,max_st,resp,resp_name,st,dt,obs,connected)
     VALUES
     (
         'b8:27:eb:4f:15:95',
@@ -296,10 +296,11 @@ INSERT INTO BOATS(mac,boat_name,max_st,resp,resp_name,st,dt,obs)
         'Orbittas',
         0,
         '2021/4/29 09:37:00',
-        'TEST DATA'
+        'TEST DATA',
+        0
    );
 
-INSERT INTO JOURNEYS(ini,ed,start_user,end_user,boat_id,i_weight,f_weight,s_img,total_img,synced,alert,eta,obs)
+INSERT INTO JOURNEYS(ini,ed,start_user,end_user,boat_id,i_weight,f_weight,s_img,total_img,synced,alert,eta,obs,in_boat)
     VALUES
     (
         '2021/4/27 19:35:00',
@@ -314,7 +315,8 @@ INSERT INTO JOURNEYS(ini,ed,start_user,end_user,boat_id,i_weight,f_weight,s_img,
         1,
         1,
         NULL,
-        'TEST DATA'
+        'TEST DATA',
+        1
     );
 
 INSERT INTO HISTORICS(boat_id,journey_id,cont_status,open_time,cont_weight,bat,dsk,temp,b_location,TiP,fl_name,dt,reg)

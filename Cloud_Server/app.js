@@ -81,7 +81,7 @@ const C = ["USERS","JOURNEYS","PARAMS"];
 
 const M = ["BOATS","USERS","JOURNEYS"];
 
-const pi_macs = ["B8:27:EB:","DC:A6:32:","E4:5F:01:"];
+const pi_macs = ["b8:27:eb:","dc:a6:32:","e4:5f:01:"];
 
 var collector, app, broker, httpsServer = [];
 
@@ -145,7 +145,13 @@ function validateClient(id)
             let output = [true];
 
             if(res[0] == "BM-DEV" || res[0] == "BM-APP")
+            {
+                if(res[0] == "BM-DEV")
+                    res[1] = res[1].toLowerCase();
+
                 return output.concat(res);
+            }
+                
         }
     }
 
@@ -158,9 +164,15 @@ function validateMAC(mac)
     {
         let len = mac.length, sep = mac.match(/:/g).length;
 
+        console.log(len); console.log(sep);
+
         if(len == 17 && sep == 5)
         {
+            console.log("matched!");
+
             let prefix = mac.slice(0,9);
+
+            console.log(prefix);
 
             for(let i = 0; i < pi_macs.length; i++)
             {
@@ -336,10 +348,15 @@ async function verify(req, min)
 {
     let authorized = false, http_code = 500, status = null, code = null, message = null, usertype = null, id = null, mail = null, password = null;
 
-    if (req.body.token)
+    if ((req.body && req.body.token) || req.token)
     {
-        let token = req.body.token;
-        
+        let token;
+
+        if(req.body)
+            token = req.body.token;
+        else
+            token = req.token;
+
         if(token && token.length > 3)
         {
             [token,id] = NaNFinder(token);
@@ -827,13 +844,17 @@ function NaNFinder(str)
 aedes.authenticate = async (client,info,password,callback) =>
 {
     let access = false, data, device = null, username = null, max_st = null, val = true;
-    
+    console.log("Validating Client....");
     let cl = validateClient(client.id);
 
     let usertype = cl[1], mac = cl[2];
 
+    console.log(mac);
+    
     if(cl[0])
     {
+        console.log("Client validated!");
+
         if(usertype == "BM-DEV")
         {
             try
@@ -841,20 +862,35 @@ aedes.authenticate = async (client,info,password,callback) =>
                 device = JSON.parse(info);
     
                 username = device.username;
-    
+                
+                console.log(username);
+
                 max_st = device.storage;
-    
+                
+                console.log("Boat Systen.");
+                
                 val = validateMAC(mac);
+
+                if (val)
+                    console.log("Valid mac");
+                else
+                    console.log("Invalid mac");
+                
             }
-            catch
+            catch(error)
             {
+                console.log(error);
+
                 username = info;
             }
         }
+        else if(usertype == "BM-APP")
+            username = info;
 
         console.log("\n\r");
 
-        [access,data] = await appAuthorizer(username,password,false);
+        if(username && val)
+            [access,data] = await appAuthorizer(username,password,false);
     }
 
     console.log("\n\r");
@@ -2247,12 +2283,14 @@ if(creds)
 /*****************************************MQTT**********************************************/
 
 
-aedes.on('publish',(packet,client) =>
+aedes.on('publish', async (packet,client) =>
 {
     if(client)
     { 
         let topic = null, message = null, data = null;
-             
+        
+        let cl = client.id.toString().split('_'), outgoing = "APP/" + cl[1];
+
         try
         {
             topic = packet.topic;
@@ -2279,27 +2317,30 @@ aedes.on('publish',(packet,client) =>
             if(topic == "APP/CLEAR")
                 min = 2;
 
-            [authorized,http_code,status,code,message,usertype,user_id,mail,secret] = verify(data,min);
+            [authorized,http_code,status,code,message,usertype,user_id,mail,secret] = await verify(data,min);
 
             if(authorized)
             {
                 let aux = topic.toString().split('/');
-
-                let cl = client.id.toString().split('_');
                 
                 if(aux[0] != "DEVICE" && cl[0] == "BM-APP")
                 {
-                    let outgoing = "APP/" + cl[1], device = "DEVICE/";
+                    let device = "DEVICE/";
 
                     if(data.id)
                     {
-                        let Q = await SQL.SEL("*",null,"BOATS",{id:data.id});
+                        let Q;
+
+                        if(min < 2)
+                            Q = await SQL.SEL("*",null,"BOATS",{id:data.id});
+                        else
+                            Q = await SQL.SEL("*",null,"JOURNEYS",{id:data.id}); //need to join data
 
                         if(Q[0])
                         {
                             let id = Q[0].id, mac = Q[0].mac, queued = Q[0].queued, boat_name = Q[0].boat_name;
 
-                            let on_journey = Q[0].on_journeym, connected = Q[0].connected, obs = Q[0].obs;
+                            let on_journey = Q[0].on_journey, connected = Q[0].connected, obs = Q[0].obs;
 
                             if(data.obs)
                             {
@@ -2311,7 +2352,7 @@ aedes.on('publish',(packet,client) =>
                                 
                             if(!queued && connected)
                             {
-                                switch(topic)
+                                switch(aux[1])
                                 {
                                     case "START":
                                     {
@@ -2327,7 +2368,7 @@ aedes.on('publish',(packet,client) =>
     
                                                 try
                                                 {
-                                                    timers[id.toString()] = setTimeout(() =>
+                                                    timers[id.toString()] = setTimeout(async () =>
                                                     {
                                                         await SQL.UPD("BOATS",{queued:0},id);
                                                         
@@ -2339,15 +2380,15 @@ aedes.on('publish',(packet,client) =>
 
                                                         let response = {id,boat_name,message,status,code};
 
-                                                        handle.response(aedes,stc,response,{topic:outgoing});  
+                                                        handle.response(aedes,stc,response,outgoing);  
     
                                                     }, 7000);
                                                     
                                                     let s1 = randomSymbol(), s2 = randomSymbol();
 
-                                                    let token = jwt.sign({user,id},secret,{expiresIn:60*60*24*14}) + s1 + user_id.toString() +  s2;
+                                                    let token = jwt.sign({boat_id:id,id:user_id},secret,{expiresIn:60*60*24*14}) + s1 + user_id.toString() +  s2;
                                                     
-                                                    handle.response(aedes,200,{token,id,user_id,obs,start:1},{topic:device});    
+                                                    handle.response(aedes,200,{token,id,user_id,obs,start:1},device);    
     
                                                     message = "Boat " + id + "," + boat_name + "'s departure queued";
                                                 
@@ -2365,7 +2406,7 @@ aedes.on('publish',(packet,client) =>
 
                                                     try
                                                     {
-                                                        handle.response(aedes,stc,response,{topic:outgoing});   
+                                                        handle.response(aedes,stc,response,outgoing);   
                                                     }
                                                     catch(error)
                                                     {
@@ -2385,11 +2426,11 @@ aedes.on('publish',(packet,client) =>
 
                                             let status = "unchanged", code = 3, stc = 200;
 
-                                            let response = {message,status,code};
+                                            let response = {id,boat_name,message,status,code};
 
                                             try
                                             {
-                                                handle.response(aedes,stc,response,{topic:outgoing});   
+                                                handle.response(aedes,stc,response,outgoing);   
                                             }
                                             catch(error)
                                             {
@@ -2414,7 +2455,7 @@ aedes.on('publish',(packet,client) =>
     
                                                 try
                                                 {
-                                                    timers[id.toString()] = setTimeout(() =>
+                                                    timers[id.toString()] = setTimeout(async () =>
                                                     {
                                                         await SQL.UPD("BOATS",{queued:0},id);
                                                         
@@ -2426,15 +2467,15 @@ aedes.on('publish',(packet,client) =>
 
                                                         let response = {id,boat_name,message,status,code};
 
-                                                        handle.response(aedes,stc,response,{topic:outgoing});  
+                                                        handle.response(aedes,stc,response,outgoing);  
     
                                                     }, 7000);
                                                     
                                                     let s1 = randomSymbol(), s2 = randomSymbol();
 
-                                                    let token = jwt.sign({user,id},secret,{expiresIn:60*60}) + s1 + user_id.toString() +  s2;
+                                                    let token = jwt.sign({boat_id:id,id:user_id},secret,{expiresIn:60*60}) + s1 + user_id.toString() +  s2;
                                                     
-                                                    handle.response(aedes,200,{id,user_id,obs,token,start:1},{topic:device});    
+                                                    handle.response(aedes,200,{id,user_id,obs,token,start:1},device);    
     
                                                     message = "Boat " + id + "," + boat_name + "'s arrival queued";
                                                 
@@ -2453,7 +2494,7 @@ aedes.on('publish',(packet,client) =>
 
                                                     try
                                                     {
-                                                        handle.response(aedes,stc,response,{topic:outgoing});   
+                                                        handle.response(aedes,stc,response,outgoing);   
                                                     }
                                                     catch(error)
                                                     {
@@ -2473,11 +2514,11 @@ aedes.on('publish',(packet,client) =>
 
                                             let status = "unchanged", code = 3, stc = 200;
 
-                                            let response = {message,status,code};
+                                            let response = {id,boat_name,message,status,code};
 
                                             try
                                             {
-                                                handle.response(aedes,stc,response,{topic:outgoing});   
+                                                handle.response(aedes,stc,response,outgoing);   
                                             }
                                             catch(error)
                                             {
@@ -2501,7 +2542,7 @@ aedes.on('publish',(packet,client) =>
         
                                         try
                                         {
-                                            handle.response(aedes,stc,response,{topic:outgoing});   
+                                            handle.response(aedes,stc,response,outgoing);   
                                         }
                                         catch(error)
                                         {
@@ -2522,7 +2563,7 @@ aedes.on('publish',(packet,client) =>
 
                                 try
                                 {
-                                    handle.response(aedes,stc,response,{topic:outgoing});   
+                                    handle.response(aedes,stc,response,outgoing);   
                                 }
                                 catch(error)
                                 {
@@ -2535,11 +2576,11 @@ aedes.on('publish',(packet,client) =>
 
                                 let status = "failure", code = 14, stc = 200;
 
-                                let response = {message,status,code};
+                                let response = {id,boat_name,message,status,code};
 
                                 try
                                 {
-                                    handle.response(aedes,stc,response,{topic:outgoing});   
+                                    handle.response(aedes,stc,response,outgoing);   
                                 }
                                 catch(error)
                                 {
@@ -2558,7 +2599,7 @@ aedes.on('publish',(packet,client) =>
 
                             try
                             {
-                                handle.response(aedes,stc,response,{topic:outgoing});   
+                                handle.response(aedes,stc,response,outgoing);   
                             }
                             catch(error)
                             {
@@ -2576,7 +2617,7 @@ aedes.on('publish',(packet,client) =>
 
                         try
                         {
-                            handle.response(aedes,stc,response,{topic:outgoing});   
+                            handle.response(aedes,stc,response,outgoing);   
                         }
                         catch(error)
                         {
@@ -2642,7 +2683,7 @@ aedes.on('publish',(packet,client) =>
                                                 {
                                                     try
                                                     {
-                                                        handle.response(aedes,200,{message:"OK"},{topic:device});    
+                                                        handle.response(aedes,200,{message:"OK"},device);    
         
                                                         message = "Boat " + id + "," + boat_name + " set for departure.";
                                                     
@@ -2663,7 +2704,7 @@ aedes.on('publish',(packet,client) =>
 
                                                 try
                                                 {
-                                                    handle.response(aedes,stc,response,{topic:outgoing});   
+                                                    handle.response(aedes,stc,response,outgoing);   
                                                 }
                                                 catch(error)
                                                 {
@@ -2709,7 +2750,7 @@ aedes.on('publish',(packet,client) =>
                                                 {
                                                     try
                                                     {
-                                                        handle.response(aedes,200,{message:"OK"},{topic:device});    
+                                                        handle.response(aedes,200,{message:"OK"},device);    
         
                                                         message = "Boat " + id + "," + boat_name + ",  arrival confirmed";
                                                     
@@ -2730,7 +2771,7 @@ aedes.on('publish',(packet,client) =>
 
                                                 try
                                                 {
-                                                    handle.response(aedes,stc,response,{topic:outgoing});   
+                                                    handle.response(aedes,stc,response,outgoing);   
                                                 }
                                                 catch(error)
                                                 {
@@ -2751,6 +2792,10 @@ aedes.on('publish',(packet,client) =>
                         }
                     }
                 }
+                else
+                {
+                    console.log("\n\rUnauthorized client\n\r");
+                }
             }
             else
             {
@@ -2759,7 +2804,7 @@ aedes.on('publish',(packet,client) =>
                 try
                 {   
                     if(cl[0] == "BM-APP")
-                        handle.response(aedes,stc,response,{topic:outgoing});
+                        handle.response(aedes,stc,response,outgoing);
                     else
                         console.log(response,"\n\rStatus Code: ",stc);
                 }
@@ -2780,7 +2825,7 @@ aedes.on('publish',(packet,client) =>
             try
             {
                 if(cl[0] == "BM-APP")
-                    handle.response(aedes,stc,response,{topic:outgoing});
+                    handle.response(aedes,stc,response,outgoing);
                 else
                     console.log(response,"\n\rStatus Code: ",stc); 
             }

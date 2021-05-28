@@ -246,12 +246,12 @@ async function CSVgen(data,id)
     }   
 }
 /**********************************EXPORTS************************************/
-module.exports.response = (res,status,payload,mqtt) =>
+module.exports.response = (res,status,payload,topic) =>
 {
     
     console.log("\n\r\n\r");
 
-    if(!mqtt)
+    if(!topic)
     {
         res.status(status).send(payload);
         
@@ -261,9 +261,9 @@ module.exports.response = (res,status,payload,mqtt) =>
     }
     else
     {
-        res.publish(mqtt.topic,JSON.stringify(payload));
+        res.publish({topic,payload:JSON.stringify(payload)});
 
-        process.stdout.write("\n\rTopic: "); console.log(mqtt.topic);
+        process.stdout.write("\n\rTopic: "); console.log(topic);
 
         process.stdout.write("\n\rServer Message: "); console.log(payload);
         
