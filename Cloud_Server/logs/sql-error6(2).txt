@@ -1,0 +1,3 @@
+Date: Mon May 31 2021 16:03:45 GMT-0400 (Venezuela Time)
+
+Error: Field 'on_journey' doesn't have a default value

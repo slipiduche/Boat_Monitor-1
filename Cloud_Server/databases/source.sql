@@ -33,10 +33,10 @@ CREATE TABLE BOATS
     max_st FLOAT,
     resp INTEGER,
     resp_name TEXT,
+    connected TINYINT NOT NULL,
     lj INTEGER,
-    on_journey TINYINT NOT NULL,
     queued TINYINT,
-    connected TINYINT,
+    on_journey TINYINT NOT NULL,
     st TINYINT NOT NULL, #-- 0 Disabled, 1 Enabled
     dt DATETIME NOT NULL,
     obs TEXT,

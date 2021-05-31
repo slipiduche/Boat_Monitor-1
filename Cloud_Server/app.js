@@ -137,7 +137,7 @@ if(!test)
 
 async function resetQ()
 {
-    await SQL.UPD("BOATS",{queued:0});
+    await SQL.UPD("BOATS",{queued:0,connected:0});
 }
 
 function validateClient(id)
@@ -946,6 +946,7 @@ aedes.authenticate = async (client,info,password,callback) =>
                         mac,
                         max_st,
                         connected:1,
+                        on_journey:0,
                         st:0,
                         dt
                     }
@@ -2303,7 +2304,7 @@ aedes.on('publish', async (packet,client) =>
     { 
         let topic = null, message = null, data = null;
         
-        let cl = client.id.toString().split('_'), outgoing = "APP/" + cl[1];
+        let cl = client.id.toString().split('_');
 
         try
         {
@@ -2328,6 +2329,8 @@ aedes.on('publish', async (packet,client) =>
 
             let authorized,http_code,status,code,message,usertype,user_id,mail,secret, min = 1, b;
 
+            let outgoing = "APP/" + cl[1];
+
             if(topic == "APP/CLEAR")
                 min = 2;
 
@@ -2340,7 +2343,7 @@ aedes.on('publish', async (packet,client) =>
                 let device = "DEVICE/";
 
                 if(aux[0] != "DEVICE" && cl[0] == "BM-APP")
-                {
+                {               
                     if(data.id)
                     {
                         let Q;
@@ -2404,7 +2407,9 @@ aedes.on('publish', async (packet,client) =>
 
                                                     let token = jwt.sign({boat_id:id,id:user_id},secret,{expiresIn:60*60*24*14}) + s1 + user_id.toString() +  s2;
                                                     
-                                                    handle.response(aedes,200,{token,id,user_id,obs,start:1},device);    
+                                                    let r = cl[1];
+
+                                                    handle.response(aedes,200,{token,id,user_id,r,obs,start:1},device);    
     
                                                     message = "Boat " + id + "," + boat_name + "'s departure queued";
                                                 
@@ -2504,7 +2509,9 @@ aedes.on('publish', async (packet,client) =>
     
                                                     }, 7000);
                                                     
-                                                    handle.response(aedes,200,{id,user_id,obs,end:1},device);    
+                                                    let r = cl[1];
+
+                                                    handle.response(aedes,200,{id,user_id,r,obs,end:1},device);    
     
                                                     message = "Boat " + id + "," + boat_name + "'s arrival queued";
                                                 
@@ -2654,8 +2661,10 @@ aedes.on('publish', async (packet,client) =>
                         }
                     }
                 }
-                else if(cl[0] == "BM-DEV" && b)
+                else if(cl[0] == "BM-DEV" && b && data.r)
                 {
+                    let outgoing = "APP/" + data.r;
+
                     if(cl[1] == aux[1])
                     {
                         let nxt = validateMAC(cl[1]);
@@ -2672,7 +2681,7 @@ aedes.on('publish', async (packet,client) =>
                                 {
                                     let id = Q[0].id, queued = Q[0].queued, on_journey = Q[0].on_journey;
 
-                                    let lj = Q[0].lj, connected = Q[0].connected;
+                                    let lj = Q[0].lj, connected = Q[0].connected, boat_name = Q[0].boat_name;
 
                                     if(b == id && connected)
                                     {
@@ -2878,6 +2887,74 @@ aedes.on('publish', async (packet,client) =>
 });
 
 
+async function dev_disc(client)
+{
+    let cl = client.toString().split('_');
+
+    if(cl[0] == "BM-DEV")
+    {
+        let mac = cl[1];
+
+        let Q = await SQL.SEL("id,connected",null,"BOATS",{mac});
+
+        if(!Q.status && Q[0])
+        {
+            console.log("here");
+
+            let id = Q[0].id,   connected = Q[0].connected;
+            
+            if(id && connected)
+            {
+                console.log("here");
+
+                await SQL.UPD("BOATS",{connected:0},id);
+            }
+        }
+    }
+}
+
+aedes.on("keepaliveTimeout",(client) =>
+{
+    console.log();
+
+    console.log("Keep alive timeout on client ",client.id);
+
+    console.log();
+
+    dev_disc(client.id);
+});
+
+
+aedes.on("clientDisconnect",(client) =>
+{
+    console.log();
+    
+    console.log("Client ",client.id," disconnected");
+
+    console.log();
+    
+    dev_disc(client.id);
+})
+
+aedes.on("clientError",(client,error) =>
+{
+    console.log();
+    
+    console.log("Client ",client.id," Error: ");
+
+    console.log(); console.log(error); console.log();
+});
+
+aedes.on("connectionError",(client,error) =>
+{
+    console.log();
+    
+    console.log("Connection Error with client ",client.id,": ");
+
+    console.log(); console.log(error); console.log();
+
+    dev_disc(client.id);
+});
 
 //Location Google format
 
