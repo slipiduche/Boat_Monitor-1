@@ -291,7 +291,10 @@ module.exports.UPD = async function UPD(TABLE,COLS,WHERE)
 {
   let DB = DBconnection(), r = "";
 
-  let q1 = "UPDATE " + TABLE, q2 = " SET ", q3 = " WHERE id = " + WHERE.toString(), Q, params = [];
+  let q1 = "UPDATE " + TABLE, q2 = " SET ", q3, Q, params = [];
+
+  if(WHERE)
+    q3 = " WHERE id = " + WHERE.toString();
 
   let keys = Object.keys(COLS), values = COLS;
     
@@ -331,7 +334,12 @@ module.exports.UPD = async function UPD(TABLE,COLS,WHERE)
     params.push(value);
   }
 
-  Q = q1 + q2 + q3 + ";";
+  Q = q1 + q2;
+  
+  if(WHERE) 
+    Q += q3;
+  
+  Q += ";";
 
   console.log(Q);
 

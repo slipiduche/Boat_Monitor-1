@@ -34,7 +34,7 @@ CREATE TABLE BOATS
     resp INTEGER,
     resp_name TEXT,
     lj INTEGER,
-    on_journey TINYINT,
+    on_journey TINYINT NOT NULL,
     queued TINYINT,
     connected TINYINT,
     st TINYINT NOT NULL, #-- 0 Disabled, 1 Enabled
@@ -286,7 +286,7 @@ INSERT INTO USERS (username,pswrd,names,mail,usertype,latt,blocked,st,approval,d
 
 
 
-INSERT INTO BOATS(mac,boat_name,max_st,resp,resp_name,st,dt,obs,connected)
+INSERT INTO BOATS(mac,boat_name,max_st,resp,resp_name,st,lj,on_journey,dt,obs,connected)
     VALUES
     (
         'b8:27:eb:4f:15:95',
@@ -294,6 +294,8 @@ INSERT INTO BOATS(mac,boat_name,max_st,resp,resp_name,st,dt,obs,connected)
         '491.7',
         1,
         'Orbittas',
+        1,
+        1,
         0,
         '2021/4/29 09:37:00',
         'TEST DATA',

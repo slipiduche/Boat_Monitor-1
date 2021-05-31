@@ -134,6 +134,12 @@ if(!test)
 17: Invalid
 */
 /*********************************FUNCTIONS***********************************/
+
+async function resetQ()
+{
+    await SQL.UPD("BOATS",{queued:0});
+}
+
 function validateClient(id)
 {
     if(id)
@@ -347,6 +353,8 @@ async function filter(tab,retrieve,params,command,inner)
 async function verify(req, min)
 {
     let authorized = false, http_code = 500, status = null, code = null, message = null, usertype = null, id = null, mail = null, password = null;
+    
+    let boat_id = null;
 
     if ((req.body && req.body.token) || req.token)
     {
@@ -441,6 +449,8 @@ async function verify(req, min)
 
                         mail = Q[0].mail;
 
+                        boat_id = decoded.boat_id;
+
                         authorized = true; 
                     }
                     
@@ -513,7 +523,10 @@ async function verify(req, min)
         message = "Missing data";
     }
 
-    return [authorized,http_code,status,code,message,usertype,id,mail,password];
+    if(!boat_id)
+        return [authorized,http_code,status,code,message,usertype,id,mail,password];
+    else
+        return [authorized,http_code,status,code,message,usertype,id,mail,password,boat_id]; 
 }
 
 async function appAuthorizer(username,password,signup)
@@ -1000,7 +1013,6 @@ catch(error)
 
 if(creds)
 {
-    
     collector = express();
     
     collector.use(fileUpload(
@@ -1045,6 +1057,8 @@ if(creds)
     broker = tls.createServer(credentials,aedes.handle);
 
     ws.createServer({ server: httpsServer[2] },aedes.handle);
+    
+    await resetQ();
 
     httpsServer[0].listen(port[0], (error) =>
     {
@@ -2312,21 +2326,21 @@ aedes.on('publish', async (packet,client) =>
             console.log("Topic: ",topic);
             console.log("Message: ",data);
 
-            let authorized,http_code,status,code,message,usertype,user_id,mail,secret, min = 1;
+            let authorized,http_code,status,code,message,usertype,user_id,mail,secret, min = 1, b;
 
             if(topic == "APP/CLEAR")
                 min = 2;
 
-            [authorized,http_code,status,code,message,usertype,user_id,mail,secret] = await verify(data,min);
+            [authorized,http_code,status,code,message,usertype,user_id,mail,secret,b] = await verify(data,min);
 
             if(authorized)
             {
                 let aux = topic.toString().split('/');
                 
+                let device = "DEVICE/";
+
                 if(aux[0] != "DEVICE" && cl[0] == "BM-APP")
                 {
-                    let device = "DEVICE/";
-
                     if(data.id)
                     {
                         let Q;
@@ -2342,6 +2356,8 @@ aedes.on('publish', async (packet,client) =>
 
                             let on_journey = Q[0].on_journey, connected = Q[0].connected, obs = Q[0].obs;
 
+                            let st = Q[0].st;
+
                             if(data.obs)
                             {
                                 if(obs)
@@ -2356,7 +2372,7 @@ aedes.on('publish', async (packet,client) =>
                                 {
                                     case "START":
                                     {
-                                        if(!on_journey)
+                                        if(!on_journey && st)
                                         {
                                             let U = await SQL.UPD("BOATS",{queued:1},id);
                                         
@@ -2420,9 +2436,26 @@ aedes.on('publish', async (packet,client) =>
                                              
                                             }
                                         }
-                                        else
+                                        else if(on_journey)
                                         {
                                             let message = "Boat " + id + ", " + boat_name + " already traveling";
+
+                                            let status = "unchanged", code = 3, stc = 200;
+
+                                            let response = {id,boat_name,message,status,code};
+
+                                            try
+                                            {
+                                                handle.response(aedes,stc,response,outgoing);   
+                                            }
+                                            catch(error)
+                                            {
+                                                console.log(error);
+                                            }
+                                        }
+                                        else
+                                        {
+                                            let message = "Boat " + id + ", " + boat_name + " not cleared for departures";
 
                                             let status = "unchanged", code = 3, stc = 200;
 
@@ -2471,11 +2504,7 @@ aedes.on('publish', async (packet,client) =>
     
                                                     }, 7000);
                                                     
-                                                    let s1 = randomSymbol(), s2 = randomSymbol();
-
-                                                    let token = jwt.sign({boat_id:id,id:user_id},secret,{expiresIn:60*60}) + s1 + user_id.toString() +  s2;
-                                                    
-                                                    handle.response(aedes,200,{id,user_id,obs,token,start:1},device);    
+                                                    handle.response(aedes,200,{id,user_id,obs,end:1},device);    
     
                                                     message = "Boat " + id + "," + boat_name + "'s arrival queued";
                                                 
@@ -2625,7 +2654,7 @@ aedes.on('publish', async (packet,client) =>
                         }
                     }
                 }
-                else if(cl[0] == "BM-DEV")
+                else if(cl[0] == "BM-DEV" && b)
                 {
                     if(cl[1] == aux[1])
                     {
@@ -2633,7 +2662,9 @@ aedes.on('publish', async (packet,client) =>
 
                         if(nxt)
                         {
-                            let Q = await SQL.SEL("id,queued,on_journey,lj",null,"BOATS",{mac:cl[1]});
+                            let mac = cl[1];
+
+                            let Q = await SQL.SEL("*",null,"BOATS",{mac});
 
                             if(!Q.status)
                             {
@@ -2641,148 +2672,156 @@ aedes.on('publish', async (packet,client) =>
                                 {
                                     let id = Q[0].id, queued = Q[0].queued, on_journey = Q[0].on_journey;
 
-                                    let lj = Q[0].lj;
+                                    let lj = Q[0].lj, connected = Q[0].connected;
 
-                                    switch(aux[2])
+                                    if(b == id && connected)
                                     {
-                                        case "DEPARTURE":
+                                        switch(aux[2])
                                         {
-                                            if(queued && !on_journey)
+                                            case "DEPARTURE":
                                             {
-                                                if(timers[id.toString()])
+                                                if(queued && !on_journey)
                                                 {
-                                                    clearTimeout(timers[id.toString()]);
+                                                    if(timers[id.toString()])
+                                                    {
+                                                        clearTimeout(timers[id.toString()]);
 
-                                                    delete timers[id.toString()];        
-                                                }
+                                                        delete timers[id.toString()];        
+                                                    }
 
-                                                let  TZOfsset = (new Date()).getTimezoneOffset() * 60000; 
+                                                    let  TZOfsset = (new Date()).getTimezoneOffset() * 60000; 
 
-                                                let dt = (new Date(Date.now() - TZOfsset)).toISOString().replace(/T|Z/g,' ');
+                                                    let dt = (new Date(Date.now() - TZOfsset)).toISOString().replace(/T|Z/g,' ');
+                                                    
+                                                    let params = 
+                                                    {
+                                                        ini: dt,
+                                                        start_user: data.user_id,
+                                                        boat_id: data.id,
+                                                        i_weight: data.weight,
+                                                        s_img: 0,
+                                                        total_img: 0,
+                                                        synced: 0,
+                                                        obs:data.obs,
+                                                        alert:0
+                                                    }
+
+                                                    let P = await SQL.PROC("bm_JOURNEYS_ST",params)
+                                                    
+                                                    let message, status, code, stc;
+
+                                                    device += mac + "/START";
                                                 
-                                                let params = 
-                                                {
-                                                    ini: dt,
-                                                    start_user: data.user_id,
-                                                    boat_id: data.id,
-                                                    i_weight: data.weight,
-                                                    s_img: 0,
-                                                    total_img: 0,
-                                                    synced: 0,
-                                                    obs:data.obs,
-                                                    alert:0
-                                                }
-
-                                                let P = await SQL.PROC("bm_JOURNEYS_ST",params)
+                                                    if(!P.status)
+                                                    {
+                                                        try
+                                                        {
+                                                            handle.response(aedes,200,{message:"OK"},device);    
+            
+                                                            message = "Boat " + id + "," + boat_name + " set for departure.";
+                                                        
+                                                            status = "success", code = "1", stc = 200;
+                                                            
+                                                        }
+                                                        catch(error)
+                                                        {
+                                                            console.log(error);  
+            
+                                                            message = "Aedes error."; status = "failure"; code = "14";
+                                                        
+                                                            stc = 500;         
+                                                            
+                                                            await SQL.UPD("BOATS",{on_journey:0},id);
+                                                        }
+                                                    }
                                                 
-                                                let message, status, code, stc;
+                                                    let response = {message,status,code};
 
-                                                device += mac + "/START";
-                                            
-                                                if(!P.status)
-                                                {
                                                     try
                                                     {
-                                                        handle.response(aedes,200,{message:"OK"},device);    
-        
-                                                        message = "Boat " + id + "," + boat_name + " set for departure.";
-                                                    
-                                                        status = "success", code = "1", stc = 200;
-                                                        
+                                                        handle.response(aedes,stc,response,outgoing);   
                                                     }
                                                     catch(error)
                                                     {
-                                                        console.log(error);  
-        
-                                                        message = "Aedes error."; status = "failure"; code = "14";
-                                                       
-                                                        stc = 500;         
+                                                        console.log(error);
                                                     }
                                                 }
-                                            
-                                                let response = {message,status,code};
 
-                                                try
-                                                {
-                                                    handle.response(aedes,stc,response,outgoing);   
-                                                }
-                                                catch(error)
-                                                {
-                                                    console.log(error);
-                                                }
+                                                break;
                                             }
 
-                                            break;
-                                        }
-
-                                        case "ARRIVAL":
-                                        {
-                                            if(queued && on_journey)
+                                            case "ARRIVAL":
                                             {
-                                                if(timers[id.toString()])
+                                                if(queued && on_journey)
                                                 {
-                                                    clearTimeout(timers[id.toString()]);
+                                                    if(timers[id.toString()])
+                                                    {
+                                                        clearTimeout(timers[id.toString()]);
 
-                                                    delete timers[id.toString()];        
-                                                }
+                                                        delete timers[id.toString()];        
+                                                    }
 
-                                                let  TZOfsset = (new Date()).getTimezoneOffset() * 60000; 
+                                                    let  TZOfsset = (new Date()).getTimezoneOffset() * 60000; 
 
-                                                let dt = (new Date(Date.now() - TZOfsset)).toISOString().replace(/T|Z/g,' ');
+                                                    let dt = (new Date(Date.now() - TZOfsset)).toISOString().replace(/T|Z/g,' ');
+                                                    
+                                                    let params = 
+                                                    {
+                                                        id: lj,
+                                                        boat_id: data.id,
+                                                        end_user: data.user_id,
+                                                        ed: dt,
+                                                        f_weight: data.weight,
+                                                        obs: data.obs
+                                                    }
+                                    
+                                                    let P = await SQL.PROC("bm_JOURNEYS_ED",params); 
+                                                    
+                                                    let message, status, code, stc;
+
+                                                    device += mac + "/END";
                                                 
-                                                let params = 
-                                                {
-                                                    id: lj,
-                                                    boat_id: data.id,
-                                                    end_user: data.user_id,
-                                                    ed: dt,
-                                                    f_weight: data.weight,
-                                                    obs: datab.obs
-                                                }
-                                
-                                                let P = await SQL.PROC("bm_JOURNEYS_ED",params); 
+                                                    if(!P.status)
+                                                    {
+                                                        try
+                                                        {
+                                                            handle.response(aedes,200,{message:"OK"},device);    
+            
+                                                            message = "Boat " + id + "," + boat_name + ",  arrival confirmed";
+                                                        
+                                                            status = "success", code = "1", stc = 200;
+                                                            
+                                                        }
+                                                        catch(error)
+                                                        {
+                                                            console.log(error);  
+            
+                                                            message = "Aedes error."; status = "failure"; code = "14";
+                                                        
+                                                            stc = 500;  
+                                                            
+                                                            await SQL.UPD("BOATS",{on_journey:1},id);
+                                                        }
+                                                    }
                                                 
-                                                let message, status, code, stc;
+                                                    let response = {message,status,code};
 
-                                                device += mac + "/END";
-                                            
-                                                if(!P.status)
-                                                {
                                                     try
                                                     {
-                                                        handle.response(aedes,200,{message:"OK"},device);    
-        
-                                                        message = "Boat " + id + "," + boat_name + ",  arrival confirmed";
-                                                    
-                                                        status = "success", code = "1", stc = 200;
-                                                        
+                                                        handle.response(aedes,stc,response,outgoing);   
                                                     }
                                                     catch(error)
                                                     {
-                                                        console.log(error);  
-        
-                                                        message = "Aedes error."; status = "failure"; code = "14";
-                                                       
-                                                        stc = 500;         
+                                                        console.log(error);
                                                     }
                                                 }
-                                            
-                                                let response = {message,status,code};
 
-                                                try
-                                                {
-                                                    handle.response(aedes,stc,response,outgoing);   
-                                                }
-                                                catch(error)
-                                                {
-                                                    console.log(error);
-                                                }
+                                                break;
                                             }
-
-                                            break;
+                                            
                                         }
-                                        
                                     }
+                                    
                                 }
                                 else
                                 {
