@@ -23,7 +23,7 @@ const sub_tops = ["/START","/END","/CLEAR"];
 
 var stoken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJib2F0X2lkIjoyLCJpZCI6MSwiaWF0IjoxNjIyNDg0Mjc1LCJleHAiOjE2MjM2OTM4NzV9.2Z68nCX5y19H7u410csKYQIMgNkq3FQ0hi0iiiMLBGs\"1>";
 
-var token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoib3JiaXR0YXNAb3JiaXR0YXMuY29tIiwiaWQiOjEsImlhdCI6MTYyMjQ5NTEyMiwiZXhwIjoxNjIyNDk4NzIyfQ.qJ1oLSBUip_r_ZQW_USvdfU1uB9VJwM37QmU8k8ZUAA=1*";
+var token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoib3JiaXR0YXNAb3JiaXR0YXMuY29tIiwiaWQiOjEsImlhdCI6MTYyMjY2NTkyNywiZXhwIjoxNjIyNjY5NTI3fQ.rTYVLjHjsGa53rZOqbC-EUEotc-EXKWGV32C3nxVqXY,1*"
 
 function appCon()
 {
@@ -78,6 +78,17 @@ function appCon()
                 let message = JSON.stringify({token,id,CAT:"CAT!"});
 
                 app.publish("APP/END",message);
+                
+                break;
+            }
+
+            case "C":
+            {
+                let id = parseInt(input.slice(1,input.length));
+
+                let message = JSON.stringify({token,id,CAT:"CAT!"});
+
+                app.publish("APP/CLEAR",message);
                 
                 break;
             }
@@ -152,6 +163,8 @@ device.on("connect", async () =>
     
     await device.subscribe("DEVICE/" + mac + sub_tops[0]);
     await device.subscribe("DEVICE/" + mac + sub_tops[1]);
+    await device.subscribe("DEVICE/" + mac + sub_tops[2]);
+
 
     device.on("message",async (topic,payload,packet) =>
     {
@@ -210,6 +223,30 @@ device.on("connect", async () =>
                         let response =  JSON.stringify(message);
     
                         device.publish("DEVICE/" + mac + "/ARRIVAL",response);
+                    }
+                    
+                    break;
+                }
+
+                case "CLEAR":
+                {
+                    if(message.delete)
+                    {
+                        setTimeout(() =>
+                        {
+                            message.deleted = 1;
+
+                            let response =  JSON.stringify(message);
+                            
+                            device.publish("DEVICE/" + mac + "/DELETION",response);
+
+                        }, 4000);
+
+                        message.proceed = 1;
+
+                        let response =  JSON.stringify(message);
+    
+                        device.publish("DEVICE/" + mac + "/DELETION",response);
                     }
                     
                     break;

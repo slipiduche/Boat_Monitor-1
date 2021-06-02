@@ -140,7 +140,7 @@ if(!test)
 
 async function resetQ()
 {
-    await SQL.UPD("BOATS",{queued:0,connected:0});
+    await SQL.UPD("BOATS",{queued:0,connected:0,pending:0});
 }
 
 function validateClient(id)
@@ -253,7 +253,7 @@ async function filter(tab,retrieve,params,command,inner)
     if(params.csv)
         delete params.csv;
     
-    if(params.id)
+    if(params.id && command != "SEL")
     {
         id = params.id;
 
@@ -318,6 +318,7 @@ async function filter(tab,retrieve,params,command,inner)
 
             if(Object.keys(params).length > 0)
                 where = params;
+                
            
             Q = await SQL.SEL(selection,rest,tab,where,range,last,join);
 
@@ -2359,7 +2360,7 @@ aedes.on('publish', async (packet,client) =>
                             [
                                 {BOATS:1},
                                 [bin2],
-                                [["r_boat_id"],[""],[""],[""],[""],[""],[""]]
+                                [[" r_boat_id","","","","","",""]]
                             ];
 
                             Q = await filter("JOURNEYS",null,{id:data.id},"SEL",inner)
@@ -2520,7 +2521,7 @@ aedes.on('publish', async (packet,client) =>
                                                         handle.response(aedes,stc,response,outgoing);  
     
                                                     }, 7000);
-                                                    
+
                                                     let r = cl[1];
 
                                                     handle.response(aedes,200,{id,user_id,r,obs,end:1},device);    
@@ -2592,7 +2593,7 @@ aedes.on('publish', async (packet,client) =>
     
                                                 try
                                                 {
-                                                    timers[id.toString()] = setTimeout(async () =>
+                                                    timers[boat_id.toString()] = setTimeout(async () =>
                                                     {
                                                         await SQL.UPD("BOATS",{queued:0},id);
                                                         
@@ -2608,9 +2609,14 @@ aedes.on('publish', async (packet,client) =>
     
                                                     }, 7000);
                                                     
+                                                                                                        
+                                                    let s1 = randomSymbol(), s2 = randomSymbol();
+
+                                                    let token = jwt.sign({boat_id:id,id:user_id},secret,{expiresIn:60*60}) + s1 + user_id.toString() +  s2;
+
                                                     let r = cl[1];
 
-                                                    handle.response(aedes,200,{token:data.token,id:boat_id,journey_id:id,user_id,r,delete:1},device);    
+                                                    handle.response(aedes,200,{token,id:boat_id,journey_id:id,user_id,r,delete:1},device);    
     
                                                     message = "Deletion of data on Journey id ",id,", in boat id ",boat_id," queued";
                                                 
@@ -2754,6 +2760,21 @@ aedes.on('publish', async (packet,client) =>
                             }
                             
                         }
+                        else if(Q.status)
+                        {
+                            let  stc = 500;               
+
+                            let response = Q;
+
+                            try
+                            {
+                                handle.response(aedes,stc,response,outgoing);   
+                            }
+                            catch(error)
+                            {
+                                console.log(error);
+                            }
+                        }
                         else
                         {
                             let message, status = "failure", code = 16, stc = 400;
@@ -2815,6 +2836,8 @@ aedes.on('publish', async (packet,client) =>
                                     let id = Q[0].id, queued = Q[0].queued, on_journey = Q[0].on_journey;
 
                                     let lj = Q[0].lj, connected = Q[0].connected, boat_name = Q[0].boat_name;
+
+                                    let pending = Q[0].pending;
 
                                     if(b == id && connected)
                                     {
@@ -2963,7 +2986,7 @@ aedes.on('publish', async (packet,client) =>
 
                                             case "DELETION":
                                             {
-                                                if(queued && data.journey_id)
+                                                if((queued || pending) && data.journey_id)
                                                 {
                                                     if(timers[id.toString()])
                                                     {
@@ -2976,15 +2999,7 @@ aedes.on('publish', async (packet,client) =>
                                                     
                                                     let message, status, code, stc;
 
-                                                    if(proceed)
-                                                    {
-                                                        message = "Deletion of Travel " + data.journey_id + " data from Boat "
-                                                                      + id + ", " + boat_name + " in progreess...";
-                                                        
-                                                        status = "in-progress", code = "18", stc = 200;         
-                                                       
-                                                    }
-                                                    else if(deleted)
+                                                    if(deleted)
                                                     {
                                                         let params =
                                                         {
@@ -3007,8 +3022,21 @@ aedes.on('publish', async (packet,client) =>
                                                             message = P.message; status = P.status; code = P.code;
                                                         }
                                                     }
+                                                    else if(proceed)
+                                                    {
+                                                        await SQL.UPD("BOATS",{queued:0,pending:1},id);
+
+                                                        message = "Deletion of Travel " + data.journey_id + " data from Boat "
+                                                                      + id + ", " + boat_name + " in progreess...";
+                                                        
+                                                        status = "in-progress", code = "18", stc = 200;         
+                                                       
+                                                    }
                                                     else if(proceed == 0)
                                                     {
+
+                                                        await SQL.UPD("BOATS",{queued:0},id);
+
                                                         message = "Deletion of Travel " + data.journey_id + " data from Boat "
                                                                       + id + ", " + boat_name + " can't be completed";
                                                         
@@ -3017,6 +3045,8 @@ aedes.on('publish', async (packet,client) =>
                                                     }
                                                     else
                                                     {
+                                                        await SQL.UPD("BOATS",{queued:0,pending:0},id);
+                                                        
                                                         message = "Boat " +  id + ", " + boat_name + " communication error";
                                                         
                                                         status = "failure", code = "4", stc = 500;     

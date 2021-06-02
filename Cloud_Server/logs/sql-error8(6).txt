@@ -1,0 +1,3 @@
+Date: Wed Jun 02 2021 16:40:33 GMT-0400 (Venezuela Time)
+
+Error: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '[object Object]' at line 1

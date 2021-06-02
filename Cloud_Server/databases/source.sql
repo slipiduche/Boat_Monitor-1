@@ -36,6 +36,7 @@ CREATE TABLE BOATS
     connected TINYINT NOT NULL,
     lj INTEGER,
     queued TINYINT,
+    pending TINYINT,
     on_journey TINYINT NOT NULL,
     st TINYINT NOT NULL, #-- 0 Disabled, 1 Enabled
     dt DATETIME NOT NULL,
@@ -260,7 +261,7 @@ CREATE PROCEDURE bm_JOURNEYS_CL(IN id0 INT, IN boat_id0 INT)
 
 BEGIN
     
-    UPDATE BOATS SET queued = 0 WHERE id = boat_id0;
+    UPDATE BOATS SET queued = 0, pending = 0 WHERE id = boat_id0;
 
     UPDATE JOURNEYS SET in_boat = 0 WHERE id = id0;   
 
@@ -336,24 +337,6 @@ INSERT INTO JOURNEYS(ini,ed,start_user,end_user,boat_id,i_weight,f_weight,s_img,
         1
     );
 
-INSERT INTO HISTORICS(boat_id,journey_id,cont_status,open_time,cont_weight,bat,dsk,temp,b_location,TiP,fl_path,dt,reg)
-    VALUES
-    (
-        1,
-        1,
-        1,
-        900,
-        417.15,
-        85.5,
-        27.1,
-        10.1,
-        '41°24''12.2"N 2°10''26.5"E',
-        50,
-        'B1_042220211937415959.txt',
-        '2021/4/27 19:35:00',
-        '2021/4/27 19:35:00'
-    );
-
 INSERT INTO FILES(fl_name,fl_type,fl_path,fl_url,journey_id,boat_id,cam,rl,dt,reg)
     VALUES
     (
@@ -368,6 +351,28 @@ INSERT INTO FILES(fl_name,fl_type,fl_path,fl_url,journey_id,boat_id,cam,rl,dt,re
         '2021/4/27 19:35:00',
         '2021/4/27 19:35:00'
     );
+
+
+INSERT INTO HISTORICS(boat_id,journey_id,cont_status,open_time,cont_weight,bat,dsk,temp,b_location,TiP,fl_path,fl_id,dt,reg,ln)
+    VALUES
+    (
+        1,
+        1,
+        1,
+        900,
+        417.15,
+        85.5,
+        27.1,
+        10.1,
+        '41°24''12.2"N 2°10''26.5"E',
+        50,
+        'B1_042220211937415959.txt',
+        1,
+        '2021/4/27 19:35:00',
+        '2021/4/27 19:35:00',
+        1
+    );
+
 
 
 INSERT INTO FILES(fl_name,fl_type,fl_path,fl_url,journey_id,boat_id,cam,rl,dt,reg)
