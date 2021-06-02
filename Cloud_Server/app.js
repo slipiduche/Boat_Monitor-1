@@ -67,6 +67,8 @@ const uin = ["names"];
 
 const bin = ["boat_name"]
 
+const bin2 = ["id","boat_name","connected","queued","on_journey","st","mac"];
+
 const jex_INS = ["s_img","total_img","synced","um"];
 
 const jex_UPD = ["s_img","total_img","synced","ug","alert","start_user","end_user"];
@@ -132,6 +134,7 @@ if(!test)
 15: queed
 16: Unexisting resource
 17: Invalid
+18: Deletion in progress
 */
 /*********************************FUNCTIONS***********************************/
 
@@ -2351,15 +2354,24 @@ aedes.on('publish', async (packet,client) =>
                         if(min < 2)
                             Q = await SQL.SEL("*",null,"BOATS",{id:data.id});
                         else
-                            Q = await SQL.SEL("*",null,"JOURNEYS",{id:data.id}); //need to join data
+                        {
+                            let inner =
+                            [
+                                {BOATS:1},
+                                [bin2],
+                                [["r_boat_id"],[""],[""],[""],[""],[""],[""]]
+                            ];
 
+                            Q = await filter("JOURNEYS",null,{id:data.id},"SEL",inner)
+                        }
+                            
                         if(Q[0])
                         {
                             let id = Q[0].id, mac = Q[0].mac, queued = Q[0].queued, boat_name = Q[0].boat_name;
 
                             let on_journey = Q[0].on_journey, connected = Q[0].connected, obs = Q[0].obs;
 
-                            let st = Q[0].st;
+                            let st = Q[0].st, boat_id = Q[0].r_boat_id, in_boat = Q[0].in_boat, synced = Q[0].synced;
 
                             if(data.obs)
                             {
@@ -2393,7 +2405,7 @@ aedes.on('publish', async (packet,client) =>
                                                         
                                                         stc = 500;
     
-                                                        message = "No response from Boat " + id;
+                                                        message = "No response from Boat " + id + ", " + boat_name;
                                                         
                                                         status = "failure", code = "14";
 
@@ -2499,7 +2511,7 @@ aedes.on('publish', async (packet,client) =>
                                                         
                                                         stc = 500;
     
-                                                        message = "No response from Boat " + id;
+                                                        message = "No response from Boat " + id + ", " + boat_name;
                                                         
                                                         status = "failure", code = "14";
 
@@ -2567,6 +2579,123 @@ aedes.on('publish', async (packet,client) =>
 
                                     case "CLEAR":
                                     {
+                                        
+                                        if(boat_id && synced && in_boat)
+                                        {
+                                            let U = await SQL.UPD("BOATS",{queued:1},id);
+                                        
+                                            if(U && !U.status)
+                                            {
+                                                let message, status, code, stc;
+                                                
+                                                device += mac + "/CLEAR";
+    
+                                                try
+                                                {
+                                                    timers[id.toString()] = setTimeout(async () =>
+                                                    {
+                                                        await SQL.UPD("BOATS",{queued:0},id);
+                                                        
+                                                        stc = 500;
+    
+                                                        message = "No response from Boat " + boat_id + ", " + boat_name;
+                                                        
+                                                        status = "failure", code = "14";
+
+                                                        let response = {id:boat_id,boat_name,message,status,code};
+
+                                                        handle.response(aedes,stc,response,outgoing);  
+    
+                                                    }, 7000);
+                                                    
+                                                    let r = cl[1];
+
+                                                    handle.response(aedes,200,{token:data.token,id:boat_id,journey_id:id,user_id,r,delete:1},device);    
+    
+                                                    message = "Deletion of data on Journey id ",id,", in boat id ",boat_id," queued";
+                                                
+                                                    status = "queued", code = "15"; stc = 200;
+                                                }
+                                                catch(error)
+                                                {
+                                                    console.log(error);
+    
+                                                    stc = 500;
+    
+                                                    message = "Aedes error."; status = "failure"; code = "14";
+
+                                                    let  response = {message,status,code};
+
+                                                    try
+                                                    {
+                                                        handle.response(aedes,stc,response,outgoing);   
+                                                    }
+                                                    catch(error)
+                                                    {
+                                                        console.log(error);
+                                                    }
+                                                }
+    
+                                                let response = {message,status,code};
+
+                                                console.log(response,"\n\rStatus Code: ",stc); 
+                                             
+                                            }
+                                        }
+                                        else if(!synced)
+                                        {
+                                            let message = "Travel " +  id  +  " data in boat " + boat_id + ", "
+                                                          + boat_name + " can't be delted because it hasn't been fully uploaded to the Server.";
+
+                                            let status = "unchanged", code = 3, stc = 200;
+
+                                            let response = {id,boat_name,message,status,code};
+
+                                            try
+                                            {
+                                                handle.response(aedes,stc,response,outgoing);   
+                                            }
+                                            catch(error)
+                                            {
+                                                console.log(error);
+                                            }
+                                        }
+                                        else if(!in_boat)
+                                        {
+                                            let message = "Travel " +  id  +  " data in boat " + boat_id + ", "
+                                            + boat_name + " has already been deleted";
+
+                                            let status = "unchanged", code = 3, stc = 200;
+
+                                            let response = {id,boat_name,message,status,code};
+
+                                            try
+                                            {
+                                                handle.response(aedes,stc,response,outgoing);   
+                                            }
+                                            catch(error)
+                                            {
+                                                console.log(error);
+                                            }
+                                        }
+                                        else
+                                        {
+                                            let message = "No Boat by id " + Q[0].boat_id + " exists";
+
+                                            let status = "unchanged", code = 3, stc = 200;
+
+                                            let response = {id,boat_name,message,status,code};
+
+                                            try
+                                            {
+                                                handle.response(aedes,stc,response,outgoing);   
+                                            }
+                                            catch(error)
+                                            {
+                                                console.log(error);
+                                            }
+                                        }
+
                                         break;
                                     }
 
@@ -2591,7 +2720,7 @@ aedes.on('publish', async (packet,client) =>
                             }
                             else if(queued)
                             {
-                                let message = "Boat " + id + ", " + boat_name + " already queued";
+                                let message = "Boat " + boat_id + ", " + boat_name + " already queued";
 
                                 let status = "unchanged", code = 3, stc = 200;
 
@@ -2627,9 +2756,13 @@ aedes.on('publish', async (packet,client) =>
                         }
                         else
                         {
-                            let message = "No Boat by id " + data.id + " exists";
+                            let message, status = "failure", code = 16, stc = 400;
 
-                            let status = "failure", code = 16, stc = 400;
+                            if(min < 2)
+                                message = "No Boat by id " + data.id + " exists";
+                            else
+                                message = "No Travel by id " + data.id + " exists";
+                            
 
                             let response = {message,status,code};
 
@@ -2744,7 +2877,7 @@ aedes.on('publish', async (packet,client) =>
                                                         }
                                                     }
                                                 
-                                                    let response = {message,status,code};
+                                                    let response = {boat_id:id,boat_name,message,status,code};
 
                                                     try
                                                     {
@@ -2813,7 +2946,83 @@ aedes.on('publish', async (packet,client) =>
                                                         }
                                                     }
                                                 
-                                                    let response = {message,status,code};
+                                                    let response = {boat_id:id,journey_id:lj,boat_name,message,status,code};
+
+                                                    try
+                                                    {
+                                                        handle.response(aedes,stc,response,outgoing);   
+                                                    }
+                                                    catch(error)
+                                                    {
+                                                        console.log(error);
+                                                    }
+                                                }
+
+                                                break;
+                                            }
+
+                                            case "DELETION":
+                                            {
+                                                if(queued && data.journey_id)
+                                                {
+                                                    if(timers[id.toString()])
+                                                    {
+                                                        clearTimeout(timers[id.toString()]);
+
+                                                        delete timers[id.toString()];        
+                                                    }
+
+                                                    let proceed = data.proceed, deleted = data.deleted;
+                                                    
+                                                    let message, status, code, stc;
+
+                                                    if(proceed)
+                                                    {
+                                                        message = "Deletion of Travel " + data.journey_id + " data from Boat "
+                                                                      + id + ", " + boat_name + " in progreess...";
+                                                        
+                                                        status = "in-progress", code = "18", stc = 200;         
+                                                       
+                                                    }
+                                                    else if(deleted)
+                                                    {
+                                                        let params =
+                                                        {
+                                                            id:data.journey_id,
+                                                            boat_id:id
+                                                        };
+
+                                                        let P = await SQL.PROC("bm_JOURNEYS_CL",params);
+
+                                                        if(!P.status)
+                                                        {
+                                                            message = "Deletion of Travel " + data.journey_id + " data from Boat "
+                                                                      + id + ", " + boat_name + " complete";
+                                                        
+                                                            status = "success", code = "1", stc = 200;         
+                                                       
+                                                        }
+                                                        else
+                                                        {
+                                                            message = P.message; status = P.status; code = P.code;
+                                                        }
+                                                    }
+                                                    else if(proceed == 0)
+                                                    {
+                                                        message = "Deletion of Travel " + data.journey_id + " data from Boat "
+                                                                      + id + ", " + boat_name + " can't be completed";
+                                                        
+                                                        status = "failure", code = "4", stc = 500;         
+                                                       
+                                                    }
+                                                    else
+                                                    {
+                                                        message = "Boat " +  id + ", " + boat_name + " communication error";
+                                                        
+                                                        status = "failure", code = "4", stc = 500;     
+                                                    }
+                                               
+                                                    let response = {boat_id:id,journey_id:id,boat_name,message,status,code};
 
                                                     try
                                                     {

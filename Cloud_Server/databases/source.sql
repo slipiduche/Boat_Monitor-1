@@ -85,6 +85,34 @@ CREATE TABLE JOURNEYS
         REFERENCES USERS (id)
 );
 
+CREATE TABLE FILES
+(
+    id INTEGER NOT NULL AUTO_INCREMENT,
+    fl_name TEXT NOT NULL,
+    fl_type TEXT NOT NULL,
+    fl_path TEXT NOT NULL,
+    fl_url TEXT NOT NULL,
+    journey_id INTEGER NOT NULL,
+    boat_id INTEGER NOT NULL,
+    cam INTEGER,
+    rl INT,
+    rt INT,
+    dt DATETIME NOT NULL,
+    reg DATETIME NOT NULL,
+
+    PRIMARY KEY(id),
+
+    CONSTRAINT FK_JOURNEY_F
+        FOREIGN KEY (journey_id) 
+        REFERENCES JOURNEYS (id)
+            ON DELETE CASCADE,
+
+    CONSTRAINT FK_BOAT_F
+        FOREIGN KEY (boat_id)
+        REFERENCES BOATS (id)
+            ON DELETE CASCADE
+);
+
 
 CREATE TABLE HISTORICS
 (
@@ -99,7 +127,9 @@ CREATE TABLE HISTORICS
     temp FLOAT NOT NULL,
     b_location TEXT NOT NULL, #--LAT, LONG? gOOGLE COMPATIBLE
     TiP FLOAT,
-    fl_name TEXT NOT NULL, #--filename
+    fl_path TEXT NOT NULL, #--filename
+    fl_id INT NOT NULL,
+    ln INT NOT NULL,
     dt DATETIME NOT NULL, #--date of event
     reg DATETIME NOT NULL, #--date of data reception
     
@@ -116,32 +146,6 @@ CREATE TABLE HISTORICS
         REFERENCES BOATS (id)
 );
 
-CREATE TABLE FILES
-(
-    id INTEGER NOT NULL AUTO_INCREMENT,
-    fl_name TEXT NOT NULL,
-    fl_type TEXT NOT NULL,
-    fl_path TEXT NOT NULL,
-    fl_url TEXT NOT NULL,
-    journey_id INTEGER NOT NULL,
-    boat_id INTEGER NOT NULL,
-    cam INTEGER,
-    rl INT,
-    dt DATETIME NOT NULL,
-    reg DATETIME NOT NULL,
-
-    PRIMARY KEY(id),
-
-    CONSTRAINT FK_JOURNEY_F
-        FOREIGN KEY (journey_id) 
-        REFERENCES JOURNEYS (id)
-            ON DELETE CASCADE,
-
-    CONSTRAINT FK_BOAT_F
-        FOREIGN KEY (boat_id)
-        REFERENCES BOATS (id)
-            ON DELETE CASCADE
-);
 
 CREATE TABLE ALERTS
 (
@@ -251,6 +255,17 @@ BEGIN
 
 END $$
 
+
+CREATE PROCEDURE bm_JOURNEYS_CL(IN id0 INT, IN boat_id0 INT)
+
+BEGIN
+    
+    UPDATE BOATS SET queued = 0 WHERE id = boat_id0;
+
+    UPDATE JOURNEYS SET in_boat = 0 WHERE id = id0;   
+
+END $$
+
 DELIMITER ;
 
 INSERT INTO USERS (username,pswrd,names,mail,usertype,latt,blocked,st,approval,dt) VALUES 
@@ -321,7 +336,7 @@ INSERT INTO JOURNEYS(ini,ed,start_user,end_user,boat_id,i_weight,f_weight,s_img,
         1
     );
 
-INSERT INTO HISTORICS(boat_id,journey_id,cont_status,open_time,cont_weight,bat,dsk,temp,b_location,TiP,fl_name,dt,reg)
+INSERT INTO HISTORICS(boat_id,journey_id,cont_status,open_time,cont_weight,bat,dsk,temp,b_location,TiP,fl_path,dt,reg)
     VALUES
     (
         1,

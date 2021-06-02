@@ -866,85 +866,92 @@ module.exports.uploads = async (res,req) =>
     return [ok,filenames,status,code];
 };
 
-module.exports.data = async (res,req,filenames) =>
+module.exports.data = async (res,req,filenames,ids) =>
 {
     let readFile = util.promisify(fs.readFile);
 
-    let path = "./files/historics/", file = "", jsons = [], data = {}, result = [], fault = 0;
+    let path = "./files/historics/", file = "", jsons = null, data = null, result = [], fault = 0;
 
     let code = 200;
 
-    let fl_name, fl_type, fl_path, fl_url, rl = 0, dt, reg;
+    let fl_path, rl = 0, rt = 0;
 
     for(let i = 0; i < filenames.length; i++)
     {
         fl_path = path + filenames[i];
 
-        file = readFile(fl_path);
+        file = await readFile(fl_path);
 
-        jsons = file.split("\n\r");
-
-        for(let j = 0; j < jsons.length; j++)
+        try
         {
-            data = jsons[j];
+            jsons = JSON.parse(file);
 
-            process.stdout.write("JSON String: ");
-            console.log(data);
-
-            try
-            {
-                data = JSON.parse(data);
-            }
-            catch
-            {
-                console.log("Bad JSON");
-            }
-            
-            data.reg = new Date().toISOString().toString().replace("T"," ").replace("Z","");
-            
-            let r = sql.INS("HISTORICS",data);
-
-            if(!r.STATUS)
-                rl++;
-            else
-            {
-                let error = "Failed to process data: " + JSON.stringify(data);
-                
-                error +="\n\rFile: " + filenames[i] + " @ line " + rl.toString();
-                
-                log.errorLog("data",error,1);
-            }
+            rt  = jsons.length;
         }
-
-        if(rl != 0)
+        catch 
         {
-            let r = sql.UPDT("FILES",{rl},{fl_name:filenames[i],ops:""}); 
-
-            result.push({fl_update:r,rl});
-    
-            if(!r.STATUS)
-                console.log("Successfully registered " + rl + " lines read from file  " + filenames[i]);
-            else
-            {
-                let error = "Failed to register the " + rl.toString() + " lines read from file  " + filenames[i];
-                
-                log.errorLog("data",error,2);
-            }     
+            console.log("Bad JSON");
         }
-        else
+       
+        if(jsons)
         {
-            fault++;
-
-            if(fault == (filenames.length - 1))
+            for(let j = 0; j < rt; j++)
             {
-                code = 500;
+                data = jsons[j];
 
-                result = {STATUS:"FAILURE", MESSAGE:"NO DOCUMENTS WHERE PROCCESSED"};
-            }
+                process.stdout.write("JSON String: ");
+                console.log(data);
                 
-        }
+                let now = Date.now();
+
+                data.reg = (new Date(now)).toISOString().replace(/T|Z/g,' ');;
+                
+                data.journey_id = ids.journey; data.boat_id = ids.boat;
+
+                data.fl_path = fl_path; data.fl_id = ids.file; data.ln = j;
+
+                let Q = SQL.INS("HISTORICS",data);
+
+                if(!Q.status)
+                    rl++;
+                else
+                {
+                    let error = "Failed to process data: " + JSON.stringify(data);
+                    
+                    error +="\n\rFile: " + filenames[i] + " @ line " + rl.toString();
+                    
+                    log.errorLog("data",error,1);
+
+                    break;
+                }
+            }
+
+            if(rl != 0)
+            {
+                let r = SQL.UPD("FILES",{rl,rt},ids.flie);
         
-           
+                if(!r.STATUS)
+                    console.log("Successfully registered " + rl + " lines read from file  " + filenames[i]);
+                else
+                {
+                    let error = "Failed to register the " + rl.toString() + " lines read from file  " + filenames[i];
+                    
+                    log.errorLog("data",error,2);
+                }     
+            }
+            else
+            {
+                fault++;
+
+                if(fault == (filenames.length - 1))
+                {
+                    code = 500;
+
+                    result = {STATUS:"FAILURE", MESSAGE:"NO DOCUMENTS WERE PROCCESSED"};
+                }
+                    
+            }
+        }         
     }
 
     return [result,code];
