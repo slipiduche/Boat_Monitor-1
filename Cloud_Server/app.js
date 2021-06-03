@@ -2879,25 +2879,50 @@ aedes.on('publish', async (packet,client) =>
                                                 
                                                     if(!P.status)
                                                     {
-                                                        try
+                                                        let journey_id = P[0][0][0].id;
+
+                                                        if(journey_id)
                                                         {
-                                                            handle.response(aedes,200,{message:"OK"},device);    
-            
-                                                            message = "Boat " + id + "," + boat_name + " set for departure.";
-                                                        
-                                                            status = "success", code = "1", stc = 200;
+                                                            try
+                                                            {
+                                                                handle.response(aedes,200,{journey_id,message:"OK"},device);    
+                
+                                                                message = "Boat " + id + "," + boat_name + " set for departure.";
                                                             
+                                                                status = "success", code = "1", stc = 200;
+                                                                
+                                                            }
+                                                            catch(error)
+                                                            {
+                                                                console.log(error);  
+                
+                                                                message = "Aedes error."; status = "failure"; code = "14";
+                                                            
+                                                                stc = 500;         
+                                                                
+                                                                await SQL.UPD("BOATS",{on_journey:0},id);
+                                                            }
                                                         }
-                                                        catch(error)
+                                                        else
                                                         {
-                                                            console.log(error);  
-            
-                                                            message = "Aedes error."; status = "failure"; code = "14";
-                                                        
-                                                            stc = 500;         
-                                                            
-                                                            await SQL.UPD("BOATS",{on_journey:0},id);
-                                                        }
+                                                            message = "Database information retrieval error";
+
+                                                            status = "failure";
+
+                                                            code = 5;
+
+                                                            stc = 500;
+                                                        }     
+                                                    }
+                                                    else
+                                                    {
+                                                        message = P.message;
+
+                                                        status = P.status;
+
+                                                        code = P.code;
+
+                                                        stc = 500;
                                                     }
                                                 
                                                     let response = {boat_id:id,boat_name,message,status,code};
@@ -2967,6 +2992,16 @@ aedes.on('publish', async (packet,client) =>
                                                             
                                                             await SQL.UPD("BOATS",{on_journey:1},id);
                                                         }
+                                                    }
+                                                    else
+                                                    {
+                                                        message = P.message;
+
+                                                        status = P.status;
+
+                                                        code = P.code;
+
+                                                        stc = 500;
                                                     }
                                                 
                                                     let response = {boat_id:id,journey_id:lj,boat_name,message,status,code};
