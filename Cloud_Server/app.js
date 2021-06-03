@@ -53,7 +53,7 @@ const FK =
   JOURNEYS:{USERS:["JOURNEYS.start_user","JOURNEYS.end_user"],BOATS:["JOURNEYS.boat_id"]}
 }
 
-const BOATS = ["id","boat_name","max_st","resp","resp_name","st","on_journey","lj","dt","obs"];
+const BOATS = ["id","boat_name","max_st","resp","resp_name","st","on_journey","lj","pending","dt","obs"];
 
 const USERS = ["id","username","names","mail","usertype","latt","ldt","blocked","st","approval","lva","dt"];
 
@@ -2346,7 +2346,7 @@ aedes.on('publish', async (packet,client) =>
                 
                 let device = "DEVICE/";
 
-                if(aux[0] != "DEVICE" && cl[0] == "BM-APP")
+                if(aux[0] == "APP" && cl[0] == "BM-APP")
                 {               
                     if(data.id)
                     {
@@ -2815,7 +2815,7 @@ aedes.on('publish', async (packet,client) =>
                         }
                     }
                 }
-                else if(cl[0] == "BM-DEV" && b && data.r)
+                else if(aux[0] == "DEVICE" && cl[0] == "BM-DEV" && b && data.r)
                 {
                     let outgoing = "APP/" + data.r;
 
@@ -2837,7 +2837,7 @@ aedes.on('publish', async (packet,client) =>
 
                                     let lj = Q[0].lj, connected = Q[0].connected, boat_name = Q[0].boat_name;
 
-                                    let pending = Q[0].pending;
+                                    let pending = Q[0].pendingm, start = 0, end = 0, clear = 0;
 
                                     if(b == id && connected)
                                     {
@@ -2845,6 +2845,7 @@ aedes.on('publish', async (packet,client) =>
                                         {
                                             case "DEPARTURE":
                                             {
+                                                
                                                 if(queued && !on_journey)
                                                 {
                                                     if(timers[id.toString()])
@@ -2890,6 +2891,8 @@ aedes.on('publish', async (packet,client) =>
                                                                 message = "Boat " + id + "," + boat_name + " set for departure.";
                                                             
                                                                 status = "success", code = "1", stc = 200;
+
+                                                                start = 1;
                                                                 
                                                             }
                                                             catch(error)
@@ -2925,7 +2928,7 @@ aedes.on('publish', async (packet,client) =>
                                                         stc = 500;
                                                     }
                                                 
-                                                    let response = {boat_id:id,boat_name,message,status,code};
+                                                    let response = {start,boat_id:id,boat_name,message,status,code};
 
                                                     try
                                                     {
@@ -2981,6 +2984,7 @@ aedes.on('publish', async (packet,client) =>
                                                         
                                                             status = "success", code = "1", stc = 200;
                                                             
+                                                            end = 1;
                                                         }
                                                         catch(error)
                                                         {
@@ -3004,7 +3008,7 @@ aedes.on('publish', async (packet,client) =>
                                                         stc = 500;
                                                     }
                                                 
-                                                    let response = {boat_id:id,journey_id:lj,boat_name,message,status,code};
+                                                    let response = {end,boat_id:id,journey_id:lj,boat_name,message,status,code};
 
                                                     try
                                                     {
@@ -3049,7 +3053,9 @@ aedes.on('publish', async (packet,client) =>
                                                             message = "Deletion of Travel " + data.journey_id + " data from Boat "
                                                                       + id + ", " + boat_name + " complete";
                                                         
-                                                            status = "success", code = "1", stc = 200;         
+                                                            status = "success", code = "1", stc = 200;  
+                                                            
+                                                            clear = 1;
                                                        
                                                         }
                                                         else
@@ -3087,8 +3093,8 @@ aedes.on('publish', async (packet,client) =>
                                                         status = "failure", code = "4", stc = 500;     
                                                     }
                                                
-                                                    let response = {boat_id:id,journey_id:id,boat_name,message,status,code};
-
+                                                    let response = {clear,boat_id:id,boat_name,journey_id:id,message,status,code};
+                                                    
                                                     try
                                                     {
                                                         handle.response(aedes,stc,response,outgoing);   
