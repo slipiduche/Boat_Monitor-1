@@ -951,13 +951,26 @@ aedes.authenticate = async (client,info,password,callback) =>
                     let  TZOfsset = (new Date()).getTimezoneOffset() * 60000; 
             
                     let dt = (new Date(Date.now() - TZOfsset)).toISOString().replace(/T|Z/g,' ');
-        
+                    
+                    let W = await SQL.SEL("id",null,"BOATS",null,null,1,null);
+
+                    let boat_name = "Boat";
+
+                    if(!W.status && W[0])
+                    {
+                        if(W[0].id)
+                            boat_name += W[0].id.toString();
+                    }
+
                     let params =
                     {
                         mac,
+                        boat_name,
                         max_st,
                         connected:1,
                         on_journey:0,
+                        queued:0,
+                        pending:0,
                         st:0,
                         dt
                     }
@@ -968,7 +981,19 @@ aedes.authenticate = async (client,info,password,callback) =>
         }  
     }     
     else
-        console.log(client.id," login attemtpt failed: ", data);
+    {
+        if(!username)
+        {
+            console.log("\"user\" data recived: ",info)
+
+            console.log(client.id," login attemtpt failed: null username");
+        }
+        else if(!val)
+            console.log("Invalid Client ID");
+        else
+            console.log(client.id," login attemtpt failed: ", data);s
+    }
+        
     
 }
 
