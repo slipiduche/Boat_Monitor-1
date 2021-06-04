@@ -991,7 +991,7 @@ aedes.authenticate = async (client,info,password,callback) =>
         else if(!val)
             console.log("Invalid Client ID");
         else
-            console.log(client.id," login attemtpt failed: ", data);s
+            console.log(client.id," login attemtpt failed: ", data);
     }
         
     
