@@ -861,8 +861,15 @@ function NaNFinder(str)
 aedes.authenticate = async (client,info,password,callback) =>
 {
     let access = false, data, device = null, username = null, max_st = null, val = true;
+   
     console.log("Validating Client....");
-    let cl = validateClient(client.id);
+    
+    let cid;
+
+    if(client)
+        cid = client.id;
+
+    let cl = validateClient(cid);
 
     let usertype = cl[1], mac = cl[2];
 
@@ -3201,7 +3208,11 @@ aedes.on("keepaliveTimeout",(client) =>
 
     console.log();
 
-    dev_disc(client.id);
+    if(client)
+    {
+        if(client.id)
+            dev_disc(client.id);
+    }       
 });
 
 
@@ -3213,7 +3224,11 @@ aedes.on("clientDisconnect",(client) =>
 
     console.log();
     
-    dev_disc(client.id);
+    if(client)
+    {
+        if(client.id)
+            dev_disc(client.id);
+    }  
 })
 
 aedes.on("clientError",(client,error) =>
