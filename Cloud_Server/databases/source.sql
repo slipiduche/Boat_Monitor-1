@@ -342,16 +342,76 @@ INSERT INTO FILES(fl_name,fl_type,fl_path,fl_url,journey_id,boat_id,cam,rl,dt,re
     (
         'B1_042220211937415959.txt',
         '.txt',
-        './files/historics/J1/B1_042220211937415959.txt',
+        '/files/historics/J1/B1_042220211937415959.txt',
         'files/1/1',
         1,
         1,
         NULL,
-        1,
+        4,
         '2021/4/27 19:35:00',
         '2021/4/27 19:35:00'
     );
 
+
+INSERT INTO HISTORICS(boat_id,journey_id,cont_status,open_time,cont_weight,bat,dsk,temp,b_location,TiP,fl_path,fl_id,dt,reg,ln)
+    VALUES
+    (
+        1,
+        1,
+        1,
+        900,
+        417.15,
+        85.5,
+        27.1,
+        10.1,
+        '41 24.2028, 2 10.4418',
+        50,
+        'B1_042220211937415959.txt',
+        1,
+        '2021/4/27 19:35:00',
+        '2021/4/27 19:35:00',
+        1
+    );
+
+INSERT INTO HISTORICS(boat_id,journey_id,cont_status,open_time,cont_weight,bat,dsk,temp,b_location,TiP,fl_path,fl_id,dt,reg,ln)
+    VALUES
+    (
+        1,
+        1,
+        1,
+        900,
+        417.15,
+        85.5,
+        27.1,
+        10.1,
+        '41 24.2028, 2 10.4418',
+        50,
+        'B1_042220211937415959.txt',
+        1,
+        '2021/4/27 19:35:00',
+        '2021/4/27 19:35:00',
+        2
+    );
+
+INSERT INTO HISTORICS(boat_id,journey_id,cont_status,open_time,cont_weight,bat,dsk,temp,b_location,TiP,fl_path,fl_id,dt,reg,ln)
+    VALUES
+    (
+        1,
+        1,
+        1,
+        900,
+        417.15,
+        85.5,
+        27.1,
+        10.1,
+        '41 24.2028, 2 10.4418',
+        50,
+        'B1_042220211937415959.txt',
+        1,
+        '2021/4/27 19:35:00',
+        '2021/4/27 19:35:00',
+        3
+    );
 
 INSERT INTO HISTORICS(boat_id,journey_id,cont_status,open_time,cont_weight,bat,dsk,temp,b_location,TiP,fl_path,fl_id,dt,reg,ln)
     VALUES
@@ -370,9 +430,10 @@ INSERT INTO HISTORICS(boat_id,journey_id,cont_status,open_time,cont_weight,bat,d
         1,
         '2021/4/27 19:35:00',
         '2021/4/27 19:35:00',
-        1
+        4
     );
 
+    
 
 
 INSERT INTO FILES(fl_name,fl_type,fl_path,fl_url,journey_id,boat_id,cam,rl,dt,reg)
