@@ -1297,6 +1297,10 @@ if(creds)
     {
         let authorized, http_code, status, code, message, usertype, id, mail, secret,  body = req.body;
 
+        console.log(); process.stdout.write(req.get("host")); console.log(req.url); console.log();
+
+        process.stdout.write("Request: "); console.log(req.body); console.log();
+
         if(body)
         {
             req = getBody(req,true);
@@ -1311,10 +1315,6 @@ if(creds)
                 body = null;
         }
             
-        console.log(); process.stdout.write(req.get("host")); console.log(req.url); console.log();
-
-        process.stdout.write("Request: "); console.log(req.body); console.log();
-
         if(body)
         {
             [authorized,http_code,status,code,message,usertype,id,mail,secret] = await verify(req,1);
@@ -1379,6 +1379,10 @@ if(creds)
     {
         let authorized, http_code, status, code, message, usertype, id, mail, secret, body = req.body;
 
+        console.log(); process.stdout.write(req.get("host")); console.log(req.url); console.log();
+
+        process.stdout.write("Request: "); console.log(req.body); console.log();
+
         if(body)
         {
             req = getBody(req,true);
@@ -1392,10 +1396,6 @@ if(creds)
             else 
                 body = null;
         }
-            
-        console.log(); process.stdout.write(req.get("host")); console.log(req.url); console.log();
-
-        process.stdout.write("Request: "); console.log(req.body); console.log();
 
         if(body)
         {
@@ -1464,6 +1464,10 @@ if(creds)
     app.get("/journeys", async (req,res) => 
     {
         let authorized, http_code, status, code, message, usertype, id, mail, secret, body = req.body;
+        
+        console.log(); process.stdout.write(req.get("host")); console.log(req.url); console.log();
+
+        process.stdout.write("Request: "); console.log(req.body); console.log();
 
         if(body)
         {
@@ -1479,9 +1483,7 @@ if(creds)
                 body = null;
         }
 
-        console.log(); process.stdout.write(req.get("host")); console.log(req.url); console.log();
-
-        process.stdout.write("Request: "); console.log(req.body); console.log();
+       
 
         if(body)
         {
@@ -1555,6 +1557,10 @@ if(creds)
     {
         let authorized, http_code, status, code, message, usertype, id, mail, secret, body = req.body;
 
+        console.log(); process.stdout.write(req.get("host")); console.log(req.url); console.log();
+
+        process.stdout.write("Request: "); console.log(req.body); console.log();
+
         if(body)
         {
             req = getBody(req,true);
@@ -1567,11 +1573,7 @@ if(creds)
             }
             else 
                 body = null;
-        }
-
-        console.log(); process.stdout.write(req.get("host")); console.log(req.url); console.log();
-
-        process.stdout.write("Request: "); console.log(req.body); console.log();
+        } 
 
         if(body)
         {
@@ -1637,6 +1639,10 @@ if(creds)
     {
         let authorized, http_code, status, code, message, usertype, id, mail, secret, body = req.body;
 
+        console.log(); process.stdout.write(req.get("host")); console.log(req.url); console.log();
+
+        process.stdout.write("Request: "); console.log(req.body); console.log();
+
         if(body)
         {
             req = getBody(req,true);
@@ -1651,10 +1657,6 @@ if(creds)
                 body = null;
         }
             
-        console.log(); process.stdout.write(req.get("host")); console.log(req.url); console.log();
-
-        process.stdout.write("Request: "); console.log(req.body); console.log();
-
         if(body)
         {
             [authorized,http_code,status,code,message,usertype,id,mail,secret] = await verify(req,1);
@@ -1719,6 +1721,10 @@ if(creds)
     {
         let authorized, http_code, status, code, message, usertype, id, mail, secret,  body = req.body;
 
+        console.log(); process.stdout.write(req.get("host")); console.log(req.url); console.log();
+
+        process.stdout.write("Request: "); console.log(req.body); console.log();
+
         if(body)
         {
             req = getBody(req,true);
@@ -1732,10 +1738,6 @@ if(creds)
             else 
                 body = null;
         }
-            
-        console.log(); process.stdout.write(req.get("host")); console.log(req.url); console.log();
-
-        process.stdout.write("Request: "); console.log(req.body); console.log();
 
         if(body)
         {
@@ -1800,6 +1802,11 @@ if(creds)
     app.get("/params", async (req,res) =>
     {
         let authorized, http_code, status, code, message, usertype, id, mail, secret,  body = req.body;
+       
+        console.log(); process.stdout.write(req.get("host")); console.log(req.url); console.log();
+
+        process.stdout.write("Request: "); console.log(req.body); console.log();
+
 
         if(body)
         {
@@ -1814,11 +1821,7 @@ if(creds)
             else 
                 body = null;
         }
-            
-        console.log(); process.stdout.write(req.get("host")); console.log(req.url); console.log();
-
-        process.stdout.write("Request: "); console.log(req.body); console.log();
-
+     
         if(body)
         {
             [authorized,http_code,status,code,message,usertype,id,mail,secret] = await verify(req,2);
@@ -1884,6 +1887,10 @@ if(creds)
     {
         let authorized, http_code, status, code, message, usertype, id, mail, secret, body = req.body;
 
+        console.log(); process.stdout.write(req.get("host")); console.log(req.url); console.log();
+
+        process.stdout.write("Request: "); console.log(req.body); console.log();
+
         if(body)
         {
             req = getBody(req,true);
@@ -1898,10 +1905,6 @@ if(creds)
                 body = null;
         }
             
-        console.log(); process.stdout.write(req.get("host")); console.log(req.url); console.log();
-
-        process.stdout.write("Request: "); console.log(req.body); console.log();
-
         if(body)
         {
             [authorized,http_code,status,code,message,usertype,id,mail,secret] = await verify(req,2);
@@ -2306,7 +2309,7 @@ if(creds)
     {
         let authorized = false, access, http_code, status, code, message, min = 2;
         
-        let id, mail, usertype, body = req.body;
+        let id, mail, usertype, body = req.body, params;
         
         console.log(); process.stdout.write(req.get("host")); console.log(req.url); console.log();
 
