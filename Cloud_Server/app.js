@@ -137,6 +137,27 @@ if(!test)
 18: Deletion in progress
 */
 /*********************************FUNCTIONS***********************************/
+function getBody(req,inception)
+{
+    if(inception)
+    {
+        if(req && req.body && req.body.body)
+        {
+            try
+            {
+                req.body = JSON.parse(req.body.body);
+            }
+            catch(error)
+            {
+                return null;
+            }
+        }
+        else
+            return null;      
+    }
+
+    return req;
+}
 
 async function resetQ()
 {
@@ -1194,59 +1215,80 @@ if(creds)
 
     app.get("/recovery", sup, async (req,res) => 
     {
-        let params = req.body;
+        let body = req.body; 
 
         console.log(); process.stdout.write(req.get("host")); console.log(req.url); console.log();
 
         process.stdout.write("Request: "); console.log(req.body); console.log();
-
-        let mail = params.mail;
-
-        let W = await SQL.SEL("*",null,"USERS",{mail},null);
-
-        if(!W.status)
+        
+        if(body)
         {
-            if(W[0])
+            req = getBody(req,true);
+
+            if(req && req.body)
             {
-                if(W[0].mail && W[0].username && W[0].st)
+                process.stdout.write("Processed Request: "); console.log(req.body); console.log();
+                
+                body = Object.keys(req.body).length;
+            }
+            else 
+                body = null;
+        }
+            
+        if(body)
+        {
+            let params = req.body;
+
+            let mail = params.mail;
+    
+            let W = await SQL.SEL("*",null,"USERS",{mail},null);
+    
+            if(!W.status)
+            {
+                if(W[0])
                 {
-                    let username = W[0].username, mail = W[0].mail, password = gen(16);
-
-                    let pswrd = await bcrypt.hash(password,10);
-                    
-                    let Q = await SQL.UPD("USERS",{pswrd},W[0].id);        
-
-                    if(!Q.status)
+                    if(W[0].mail && W[0].username && W[0].st)
                     {
-                        try
-                        {   
-                            handle.mailing({username,mail,password},false,transporter);
-
-                            handle.response(res,200,{message:"An email containing new credentials was sent",status:"success",code:1});
-                        }
-                        catch(error)
+                        let username = W[0].username, mail = W[0].mail, password = gen(16);
+    
+                        let pswrd = await bcrypt.hash(password,10);
+                        
+                        let Q = await SQL.UPD("USERS",{pswrd},W[0].id);        
+    
+                        if(!Q.status)
                         {
-                            log.errorLog("mail",error.toString(),1);
-
-                            handle.response(res,500,{message:"Unable to send email",status:"failure",code:4});
+                            try
+                            {   
+                                handle.mailing({username,mail,password},false,transporter);
+    
+                                handle.response(res,200,{message:"An email containing new credentials was sent",status:"success",code:1});
+                            }
+                            catch(error)
+                            {
+                                log.errorLog("mail",error.toString(),1);
+    
+                                handle.response(res,500,{message:"Unable to send email",status:"failure",code:4});
+                            }
                         }
+                        else
+                            handle.response(res,500,Q);
+    
                     }
+                    else if(W[0].st == false)
+                        handle.response(res,403,{message:"User is not enabled",status:"unavailable",code:6});
                     else
-                        handle.response(res,500,Q);
-
+                        handle.response(res,500,{message:"Database Integrity Issue",status:"failure",code:4});
                 }
-                else if(W[0].st == false)
-                    handle.response(res,403,{message:"User is not enabled",status:"unavailable",code:6});
                 else
-                    handle.response(res,500,{message:"Database Integrity Issue",status:"failure",code:4});
+                {
+                    handle.response(res,403,{message:"No user is registered with this email address",status:"failure",code:4});
+                }
             }
             else
-            {
-                handle.response(res,403,{message:"No user is registered with this email address",status:"failure",code:4});
-            }
+                handle.response(res,500,W);
         }
         else
-            handle.response(res,500,W);
+            handle.response(res,400,{message:"No Body",status:"failure",code:4});   
     });
 
     /*Data Visualization*/
@@ -1256,7 +1298,18 @@ if(creds)
         let authorized, http_code, status, code, message, usertype, id, mail, secret,  body = req.body;
 
         if(body)
-            body = Object.keys(body).length;
+        {
+            req = getBody(req,true);
+
+            if(req && req.body)
+            {
+                process.stdout.write("Processed Request: "); console.log(req.body); console.log();
+                
+                body = Object.keys(req.body).length;
+            }
+            else 
+                body = null;
+        }
             
         console.log(); process.stdout.write(req.get("host")); console.log(req.url); console.log();
 
@@ -1327,7 +1380,18 @@ if(creds)
         let authorized, http_code, status, code, message, usertype, id, mail, secret, body = req.body;
 
         if(body)
-            body = Object.keys(body).length;
+        {
+            req = getBody(req,true);
+
+            if(req && req.body)
+            {
+                process.stdout.write("Processed Request: "); console.log(req.body); console.log();
+                
+                body = Object.keys(req.body).length;
+            }
+            else 
+                body = null;
+        }
             
         console.log(); process.stdout.write(req.get("host")); console.log(req.url); console.log();
 
@@ -1402,7 +1466,18 @@ if(creds)
         let authorized, http_code, status, code, message, usertype, id, mail, secret, body = req.body;
 
         if(body)
-            body = Object.keys(body).length;
+        {
+            req = getBody(req,true);
+
+            if(req && req.body)
+            {
+                process.stdout.write("Processed Request: "); console.log(req.body); console.log();
+                
+                body = Object.keys(req.body).length;
+            }
+            else 
+                body = null;
+        }
 
         console.log(); process.stdout.write(req.get("host")); console.log(req.url); console.log();
 
@@ -1481,7 +1556,18 @@ if(creds)
         let authorized, http_code, status, code, message, usertype, id, mail, secret, body = req.body;
 
         if(body)
-            body = Object.keys(body).length
+        {
+            req = getBody(req,true);
+
+            if(req && req.body)
+            {
+                process.stdout.write("Processed Request: "); console.log(req.body); console.log();
+                
+                body = Object.keys(req.body).length;
+            }
+            else 
+                body = null;
+        }
 
         console.log(); process.stdout.write(req.get("host")); console.log(req.url); console.log();
 
@@ -1552,7 +1638,18 @@ if(creds)
         let authorized, http_code, status, code, message, usertype, id, mail, secret, body = req.body;
 
         if(body)
-            body = Object.keys(body).length;
+        {
+            req = getBody(req,true);
+
+            if(req && req.body)
+            {
+                process.stdout.write("Processed Request: "); console.log(req.body); console.log();
+                
+                body = Object.keys(req.body).length;
+            }
+            else 
+                body = null;
+        }
             
         console.log(); process.stdout.write(req.get("host")); console.log(req.url); console.log();
 
@@ -1623,7 +1720,18 @@ if(creds)
         let authorized, http_code, status, code, message, usertype, id, mail, secret,  body = req.body;
 
         if(body)
-            body = Object.keys(body).length;
+        {
+            req = getBody(req,true);
+
+            if(req && req.body)
+            {
+                process.stdout.write("Processed Request: "); console.log(req.body); console.log();
+                
+                body = Object.keys(req.body).length;
+            }
+            else 
+                body = null;
+        }
             
         console.log(); process.stdout.write(req.get("host")); console.log(req.url); console.log();
 
@@ -1694,7 +1802,18 @@ if(creds)
         let authorized, http_code, status, code, message, usertype, id, mail, secret,  body = req.body;
 
         if(body)
-            body = Object.keys(body).length;
+        {
+            req = getBody(req,true);
+
+            if(req && req.body)
+            {
+                process.stdout.write("Processed Request: "); console.log(req.body); console.log();
+                
+                body = Object.keys(req.body).length;
+            }
+            else 
+                body = null;
+        }
             
         console.log(); process.stdout.write(req.get("host")); console.log(req.url); console.log();
 
@@ -1766,7 +1885,18 @@ if(creds)
         let authorized, http_code, status, code, message, usertype, id, mail, secret, body = req.body;
 
         if(body)
-            body = Object.keys(body).length;
+        {
+            req = getBody(req,true);
+
+            if(req && req.body)
+            {
+                process.stdout.write("Processed Request: "); console.log(req.body); console.log();
+                
+                body = Object.keys(req.body).length;
+            }
+            else 
+                body = null;
+        }
             
         console.log(); process.stdout.write(req.get("host")); console.log(req.url); console.log();
 
@@ -1834,11 +1964,25 @@ if(creds)
 
     app.get("/files/zip", async (req,res) => 
     {
-        let authorized, http_code, status, code, message, usertype, id, mail, secret, body = Object.keys(req.body).length;
+        let authorized, http_code, status, code, message, usertype, id, mail, secret, body = req.body;
 
         console.log(); process.stdout.write(req.get("host")); console.log(req.url); console.log();
 
         process.stdout.write("Request: "); console.log(req.body); console.log();
+
+        if(body)
+        {
+            req = getBody(req,true);
+
+            if(req && req.body)
+            {
+                process.stdout.write("Processed Request: "); console.log(req.body); console.log();
+                
+                body = Object.keys(req.body).length;
+            }
+            else 
+                body = null;
+        }
 
         if(body)
         {
@@ -1870,11 +2014,25 @@ if(creds)
 
     app.get("/files/:type/:file", async (req,res) => 
     {
-        let authorized, http_code, status, code, message, usertype, id, mail, secret, body = Object.keys(req.body).length;
+        let authorized, http_code, status, code, message, usertype, id, mail, secret, body = req.body;
 
         console.log(); process.stdout.write(req.get("host")); console.log(req.url); console.log();
 
         process.stdout.write("Request: "); console.log(req.body); console.log();
+
+        if(body)
+        {
+            req = getBody(req,true);
+
+            if(req && req.body)
+            {
+                process.stdout.write("Processed Request: "); console.log(req.body); console.log();
+                
+                body = Object.keys(req.body).length;
+            }
+            else 
+                body = null;
+        }
 
         if(body)
         {
@@ -1901,9 +2059,7 @@ if(creds)
 
     app.post("/signup", sup, async (req,res) => //add approval
     {
-        let params = req.body;
-
-        let body = Object.keys(req.body).length;
+        let body = req.body;
 
         console.log(); process.stdout.write(req.get("host")); console.log(req.url); console.log();
 
@@ -1911,6 +2067,22 @@ if(creds)
 
         if(body)
         {
+            req = getBody(req,true);
+
+            if(req && req.body)
+            {
+                process.stdout.write("Processed Request: "); console.log(req.body); console.log();
+                
+                body = Object.keys(req.body).length;
+            }
+            else 
+                body = null;
+        }
+
+        if(body)
+        {
+            let params = req.body;
+
             let username = params.username;
 
             let W = await SQL.SEL("*",null,"USERS",{username},null);
@@ -1979,11 +2151,25 @@ if(creds)
     {
         let authorized = false, access, http_code, status, code, message, secret, min = 1;
         
-        let id, mail, usertype, body = Object.keys(req.body).length;
+        let id, mail, usertype, body = req.body;
         
         console.log(); process.stdout.write(req.get("host")); console.log(req.url); console.log();
 
         process.stdout.write("Request: "); console.log(req.body); console.log();
+
+        if(body)
+        {
+            req = getBody(req,true);
+
+            if(req && req.body)
+            {
+                process.stdout.write("Processed Request: "); console.log(req.body); console.log();
+                
+                body = Object.keys(req.body).length;
+            }
+            else 
+                body = null;
+        }
 
         if(body)
         {
@@ -2045,11 +2231,25 @@ if(creds)
     {
         let authorized = false, access, http_code, status, code, message, secret, min = 1;
         
-        let id, mail, usertype, body = Object.keys(req.body).length;
+        let id, mail, usertype, body = req.body;
         
         console.log(); process.stdout.write(req.get("host")); console.log(req.url); console.log();
 
         process.stdout.write("Request: "); console.log(req.body); console.log();
+
+        if(body)
+        {
+            req = getBody(req,true);
+
+            if(req && req.body)
+            {
+                process.stdout.write("Processed Request: "); console.log(req.body); console.log();
+                
+                body = Object.keys(req.body).length;
+            }
+            else 
+                body = null;
+        }
 
         if(body)
         {
@@ -2106,11 +2306,25 @@ if(creds)
     {
         let authorized = false, access, http_code, status, code, message, min = 2;
         
-        let id, mail, usertype, body = Object.keys(req.body).length;
+        let id, mail, usertype, body = req.body;
         
         console.log(); process.stdout.write(req.get("host")); console.log(req.url); console.log();
 
         process.stdout.write("Request: "); console.log(req.body); console.log();
+
+        if(body)
+        {
+            req = getBody(req,true);
+
+            if(req && req.body)
+            {
+                process.stdout.write("Processed Request: "); console.log(req.body); console.log();
+                
+                body = Object.keys(req.body).length;
+            }
+            else 
+                body = null;
+        }
 
         if(body)
         {
@@ -2230,11 +2444,25 @@ if(creds)
     {
         let authorized = false, access = false, http_code, status, code, message, min = 1;
 
-        let usertype, id, body = Object.keys(req.body).length, params;
+        let usertype, id, body = req.body, params;
         
         console.log(); process.stdout.write(req.get("host")); console.log(req.url); console.log();
 
         process.stdout.write("Request: "); console.log(req.body); console.log();
+
+        if(body)
+        {
+            req = getBody(req,true);
+
+            if(req && req.body)
+            {
+                process.stdout.write("Processed Request: "); console.log(req.body); console.log();
+                
+                body = Object.keys(req.body).length;
+            }
+            else 
+                body = null;
+        }
 
         if(body)
         {
