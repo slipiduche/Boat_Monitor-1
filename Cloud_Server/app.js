@@ -2017,14 +2017,16 @@ if(creds)
 
     app.get("/files/:type/:file", async (req,res) => 
     {
-        let authorized, http_code, status, code, message, usertype, id, mail, secret, body = req.body;
+        let authorized, http_code, status, code, message, usertype, id, mail, secret, headers = req.headers;
 
         console.log(); process.stdout.write(req.get("host")); console.log(req.url); console.log();
 
-        process.stdout.write("Request: "); console.log(req.body); console.log();
+        process.stdout.write("Request: "); console.log(headers); console.log();
 
-        if(body)
+        if(headers)
         {
+            req.body = req.headers;
+            
             req = getBody(req,true);
 
             if(req && req.body)

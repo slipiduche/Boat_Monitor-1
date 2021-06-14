@@ -1,0 +1,7 @@
+Date: Mon Jun 14 2021 15:30:06 GMT-0400 (Venezuela Time)
+
+Piping error of file ./files/media/snapshots/J1/IMG_20210506_140531547.jpg.
+
+TypeError: Cannot read property 'size' of undefinedTypeError: Cannot read property 'size' of undefined
+    at Object.module.exports.downloads (C:\My_Workspace\Boat_Monitor\Cloud_Server\modules\requests.js:452:50)
+    at processTicksAndRejections (node:internal/process/task_queues:94:5)

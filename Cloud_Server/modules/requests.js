@@ -424,7 +424,7 @@ module.exports.downloads = async (req,res) =>
                         let stat = util.promisify(fs.stat);
     
                         let stats = await stat(filepath);
-    
+                        
                         if(type == ".txt" || type == ".csv")
                             ct = "text/plain";
                         else if(type == ".mp4")
@@ -438,18 +438,27 @@ module.exports.downloads = async (req,res) =>
                         {
     
                             let stream = fs.createReadStream(filepath), hrstart = process.hrtime();                        
-    
+                            
+                            let finished = false;
+                            
                             if(compression && type == ".jpg")
                             {
                                 res.writeHead(200, {'Content-Type': "image/jpeg"});
                                 
                                 let compress = sharp().rotate().resize(530).jpeg({ mozjpeg: true, quality:60});
                                 
-                                stream.pipe(compress).on("data",(chunk) => size+=chunk.length).pipe(res);
+                                stream.pipe(compress).on("data",(chunk) => 
+                                {
+                                    size+=chunk.length;
+
+                                    if(finished)
+                                        print(hrstart,size,filepath);
+
+                                }).pipe(res);
                             }
                             else
                             {
-                                let size = stats.size;
+                                size = stats.size;
     
                                 res.writeHead(200, {'Content-Type': ct,'Content-Length':size});       
                 
@@ -460,6 +469,14 @@ module.exports.downloads = async (req,res) =>
                             stream.on("error",(e) =>  
                             {
                                 log.errorLog("download","Piping error of file " + filepath + ".\n\r\n\r" + e,1);
+                            });
+
+                            stream.on("end",() => 
+                            {
+                                finished = true;
+
+                                if(!compression)
+                                    print(hrstart,size,filepath)
                             });
 
                             stream.on("finish",() => 
@@ -568,7 +585,7 @@ module.exports.downloads = async (req,res) =>
                                             log.errorLog("download","Piping error of file " + filepath + ".\n\r\n\r" + e,1);
                                         }) 
 
-                                        stream.on("finish",() => 
+                                        stream.on("end",() => 
                                         {
                                             print(hrstart,size,filepath)
                                         });                                       

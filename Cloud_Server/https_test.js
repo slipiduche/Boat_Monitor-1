@@ -37,7 +37,7 @@ const { error } = require('console');
 
 /*************************VARIABLES AND INSTANCES*****************************/
 
-const port = 8443;
+const port = 9443;
 
 var privateKey, certificate, credentials;
 
@@ -168,12 +168,21 @@ if(creds)
     });
 
    
-    app.post('/kitty-pon',async (req,res)=>
+    app.post('/kitty',async (req,res)=>
     {
-        console.log(req);
+        console.log(req.headers);
 
         res.send({murp:"marp"});
     });
+
+    app.get('/kitty2',async (req,res)=>
+    {
+        console.log(req.headers);
+
+        res.send({murp:"marp"});
+    });
+
+
         
         
    

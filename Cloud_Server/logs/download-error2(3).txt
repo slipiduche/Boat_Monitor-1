@@ -1,0 +1,5 @@
+Date: Mon Jun 14 2021 15:16:20 GMT-0400 (Venezuela Time)
+
+File /files/historics/J1/B1_042220211937415959.txt can't be found.
+
+Error: ENOENT: no such file or directory, stat 'C:\files\historics\J1\B1_042220211937415959.txt'Error: ENOENT: no such file or directory, stat 'C:\files\historics\J1\B1_042220211937415959.txt'

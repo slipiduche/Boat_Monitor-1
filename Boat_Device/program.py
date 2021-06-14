@@ -104,10 +104,7 @@ def writeData(data,last):
     
 #}
 
-def get_temp():
-#{
-    return 7.7;
-#}
+from modules.params import getTemp as get_temp;
 
 def get_weight():
 #{
@@ -139,24 +136,24 @@ def connection(host = "https://www.google.com/"):
         return False;
 #}
 
-urllib3.disable_warnings()
+# urllib3.disable_warnings()
 
-url = "https://localhost:8443/kitty-pon";
+# url = "https://localhost:8443/kitty-pon";
 
-json_data = json.dumps({"CAT":"CAT"});
+# json_data = json.dumps({"CAT":"CAT"});
 
-multipart_form_data = {
-        'audio': ('m34.png', open('C:\\Users\\CLIM-DESKTOP\\Downloads\\m34.png','rb')),
-        'temperature': ('', str(1)),
-    }
+# multipart_form_data = {
+#         'audio': ('m34.png', open('C:\\Users\\CLIM-DESKTOP\\Downloads\\m34.png','rb')),
+#         'temperature': ('', str(1)),
+#     }
 
-d = json.dumps({"CAT":"CAT"});
+# d = json.dumps({"CAT":"CAT"});
 
-response = requests.post(url, data = d, verify= False);
+# response = requests.post(url, data = d, verify= False);
 
-print(response.json());
+# print(response.json());
 
-my_function();
+# my_function();
 
 dt = datetime.datetime.today();
 
