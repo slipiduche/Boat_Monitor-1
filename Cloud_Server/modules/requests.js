@@ -479,11 +479,6 @@ module.exports.downloads = async (req,res) =>
                                     print(hrstart,size,filepath)
                             });
 
-                            stream.on("finish",() => 
-                            {
-                                print(hrstart,size,filepath)
-                            });
-
                         }
                         catch(error)
                         {

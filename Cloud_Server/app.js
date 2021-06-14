@@ -288,7 +288,7 @@ async function filter(tab,retrieve,params,command,inner)
         delete params.rest;
     }
 
-    if(params.last)
+    if(params.last != null)
     {
         last = params.last;
 
