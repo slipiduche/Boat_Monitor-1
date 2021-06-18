@@ -34,3 +34,5 @@ def getTemp(samples,rate):
 # https://bigl.es/ds18b20-temperature-sensor-with-python-raspberry-pi/
 
 # https://pinout.xyz/pinout/1_wire#:~:text=The%20Raspberry%20Pi%20supports%20one,dtoverlay%3Dw1%2Dgpio
+
+# https://pypi.org/project/w1thermsensor/

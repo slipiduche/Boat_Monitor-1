@@ -1,4 +1,9 @@
-from modules.disk import getDisk
+import time;
 
 
-print(getDisk());
+t = time.localtime()[3];
+
+if(t > 18):
+    print("Night");
+else:
+    print("day");

@@ -1,5 +1,5 @@
 
-from RPi.Gpio import GPIO
+from RPi.GPIO import GPIO
 
 from hx711 import HX711
 
