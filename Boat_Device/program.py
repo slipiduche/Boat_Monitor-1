@@ -1,21 +1,8 @@
 #New Puthon file
 #!/usr/bin/python3
-# from hx711 import HX711
 
-# try:
-#     hx711 = HX711(
-#         dout_pin=5,
-#         pd_sck_pin=6,
-#         channel='A',
-#         gain=64
-#         )
 
-#     hx711.reset()   # Before we start, reset the HX711 (not obligate)
-#     measures = hx711.get_raw_data(num_measures=3)
-# finally:
-#     GPIO.cleanup()  # always do a GPIO cleanup in your scripts!
 
-# print("\n".join(measures))
 
 
 # import http.client
@@ -42,7 +29,7 @@ import requests
 import datetime
 import sys
 import os
-import urllib
+
 import urllib3
 import json
 
@@ -105,55 +92,13 @@ def writeData(data,last):
 #}
 
 from modules.params import getTemp as get_temp;
+from modules.params import get_location
+from modules.params import get_status
+from modules.params import get_weight
 
-def get_weight():
-#{
-    return 147.54;
-#}
 
-def get_status():
-#{
-    return True;
-#}
 
-def get_location():
-#{
-    return True;
-#}
 
-def connection(host = "https://www.google.com/"):
-#{
-    try:
-
-        urllib.request.urlopen(host);
-        
-        return True;
-    
-    except Exception as e:
-
-        print(e);
-
-        return False;
-#}
-
-# urllib3.disable_warnings()
-
-# url = "https://localhost:8443/kitty-pon";
-
-# json_data = json.dumps({"CAT":"CAT"});
-
-# multipart_form_data = {
-#         'audio': ('m34.png', open('C:\\Users\\CLIM-DESKTOP\\Downloads\\m34.png','rb')),
-#         'temperature': ('', str(1)),
-#     }
-
-# d = json.dumps({"CAT":"CAT"});
-
-# response = requests.post(url, data = d, verify= False);
-
-# print(response.json());
-
-# my_function();
 
 dt = datetime.datetime.today();
 
