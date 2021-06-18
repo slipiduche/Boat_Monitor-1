@@ -1,8 +1,4 @@
-from os import listdir
-from os.path import isfile, join
+from modules.disk import getDisk
 
-mypath = "./";
 
-onlyfiles = [mypath + f for f in listdir(mypath) if isfile(join(mypath, f))]
-
-print(onlyfiles);
+print(getDisk());

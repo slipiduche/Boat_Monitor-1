@@ -39,57 +39,7 @@ journey_id = 1;
 
 fl = None #'journeys/1/B1_20210608193736198.txt';
 
-def genFile(journey_id,boat_id):
-#{
-    global fl;
 
-    if(not fl):
-        
-        dt = datetime.datetime.today();
-
-        fl_name = "B" + str(boat_id) + "_" + dt.strftime("%Y%m%d%H%M%S%f")[:-3] + ".txt";
-
-        fl_path = "journeys/" + str(journey_id) + "/";
-
-        fl = fl_path + fl_name;
-
-    print(fl);
-
-    return fl;
-#}    
-
-def exists(path):
-#{
-    return os.path.isfile(path);
-#}
-
-def writeData(data,last):
-#{
-    global journey_id, boat_id;
-
-    path = genFile(journey_id,boat_id);
-
-    j = json.dumps(data);
-   
-    w = "";
-
-    if(exists(path)):
-        
-        w = "," + j;
-
-        if(last):
-            w += "]";
-
-    else:
-        w = "[" + j;
-    
-    fl = open(path,'a');
-
-    fl.write(w);
-
-    fl.close();
-    
-#}
 
 from modules.params import getTemp as get_temp;
 from modules.params import get_location
@@ -122,9 +72,6 @@ writeData(data,True);
 #print(f.read());
 
 #f.close();
-
-print(connection(host = 'https://www.google.com/'));
-
 
 import threading
 

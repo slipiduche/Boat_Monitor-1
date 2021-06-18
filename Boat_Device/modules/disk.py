@@ -3,6 +3,7 @@ from os.path import isfile, join, abspath
 
 import shutil
 
+disk = "/";
 
 def getDir(path):
 #{
@@ -61,4 +62,29 @@ def delDir(path):
 
         return False;
 
+#}
+
+def getDisk(path = disk):
+#{
+    try:
+    
+        usage = shutil.disk_usage(path);
+
+        print(usage);
+
+        max_st = round(usage[0]/(1024**3),2);
+
+        dsk =  round(usage[1]*100/usage[0],2);
+    
+        js = {"max_st":max_st, "dsk":dsk};
+
+        print(js);
+
+        return js;
+
+    except Exception as e:
+
+        print(e);
+
+        return None;
 #}
