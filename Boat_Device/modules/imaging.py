@@ -1,45 +1,91 @@
 import numpy as np
 
+import time 
+
 import cv2
 
-cam = cv2.VideoCapture(0)
-
-print (cam.set (cv2.CAP_PROP_FPS, 30))
-
-cv2.namedWindow("test")
-
-def change_res(width, height):
+def change_res(cam,width, height):
+    
     cam.set(3, width)
+    
     cam.set(4, height)
 
-img_counter = 0
+    return cam;
 
-while True:
-    ret, frame = cam.read()
-    if not ret:
-        print("failed to grab frame")
-        break
-    cv2.imshow("test", frame)
+def capture(ips,frames,rate):
 
-    k = cv2.waitKey(1)
-    if k%256 == 27:
-        # ESC pressed
-        print("Escape hit, closing...")
-        break
-    elif k%256 == 32:
-        # SPACE pressed
-        img_name = "opencv_frame_{}.png".format(img_counter)
-        cv2.imwrite(img_name, frame)
-        print("{} written!".format(img_name))
-        img_counter += 1
+    cam = None;
 
-cam.release();
+    try:
+        
+        cam = cv2.VideoCapture("http://192.168.0.100:8080/video")
+    
+    except cv2.error as e:
+
+        print(e);
+    
+    print (cam.set (cv2.CAP_PROP_FPS, 30))
+
+    cv2.namedWindow("test");
+
+    img_counter = 0
+
+    prev = 0;
+    
+    capturing = cam.isOpened();
+
+    if capturing:
+        
+        print("capturing");
+
+    while img_counter < frames and capturing:
+
+        ret, frame = cam.read()
+
+        if not ret:
+            
+            print("failed to grab frame");
+            
+            break;
+       
+        cv2.imshow("test", frame);
+
+        time_elapsed = time.time() - prev
+
+        if(time_elapsed >= rate):
+
+            prev = time_elapsed;
+
+            img_name = "opencv_frame_{}.png".format(img_counter)
+            
+            cv2.imwrite(img_name, frame)
+            
+            print("{} written!".format(img_name))
+            
+            img_counter += 1
+
+        # k = cv2.waitKey(1)
+
+        # if k%256 == 27:
+        #     # ESC pressed
+        #     print("Escape hit, closing...")
+        #     break
+        # elif k%256 == 32:
+        #     # SPACE pressed
+        #     img_name = "opencv_frame_{}.png".format(img_counter)
+        #     cv2.imwrite(img_name, frame)
+        #     print("{} written!".format(img_name))
+        #     img_counter += 1
+
+    cam.release();
+
+    cv2.destroyAllWindows();
 
 # webcam https://gadgets.ndtv.com/mobiles/features/how-to-use-your-phone-as-a-webcam-617643
 
 #  OpenCV Tutorial https://www.youtube.com/watch?v=rKcwcARdg9M
 
-cv2.destroyAllWindows();
+
 
 
 

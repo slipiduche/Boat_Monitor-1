@@ -1,9 +1,3 @@
-import time;
+from modules.imaging import capture;
 
-
-t = time.localtime()[3];
-
-if(t > 18):
-    print("Night");
-else:
-    print("day");
+capture(None,2,5);

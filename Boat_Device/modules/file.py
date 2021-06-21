@@ -26,6 +26,28 @@ def exists(path):
     return os.path.isfile(path);
 #}
 
+def dexists(path):
+#{
+    return os.path.isdir(path);
+#}
+
+def mkdir(path):
+#{
+    try:
+
+        if not dexists(path):
+            
+            os.makedirs(path);
+
+        return True;
+
+    except Exception as e:
+
+        print(e);
+
+    return False;
+#}
+
 def writeData(data,last,journey_id,boat_id,fl):
 #{
     try:
