@@ -55,7 +55,7 @@ def status():
   print(data);
 
 
-t1 = threading.Thread(IO.set_lid_sensor,args=(status,));
+t1 = threading.Thread(target=IO.set_lid_sensor,args=(status,));
 
 t1.start();
 

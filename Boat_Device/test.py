@@ -16,9 +16,11 @@ def do_():
 
     while True:
 
-        t = time.time() - prev;
+        t = time.time();
 
-        if(t >= 20):
+        te = t - prev;
+
+        if(te >= 1):
 
             print(s);
 
@@ -29,9 +31,36 @@ def do_():
         if die:
             break;
 
+def do2():
+
+    prev = 0;
+
+    s = 0;
+
+    while True:
+
+        t = time.time();
+
+        te = t - prev;
+
+        if(te >= 1):
+
+            print("cat");
+
+            s += 1;
+
+            prev = t;
+        
+        if die:
+            break;
+
 t1 = threading.Thread(target = do_);
 
+t2 = threading.Thread(target = do2);
+
 def signal_handler(sig, frame):
+    
+    global die;
 
     print('End of Porgram');
 
@@ -48,6 +77,9 @@ print('Press Ctrl+C')
 i = 0;
 
 t1.start();
+
+t2.start();
+
 
 while True:
 
