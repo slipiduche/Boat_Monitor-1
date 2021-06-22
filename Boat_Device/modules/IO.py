@@ -4,9 +4,9 @@ from signal import pause;
 
 import time;
 
-pwm = PWMLED(7);
+pwm = PWMLED(12);
 
-cont = Button(8);
+cont = Button(27);
 
 def set_lid_sensor(container):
 #{
