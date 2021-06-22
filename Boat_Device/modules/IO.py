@@ -17,6 +17,11 @@ def set_lid_sensor(container):
     #pause();
 #}
 
+def getStatus():
+#{
+    return cont.is_active;
+#}
+
 def light(cont_status):
 #{
     t = time.localtime()[3];

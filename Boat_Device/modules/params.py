@@ -1,16 +1,48 @@
-def getTemp():
+from logging import exception
+from one_wire import getTemp;
+
+from weight import getWeight;
+
+from IO import getStatus;
+
+
+def get_temp():
 #{
-    return 7.7;
+    try:
+
+        return getTemp();
+    
+    except Exception as e:
+
+        print(e);
+
+    return None;
 #}
 
 def get_weight():
 #{
-    return 147.54;
+    try:
+        
+        return getWeight(30);
+    
+    except Exception as e:
+
+        print(e);
+
+    return None;
 #}
 
 def get_status():
 #{
-    return True;
+    try:
+        
+        return getStatus();
+
+    except Exception as e:
+
+        print(e);
+
+    return None;
 #}
 
 def get_location():
