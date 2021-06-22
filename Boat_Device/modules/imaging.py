@@ -4,7 +4,7 @@ import time
 
 import cv2
 
-def change_res(cam,width, height):
+def change_res(cam, width, height):
     
     cam.set(3, width)
     
@@ -50,11 +50,13 @@ def capture(ips,frames,rate):
        
         cv2.imshow("test", frame);
 
-        time_elapsed = time.time() - prev
+        t = time.time();
+
+        time_elapsed = t - prev
 
         if(time_elapsed >= rate):
 
-            prev = time_elapsed;
+            prev = t;
 
             img_name = "opencv_frame_{}.png".format(img_counter)
             
@@ -81,6 +83,80 @@ def capture(ips,frames,rate):
 
     cv2.destroyAllWindows();
 
+
+
+def record(ips,tm,fps):
+
+    cam = None;
+
+    rec = None;
+
+    fourcc = None;
+
+    try:
+        
+        cam = cv2.VideoCapture("http://192.168.0.100:8080/video")
+
+        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+
+        rec = cv2.VideoWriter('ex.mp4', fourcc, fps, (int(cam.get(3)), int(cam.get(4))));
+
+    except cv2.error as e:
+
+        print(e);
+    
+    print (cam.set (cv2.CAP_PROP_FPS, 30))
+
+    cv2.namedWindow("test");
+
+    img_counter = 0
+
+    prev = 0;
+    
+    capturing = cam.isOpened();
+
+    if capturing:
+        
+        print("capturing");
+
+    i  = 0;
+
+    dur = tm*fps;
+
+    while i < dur and cam.isOpened():
+
+        ret, frame = cam.read()
+
+        if not ret:
+            
+            print("failed to grab frame");
+            
+            break;
+
+        rec.write(frame);
+
+        i+=1;
+            
+        cv2.imshow("test", frame);
+
+        # t = time.time();
+
+        # time_elapsed = t- prev
+
+        # if(time_elapsed >= 1):
+
+        #     prev = t;
+            
+        #     i += 1
+
+        #     print(i);
+
+    cam.release();
+    
+    rec.release();
+
+    cv2.destroyAllWindows();
+    
 # webcam https://gadgets.ndtv.com/mobiles/features/how-to-use-your-phone-as-a-webcam-617643
 
 #  OpenCV Tutorial https://www.youtube.com/watch?v=rKcwcARdg9M

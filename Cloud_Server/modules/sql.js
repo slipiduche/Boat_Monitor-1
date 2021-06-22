@@ -294,7 +294,25 @@ module.exports.UPD = async function UPD(TABLE,COLS,WHERE)
   let q1 = "UPDATE " + TABLE, q2 = " SET ", q3, Q, params = [];
 
   if(WHERE)
-    q3 = " WHERE id = " + WHERE.toString();
+  {
+    if(Array.isArray(WHERE))
+      values = WHERE;
+    else
+      values.push(WHERE);
+
+    q3 = " WHERE id IN (";
+
+    for(let i = 0; i < WHERE.length; i++)
+    {
+        q3 += WHERE.toString();
+
+        if(i < WHERE.length - 1)
+          q3 += ",";
+    }
+
+    q3 += ")";
+  }
+    
 
   let keys = Object.keys(COLS), values = COLS;
     
