@@ -992,7 +992,7 @@ aedes.authenticate = async (client,info,password,callback) =>
                         on_journey:0,
                         queued:0,
                         pending:0,
-                        st:0,
+                        st:1,
                         dt
                     }
                     
