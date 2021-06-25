@@ -1,3 +1,6 @@
-from modules.imaging import record
+from modules.mqtts import Client
 
-record(None,5,30);
+
+client = Client();
+
+client.connect("192.168.0.106",3000)

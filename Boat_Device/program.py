@@ -2,6 +2,9 @@
 #!/usr/bin/python3
 
 from Boat_Device.modules.params import get_status
+
+import modules.file as file
+
 import modules.IO as IO;
 import modules.params as params;
 import threading;
@@ -28,6 +31,8 @@ data = {
 
 def status():
 
+  global journey_id, boat_id, fl;
+
   temp = params.get_temp();
 
   weight = params.get_weight();
@@ -51,6 +56,12 @@ def status():
       "cont_status":cont_status,
       "dt":dt.strftime("%Y/%m/%d %H:%M:%S.%f")[:-3],
   }
+
+  file.mkdir("journeys/" + str(journey_id));
+
+  fl = file.genFile(journey_id,boat_id,fl);
+
+  file.writeData(data);
 
   print(data);
 
