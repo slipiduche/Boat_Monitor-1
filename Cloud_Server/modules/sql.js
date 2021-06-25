@@ -295,6 +295,8 @@ module.exports.UPD = async function UPD(TABLE,COLS,WHERE)
 
   if(WHERE)
   {
+    let values = [];
+    
     if(Array.isArray(WHERE))
       values = WHERE;
     else
@@ -302,11 +304,11 @@ module.exports.UPD = async function UPD(TABLE,COLS,WHERE)
 
     q3 = " WHERE id IN (";
 
-    for(let i = 0; i < WHERE.length; i++)
+    for(let i = 0; i < values.length; i++)
     {
-        q3 += WHERE.toString();
+        q3 += values.toString();
 
-        if(i < WHERE.length - 1)
+        if(i < values.length - 1)
           q3 += ",";
     }
 
