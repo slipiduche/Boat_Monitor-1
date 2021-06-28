@@ -1,6 +1,10 @@
-from modules.mqtts import Client
+js = {"cat":"iugb","dog":"eibfe"};
+
+cat = js["cat"];
 
 
-client = Client();
+if "cat" and "dog" in js:
+    
+    print(cat);
 
-client.connect("192.168.0.106",3000)
+

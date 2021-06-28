@@ -768,8 +768,9 @@ function exclude(tab,command,params,id,uid)
         case "USERS":
         {
             if(command == "UPD")
-            {
-                if(id == uid)
+            {   
+
+                if(id.len == 1 && id[0] == uid)
                     params = removal(params,uex_self);
                 else
                     params = removal(params,uex);
