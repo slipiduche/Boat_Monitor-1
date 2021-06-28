@@ -1,9 +1,12 @@
 import paho.mqtt.client as mqtt
 
-import uuid, re, json, os, ssl
+import uuid, re, json, os, ssl,threading
 
-from params import get_weight;
+from modules.params import get_weight;
 
+import modules.disk as disk;
+
+dataLogs = "./logs/journey.json";
 
 class Client:
     def __init__(self):
@@ -60,18 +63,11 @@ def on_disconnect():
     print("Disconnected from MQTT BROKER")
 
 
-filePath = os.path.dirname(os.path.realpath(__file__))
-logsPath = os.path.join(filePath, "..", "logs")
-
-def deleteDir(journey: str):
-    name = journey + ".json"
-    path = os.path.join(logsPath, "journey", name)
-
-    os.remove(path)
-
 def saveData(client: Client, journey:int):
     
-    data ={"id":client.id,"journey":journey,"token":client.token,"status":"ongoing","synced":False};
+    global dataLogs;
+
+    data = {"id":client.id,"journey":journey,"token":client.token,"status":"ongoing","synced":False};
     
     client.synced = False;
 
@@ -79,14 +75,27 @@ def saveData(client: Client, journey:int):
 
     client.journey = journey;
     
-    path = "./logs/journey.json";
-
-    f = open(path, "w");
+    f = open(dataLogs, "w");
     
     f.write(json.dumps(data));
     
     f.close();
 
+def closureData(client: Client):
+    
+    global dataLogs;
+
+    data = {"id":client.id,"journey":client.journey,"token":client.token,"status":"ended","synced":False};
+    
+    client.synced = False;
+
+    client.status = "ended";
+    
+    f = open(dataLogs, "w");
+    
+    f.write(json.dumps(data));
+    
+    f.close();
 
 def resetData(client: Client):
     
@@ -102,17 +111,43 @@ def resetData(client: Client):
 
     client.journey = 0;
     
-    path = "./logs/journey.json";
-
-    f = open(path, "w");
+    f = open(dataLogs, "w");
     
     f.write(json.dumps(data));
     
     f.close();
 
-def loadData(x):
+def loadData(client: Client):
     
-    x;
+    f = open(dataLogs,"r");
+
+    data = json.loads(str(f.read()));
+
+    client.synced = data["synced"];
+
+    client.status = data["status"];
+    
+    client.token = data["token"];
+
+    client.id = data["id"];
+
+    client.journey = data["journey"];
+
+    f.close();
+
+def clear(topic,response, client: Client, journey: int):
+
+    deleted = disk.delDir(disk.getPath(journey));
+
+    if deleted:
+
+        response["deleted"] = 1;
+    
+    else:
+
+        response["deleted"] = 0;
+
+    client.publish(topic,json.dumps(response));
 
 
 def processMessage(message: object, topic: str, client: Client):
@@ -124,11 +159,11 @@ def processMessage(message: object, topic: str, client: Client):
         response = {}
 
         x = options[2];
-
-        id = message["id"];
-
+    
         user_id = message["user_id"];
-       
+
+        obs = message["obs"];
+
         if x == "START":
 
             start = message["start"];
@@ -136,6 +171,8 @@ def processMessage(message: object, topic: str, client: Client):
             if start:
 
                 token = message["token"];
+                
+                id = message["id"];
 
                 if token and id and user_id:
 
@@ -144,6 +181,8 @@ def processMessage(message: object, topic: str, client: Client):
                     response["user_id"] =  user_id;
 
                     response["token"] = token;
+                    
+                    response["obs"] = obs;
 
                     response["id"] =  id;
 
@@ -166,47 +205,44 @@ def processMessage(message: object, topic: str, client: Client):
 
         elif x == "END":
 
-            x;
+            end = message["end"];
+
+            if end:
+
+                response["weight"] = get_weight();
+
+                response["token"]  = client.token;
+
+                response["obs"] =  obs;
+
+                response["id"] = client.id;
+
+                response["user_id"] = user_id;
+
+                rt = "DEVICE/" + client.mac + "/ARRIVAL";
+
+                client.publish(rt,json.dumps(response));
 
         elif x == "CLEAR":
 
-            x;
+            journey = message["journey"];
 
-    if "start" in msg:
-        if "journey_id" in msg and msg["journey_id"] != 0:
-            if msg["start"] == 1:
-                response["weight"] = msg["weight"]
+            if journey:
 
-                saveToken(msg["token"], msg["journey_id"])
+                response = message;                
                 
-                client.journey = msg.[]
-                response["token"] = msg["token"]
+                response["proceed"] = 1;
 
-                client.publish("DEPARTURE", json.dumps(response, indent=4))
+                rt = "DEVICE/" + client.mac + "/DELETION";
+
+                client.publish(rt,json.dumps(response));
+
+                t1 = threading.Thread(target = clear,args=(rt,response,client,journey,))
+
+                try:
+
+                    t1.start();
                 
-            response["started"] = 1
-            saveJourney(msg["journey_id"]) 
-    
-    elif "end" in msg and msg["end"] == 1:
-        if "journey_id" in msg and msg["journey_id"] != 0:
-            response["started"] = 0
-            response["weight"] = getWeight()
-            response["token"] = msg["token"]
-            response["journey_id"] = msg["journey_id"]
+                except Exception as e:
 
-            saveJourney(response)
-
-            client.journey = 0 # end journey
-            client.publish("END", json.dumps(response, indent=4))
-
-    elif "delete" in msg and msg["delete"] == 1:
-        if "journey_id" in msg and msg["journey_id"] != 0:
-            if client.currentJourney != msg["journey_id"]:
-                response["proceed"] = 1
-                client.publish("DELETION", json.dumps(response, indent=4))
-
-                deleteDir(str(msg["journey_id"]))
-
-                response["deleted"] = 1
-                client.publish("DELETION", json.dumps(response, indent=4))
-
+                    print(e);

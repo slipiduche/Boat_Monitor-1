@@ -82,3 +82,4 @@ def writeData(data,last,journey_id,boat_id,fl):
     
         return False;
 #}
+

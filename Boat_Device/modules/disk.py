@@ -88,3 +88,8 @@ def getDisk(path = disk):
 
         return None;
 #}
+
+def getPath(journey):
+#{
+    return "./journeys/" + str(journey);
+#}
