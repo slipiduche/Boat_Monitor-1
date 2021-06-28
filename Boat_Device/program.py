@@ -1,17 +1,15 @@
 #New Puthon file
 #!/usr/bin/python3
 
-from Boat_Device.modules.params import get_status
+from modules.params import get_status
 
 import modules.file as file
 
 import modules.IO as IO;
+
 import modules.params as params;
-import threading;
-import datetime;
-import signal;
-import sys;
-import time;
+
+import threading,datetime,signal,sys,time;
 
 boat_id = 1;
 
