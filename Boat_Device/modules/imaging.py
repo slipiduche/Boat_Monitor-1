@@ -1,8 +1,6 @@
 import numpy as np
 
-import time 
-
-import cv2
+import time,cv2
 
 def change_res(cam, width, height):
     

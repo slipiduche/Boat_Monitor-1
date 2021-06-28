@@ -1,8 +1,4 @@
-import os
-
-import urllib
-
-import requests
+import os,urllib,requests
 
 url = "https://localhost:9443/upload-photos";
 
