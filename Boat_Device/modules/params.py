@@ -10,7 +10,7 @@ def get_temp():
 #{
     try:
 
-        return getTemp();
+        return getTemp(30,0.001);
     
     except Exception as e:
 
