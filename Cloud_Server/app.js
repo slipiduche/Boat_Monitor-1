@@ -770,7 +770,11 @@ function exclude(tab,command,params,id,uid)
             if(command == "UPD")
             {   
 
-                if(id.len == 1 && id[0] == uid)
+                console.log("User id: ", uid);
+
+                console.log("id: ",id)
+
+                if(id.length == 1 && id[0] == uid)
                     params = removal(params,uex_self);
                 else
                     params = removal(params,uex);
