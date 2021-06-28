@@ -297,7 +297,7 @@ async function filter(tab,retrieve,params,command,inner)
 
     if(params.token)
     {
-        uid = params.token[params.token.length - 1];
+        uid = params.token[params.token.length - 2];
     
         delete params.token;
     }
