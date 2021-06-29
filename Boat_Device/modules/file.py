@@ -74,7 +74,7 @@ def writeData(data,last,journey_id,boat_id,fl):
 
         file.close();
     
-        return True;
+        return path;
 
     except Exception as e:
 
