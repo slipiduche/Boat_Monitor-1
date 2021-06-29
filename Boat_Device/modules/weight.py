@@ -17,7 +17,7 @@ mw = 500; # Max weight: Kg
 
 def getWeight(samples):
 #{
-    global vcc, gain, fullscale, mw, hx711;
+    global vcc, gain, fullscale, mw;
 
     weight = 0.0;
 
