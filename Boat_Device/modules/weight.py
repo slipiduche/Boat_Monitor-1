@@ -62,7 +62,7 @@ def getWeight(samples):
 
     time_elapsed = time.perf_counter() - t;
 
-    print("Measured Weight: %X (Raw Data)" % raw);
+    print("Measured Weight: %f (Raw Data)" % raw);
     
     print("Samples: %d" % samples);
     
