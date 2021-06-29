@@ -14,7 +14,7 @@ def set_lid_sensor(container):
 
     cont.when_deactivated = container(False);
 
-    #pause();
+    pause();
 #}
 
 def getStatus():
