@@ -27,7 +27,7 @@ data = {
     "dt2":dt.strftime("%Y/%m/%d %H:%M:%S.%f")
 }
 
-def status():
+def status(cont_status):
 
   global journey_id, boat_id, fl;
 
