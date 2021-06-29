@@ -1,5 +1,7 @@
 import time
 
+import statistics as stat;
+
 from w1thermsensor import W1ThermSensor
 
 sensor = W1ThermSensor();
@@ -9,6 +11,8 @@ def getTemp(samples,rate):
     iter = 0;
 
     temp = 0.0;
+
+    t = time.time();
 
     while(iter < samples):
 
@@ -20,11 +24,15 @@ def getTemp(samples,rate):
 
     temp /= iter;
 
+    time_elapsed = time.time() = t;
+    
     print("Measured Temperature: %s Celsius" % temp);
     
     print("Samples: %d" % iter);
     
-    print("Sample Rate: %dms" % rate);
+    print("Sample Rate: %dms" % rate*1000);
+
+    print("Overall Measurment Time: %ds" % time_elapsed);
 
     return temp;
 #}

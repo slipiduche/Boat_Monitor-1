@@ -1,6 +1,10 @@
 
 import RPi.GPIO as GPIO
 
+import statistics as stat
+
+import time
+
 from hx711 import HX711
 
 vcc = 3.3; # HX711 ADC Power Source: V
@@ -23,6 +27,8 @@ def getWeight(samples):
 
     raw = 0;
 
+    t = time.time();
+
     try:     
         
         GPIO.setmode(GPIO.BCM);
@@ -36,7 +42,7 @@ def getWeight(samples):
 
         hx711.reset()   # Before we start, reset the HX711 (not obligate)
         
-        raw  = hx711.get_raw_data(times = samples);
+        raw  = stat.mean(hx711.get_raw_data(times = samples));
     
     except Exception as e:
 
@@ -54,7 +60,13 @@ def getWeight(samples):
 
     weight = raw;
 
-    print("\n Weight: ".join(str(weight)));
+    time_elapsed = time.time() - t;
+
+    print("Measured Weight: %X (Raw Data)" % raw);
+    
+    print("Samples: %d" % samples);
+    
+    print("Overall Measurment Time: %ds" % time_elapsed);
 
     return weight;
 #}
