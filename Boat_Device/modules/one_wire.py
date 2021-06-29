@@ -12,7 +12,7 @@ def getTemp(samples,rate):
 
     temp = 0.0;
 
-    t = time.time();
+    t = time.perf_counter();
 
     while(iter < samples):
 
@@ -24,8 +24,8 @@ def getTemp(samples,rate):
 
     temp /= iter;
 
-    time_elapsed = time.time() = t;
-    
+    time_elapsed = time.perf_counter() - t;
+
     print("Measured Temperature: %s Celsius" % temp);
     
     print("Samples: %d" % iter);
