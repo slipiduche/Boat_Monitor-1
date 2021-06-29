@@ -15,17 +15,6 @@ fullscale = sensibility * excitation;
 
 mw = 500; # Max weight: Kg
 
-GPIO.setmode(GPIO.BCM);
-
-GPIO.setup(6, GPIO.OUT);
-
-hx711 = HX711(
-    dout_pin=5,
-    pd_sck_pin=6,
-    channel='A',
-    gain=64
-    )
-
 def getWeight(samples):
 #{
     global vcc, gain, fullscale, mw, hx711;
@@ -34,12 +23,17 @@ def getWeight(samples):
 
     raw = 0;
 
-    GPIO.setmode(GPIO.BCM)
-
-    GPIO.setup(6, GPIO.OUT);
-    
     try:     
         
+        GPIO.setmode(GPIO.BCM);
+
+        hx711 = HX711(
+                        dout_pin=5,
+                        pd_sck_pin=6,
+                        channel='A',
+                        gain=64
+                        );
+
         hx711.reset()   # Before we start, reset the HX711 (not obligate)
         
         raw  = hx711.get_raw_data(readings =samples);
