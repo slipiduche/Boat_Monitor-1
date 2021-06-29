@@ -24,6 +24,12 @@ hx711 = HX711(
     gain=64
     )
 
+err = hx711.zero()
+# check if successful
+
+if err:
+    raise ValueError('Tare is unsuccessful.')
+
 def getWeight(samples):
 #{
     global vcc, gain, fullscale, mw, hx711;
@@ -33,7 +39,7 @@ def getWeight(samples):
     raw = 0;
 
     GPIO.setmode(GPIO.BCM)
-    
+
     try:     
         
         hx711.reset()   # Before we start, reset the HX711 (not obligate)
