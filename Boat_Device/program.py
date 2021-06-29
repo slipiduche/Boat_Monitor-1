@@ -35,9 +35,6 @@ def status(cont_status):
 
   weight = params.get_weight();
 
-  cont_status = params.get_status();
-
-
   if(cont_status):
     
     print("lid open");
