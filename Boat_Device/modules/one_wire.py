@@ -30,7 +30,7 @@ def getTemp(samples,rate):
     
     print("Samples: %d" % iter);
     
-    print("Sample Rate: %dms" % rate*1000);
+    print("Sample Rate: %dms" % (rate*1000));
 
     print("Overall Measurment Time: %ds" % time_elapsed);
 
