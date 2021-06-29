@@ -1,4 +1,4 @@
    $ cat .gitignore
     # exclude everything except directory foo/bar
-    /Cloud_Server/node_modules/*
+    Cloud_Server/node_modules/*
 __pycache__
