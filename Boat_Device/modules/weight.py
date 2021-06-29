@@ -24,12 +24,6 @@ hx711 = HX711(
     gain=64
     )
 
-err = hx711.zero()
-# check if successful
-
-if err:
-    raise ValueError('Tare is unsuccessful.')
-
 def getWeight(samples):
 #{
     global vcc, gain, fullscale, mw, hx711;
