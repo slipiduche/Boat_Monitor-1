@@ -159,23 +159,35 @@ def processMessage(message: object, topic: str, client: Client):
         response = {}
 
         x = options[2];
-    
-        user_id = message["user_id"];
 
-        obs = message["obs"];
+        user_id = None; obs = None;
+
+        if "user_id" in message:
+            
+            user_id = message["user_id"];
+
+        if "obs" in message:
+        
+            obs = message["obs"];
 
         if x == "START":
 
-            start = message["start"];
+            start =  None;
+
+            if "start" in message:
+                
+                start = message["start"];
 
             if start:
 
-                token = message["token"];
+               
+
+                if ("token" and "id" in message) and user_id:
+
+                    token = message["token"];
                 
-                id = message["id"];
-
-                if token and id and user_id:
-
+                    id = message["id"];
+                    
                     response["weight"] = get_weight();
 
                     response["user_id"] =  user_id;
@@ -195,17 +207,21 @@ def processMessage(message: object, topic: str, client: Client):
                     client.publish(rt,json.dumps(response));
             
             elif client.id and client.token:
-
-                journey = message["journey_id"];
                 
-                if journey:
+                if "journey_id" in message:
 
+                    journey = message["journey_id"];
+                    
                     saveData(client,journey);
 
 
         elif x == "END":
 
-            end = message["end"];
+            end = None;
+
+            if "end" in message:
+            
+                end = message["end"];
 
             if end:
 
@@ -225,24 +241,32 @@ def processMessage(message: object, topic: str, client: Client):
 
         elif x == "CLEAR":
 
-            journey = message["journey"];
+            delete = None;
 
-            if journey:
+            if "delete" in message:
 
-                response = message;                
-                
-                response["proceed"] = 1;
+                delete = message["delete"];
 
-                rt = "DEVICE/" + client.mac + "/DELETION";
+            if delete:
+              
+                if "journey" in message:
 
-                client.publish(rt,json.dumps(response));
+                    journey = message["journey"];
 
-                t1 = threading.Thread(target = clear,args=(rt,response,client,journey,))
+                    response = message;                
+                    
+                    response["proceed"] = 1;
 
-                try:
+                    rt = "DEVICE/" + client.mac + "/DELETION";
 
-                    t1.start();
-                
-                except Exception as e:
+                    client.publish(rt,json.dumps(response));
 
-                    print(e);
+                    t1 = threading.Thread(target = clear,args=(rt,response,client,journey,))
+
+                    try:
+
+                        t1.start();
+                    
+                    except Exception as e:
+
+                        print(e);
