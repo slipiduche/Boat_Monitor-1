@@ -54,7 +54,7 @@ def getWeight(samples):
 
     weight = raw;
 
-    print("\n".join(weight));
+    print("\n".join(str(weight)));
 
     return weight;
 #}
