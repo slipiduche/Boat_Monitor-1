@@ -59,7 +59,7 @@ def status(cont_status):
 
   fl = file.genFile(journey_id,boat_id,fl);
 
-  file.writeData(data);
+  file.writeData(data,False,1,1,None);
 
   print(data);
 
