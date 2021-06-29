@@ -42,7 +42,7 @@ def getWeight(samples):
 
         hx711.reset()   # Before we start, reset the HX711 (not obligate)
         
-        raw  = stat.mean(hx711.get_raw_data(times = samples));
+        raw  = round(stat.mean(hx711.get_raw_data(times = samples)));
     
     except Exception as e:
 
@@ -62,7 +62,7 @@ def getWeight(samples):
 
     time_elapsed = time.perf_counter() - t;
 
-    print("Measured Weight: %f (Raw Data)" % raw);
+    print("Measured Weight: %s (Raw Data)" % hex(raw));
     
     print("Samples: %d" % samples);
     
