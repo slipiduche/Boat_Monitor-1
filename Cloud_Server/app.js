@@ -2486,11 +2486,56 @@ if(creds)
             }
                
 
-            if(usertype && req.body.id != id)
-                min = usertype + 1;
-            else if(!usertype)
-                min = 2;
-        
+            if(req.body.id)
+            {
+                if(req.body.tab == "USERS")
+                {      
+                    if(usertype)         
+                        min = usertype + 2;
+                    else
+                    {
+                        let did = req.body.id, len = did.length;
+                        
+                        if(len)
+                        {
+                            if(len != 1 || did[0] != id)
+                            {
+                                let X = await SQL.SEL("id,usertype",null,"USERS",{id:did});
+
+                                if(!X.status && X[0])
+                                {
+                                    l = Object.keys(X).length;
+
+                                    for(let i = 0; i < l; i++)
+                                    {
+                                        if(X[i].id != id)
+                                        {
+                                            if(min <= X[i].usertype)
+
+                                                min = X[i].usertype + 1;
+            
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        else if(did != id)
+                        {
+                            let X = await SQL.SEL("id,usertype",null,"USERS",{id:did});
+
+                            if(!X.status && X[0])
+                            {
+                                min = X[0].usertype + 1;
+                            }
+                        }        
+                    }           
+                }
+                else
+                    min = 2;
+       
+            }
+                
             access = data_access(req.body.tab,M);
 
             if(access)
