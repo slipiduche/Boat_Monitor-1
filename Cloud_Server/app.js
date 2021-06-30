@@ -2105,7 +2105,7 @@ if(creds)
                     {
                         if(W[0].approval == 2 && !W[0].blocked)
                         {
-                            params.usertype = 4;    params.approval = 0; params.id = W[0].id;
+                            params.usertype = 1;    params.approval = 0; params.id = W[0].id;
         
                             params.pswrd = await bcrypt.hash(params.pswrd,10);
             
