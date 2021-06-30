@@ -2132,7 +2132,7 @@ if(creds)
     
                     let dt = (new Date(Date.now() - TZOfsset)).toISOString().replace(/T|Z/g,' ');
             
-                    params.usertype = 4; params.latt = 0; params.st = 0; params.blocked = 0; params.dt = dt;
+                    params.usertype = 1; params.latt = 0; params.st = 0; params.blocked = 0; params.dt = dt;
                     
                     params.approval = 0;
 
