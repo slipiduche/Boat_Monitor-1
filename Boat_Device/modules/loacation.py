@@ -8,6 +8,11 @@ import serial
 portwrite = "/dev/ttyUSB2"
 port = "/dev/ttyUSB1"
 
+
+def airplane(switch):
+
+    return switch;
+    
 def parseGPS(data):
     print(data, end='') #prints raw data
     if data[0:6] == "$GPRMC":
