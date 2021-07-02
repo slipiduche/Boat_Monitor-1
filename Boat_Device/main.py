@@ -12,7 +12,7 @@ import modules.network as network;
 
 from modules.mqtts import Client
 
-check = 6;
+check = 60;
 
 out = False;
 
@@ -111,11 +111,13 @@ t_upload = None;
 
 while True:
 
-    location.airplane(False);
+    if x >= 4:
+    
+        location.airplane(False);
 
-    print("Waiting for 10 seconds before verifying connection to the internet and location...");
+        print("Waiting for 10 seconds before verifying connection to the internet and location...");
 
-    time.sleep(10);
+        time.sleep(10);
 
     print("Confirming Internet Access and Location... ");
 
