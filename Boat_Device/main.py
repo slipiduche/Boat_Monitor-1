@@ -30,7 +30,7 @@ fl = None;
 
 def wrange(lc,x):
 
-    ir = location.inRange(x);
+    ir = location.inRange(lc);
     
     if x >= 4 or ir:
     
@@ -60,6 +60,11 @@ def dataAcqusition():
     if not busy:
 
         busy = True;
+
+        #Acquire Data and write to file
+
+        
+        busy = False;
 
 t1 = threading.Timer(300,dataAcqusition,None);
 
@@ -141,6 +146,8 @@ while True:
         if out:
 
             client.connect();
+        
+        check = 60;
 
     elif op == 2:
 
@@ -152,28 +159,30 @@ while True:
             
             fl = None;
         
-        net_check = 3600;
+        check = 900;
 
         out = True;
 
     elif op == 1:
 
-        net_check = 60;
+        check = 60;
     
     elif op == 0:
 
-        net_check = 3600;
+        check = 900;
 
         out = True;
     
 
     time.sleep(check);
 
-    x +=1;
+    if(not client.connected):
+        
+        x +=1;
 
-    if x > 4:
+        if x > 4:
 
-        x = 0;
+            x = 0;
 
 #https://support.google.com/maps/answer/18539?co=GENIE.Platform%3DDesktop&hl=en
 
