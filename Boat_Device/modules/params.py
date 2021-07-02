@@ -1,50 +1,52 @@
 from logging import exception
 
-from modules.one_wire import getTemp;
+from modules.disk import getDisk;
 
-from modules.weight import getWeight;
+# from modules.one_wire import getTemp;
 
-from modules.IO import getStatus;
+# from modules.weight import getWeight;
+
+#from modules.IO import getStatus;
 
 
-def get_temp():
-#{
-    try:
+# def get_temp():
+# #{
+#     try:
 
-        return getTemp(30,0.001);
+#         return getTemp(30,0.001);
     
-    except Exception as e:
+#     except Exception as e:
 
-        print(e);
+#         print(e);
 
-    return None;
-#}
+#     return None;
+# #}
 
-def get_weight():
-#{
-    try:
+# def get_weight():
+# #{
+#     try:
         
-        return getWeight(30);
+#         return getWeight(30);
     
-    except Exception as e:
+#     except Exception as e:
 
-        print(e);
+#         print(e);
 
-    return None;
-#}
+#     return None;
+# #}
 
-def get_status():
-#{
-    try:
+# def get_status():
+# #{
+#     try:
         
-        return getStatus();
+#         return getStatus();
 
-    except Exception as e:
+#     except Exception as e:
 
-        print(e);
+#         print(e);
 
-    return None;
-#}
+#     return None;
+# #}
 
 def get_location():
 #{
@@ -63,6 +65,7 @@ def get_time():
 
 def get_disk():
 #{
-    return True;
+    return getDisk();
 #}
+
 

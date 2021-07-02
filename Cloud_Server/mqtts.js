@@ -148,7 +148,7 @@ async function appAuthorizer(username,password,signup)
        
 }
 
-/*
+
 aedes.authenticate = async (client,info,password,callback) =>
 {
     let access = null, data = null, device =  null, username = null;
@@ -182,7 +182,7 @@ aedes.authenticate = async (client,info,password,callback) =>
     
     callback(null, access);
 }
-*/
+
 const fs = require('fs');
 
 var privateKey = fs.readFileSync('sslcert/domain.key', 'utf8');

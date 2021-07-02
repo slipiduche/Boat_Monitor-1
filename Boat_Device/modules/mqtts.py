@@ -2,7 +2,7 @@ import paho.mqtt.client as mqtt
 
 import uuid, re, json, os, ssl,threading
 
-from modules.params import get_weight;
+#from modules.params import get_weight;
 
 import modules.disk as disk;
 
@@ -19,48 +19,74 @@ class Client:
         self.synced: bool = False;
         self.id: int = 0;
         self.token: str = None
+        self.connected: bool = False;
+        self.error: bool = False
+
+        self._config()
 
     def _config(self):
-        self.instance.on_connect = on_connect
-        self.instance.on_message = on_message
-        self.instance.on_disconnect = on_disconnect
+        
+        self.instance.on_connect = self.on_connect
+        
+        self.instance.on_message = self.on_message
+        
+        self.instance.on_disconnect = self.on_disconnect
 
-    def connect(self, host: str, p: int):
+    def connect(self, host: str, p: int,username: str,password: str):
+        
+        self.error = False;
+
         self.instance.tls_set(ca_certs= None, certfile=None,
                             keyfile=None, cert_reqs=ssl.CERT_NONE, #ssl.CERT_REQUIRED,
                             tls_version=ssl.PROTOCOL_TLSv1_2, ciphers=None)
-        #self.instance.tls_set_context(context = None)
+   
         self.instance.tls_insecure_set(True);
+
+        self.instance.username_pw_set(username,password);
+
         self.instance.connect(host,port = p)
+        
         self.instance.loop_start()
 
-        self.instance.publish("CAT","HANGRY");
+        self.instance.publish("CAT",json.dumps({"statement":"HANGRY"}));
         
         self.instance.subscribe(f"DEVICE/{self.name}/START")
         self.instance.subscribe(f"DEVICE/{self.name}/END")
         self.instance.subscribe(f"DEVICE/{self.name}/CLEAR")
 
-        self._config()
+        
 
     def publish(self, topic: str, payload: str):
         self.instance.publish(f"DEVICE/{self.name}/{topic}", payload)
 
 
-def on_message(client, userdata, message):
-    
-    data = json.loads(str(message.payload));
+    def on_message(self,client, userdata, message):
+        
+        data = json.loads(str(message.payload));
 
-    topic = str(message.topic);
+        topic = str(message.topic);
 
-    processMessage(data,topic,client)
-
-
-def on_connect(client, userdata, flags, rc):
-    print("Connected with result code "+str(rc))
+        processMessage(data,topic,self)
 
 
-def on_disconnect():
-    print("Disconnected from MQTT BROKER")
+    def on_connect(self,client, userdata, flags, rc):
+
+        if rc == 0:
+
+            self.connected = True;
+        
+        else:
+
+            self.error = True;
+
+        print("Connected with result code "+str(rc))
+
+
+    def on_disconnect(self,client,userdata,rc):
+
+        self.connected = False;
+
+        print("Disconnected from MQTT BROKER")
 
 
 def saveData(client: Client, journey:int):
@@ -188,7 +214,7 @@ def processMessage(message: object, topic: str, client: Client):
                 
                     id = message["id"];
                     
-                    response["weight"] = get_weight();
+                    #response["weight"] = get_weight();
 
                     response["user_id"] =  user_id;
 
@@ -225,7 +251,7 @@ def processMessage(message: object, topic: str, client: Client):
 
             if end:
 
-                response["weight"] = get_weight();
+                #response["weight"] = get_weight();
 
                 response["token"]  = client.token;
 

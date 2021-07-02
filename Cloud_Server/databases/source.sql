@@ -662,7 +662,11 @@ INSERT INTO ALERTS(hist_id,boat_id,journey_id,ta,wa,ua,sus,dt,descr)
 
 CREATE USER IF NOT EXISTS 'orbittas_b'@'localhost' IDENTIFIED WITH mysql_native_password BY '#B04tTr4ck3r++';
 
+#CREATE USER IF NOT EXISTS 'orbittas_b'@localhost IDENTIFIED WITH mysql_native_password USING PASSWORD('#B04tTr4ck3r++');
+
 GRANT ALL PRIVILEGES ON BOAT_MONITOR.* TO 'orbittas_b'@'localhost';
+
+#GRANT ALL PRIVILEGES ON 'BOAT_MONITOR'.* TO 'orbittas_b'@localhost;
 
 FLUSH PRIVILEGES;
 
