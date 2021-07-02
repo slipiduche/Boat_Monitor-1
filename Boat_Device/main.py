@@ -63,7 +63,7 @@ def dataAcqusition():
 
         #Acquire Data and write to file
 
-        
+
         busy = False;
 
 t1 = threading.Timer(300,dataAcqusition,None);
@@ -105,7 +105,7 @@ else:
     print("No Internet Access!");
 
 
-x = 0;
+x = 4;
 
 t_upload = None;
 
@@ -124,16 +124,8 @@ while True:
     op = wrange(lc,x);
 
     if op == 3:
-        
-        print("Internet Access and in Range");
 
-        location.airplane(False);
-
-        print("Waiting for 10 seconds before verifying connection to the internet...");
-
-        time.sleep(10);
-
-        print("Confirming Internet Access... ");
+        print("Internet Access and Location Confirmed");
 
         if fl: 
             
@@ -143,10 +135,17 @@ while True:
 
             fl = None;
 
-        if out:
-
+        if not client.connected:
+        
             client.connect();
         
+
+        if client.status == "ended":
+
+            out = False;
+
+            t1.cancel();
+
         check = 60;
 
     elif op == 2:
@@ -161,7 +160,11 @@ while True:
         
         check = 900;
 
-        out = True;
+        if not out and client.status == "ongoing":
+
+            t1.start();
+
+            out = True;
 
     elif op == 1:
 
@@ -171,7 +174,11 @@ while True:
 
         check = 900;
 
-        out = True;
+        if not out and client.status == "ongoing":
+
+            t1.start();
+
+            out = True;
     
 
     time.sleep(check);
